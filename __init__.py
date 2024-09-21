@@ -26,7 +26,7 @@ import bpy
 import bpy, mathutils
 import sys
 
-sys.path.append(r"C:\Users\User\Documents\PY - Scripting\Blender\PostLibrary")
+sys.path.append(r"C:\Users\User\Documents\GitHub\Post-Library")
 
 from dictionaries import COLORS_DICT
 
