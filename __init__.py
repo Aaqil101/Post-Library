@@ -24,9 +24,11 @@ bl_info = {
 
 import bpy
 import bpy, mathutils
+import pathlib
 import sys
 
-sys.path.append(r"C:\Users\User\Documents\GitHub\Post-Library")
+current_dir = pathlib.Path()
+sys.path.append(current_dir)
 
 from dictionaries import COLORS_DICT
 
