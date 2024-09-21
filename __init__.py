@@ -18,7 +18,7 @@ bl_info = {
     "location": "Compositor > Toolshelf",
     "description": "Boost your Blender workflow with essential tools for efficient VFX and post-processing. Simplify compositing, and finishing touches with this powerful addon.",
     "warning": "",
-    "doc_url": "",
+    "doc_url": "https://github.com/Aaqil101/Post-Library",
     "category": "Nodes",
 }
 
@@ -28,7 +28,7 @@ import pathlib
 import sys
 
 current_dir = pathlib.Path()
-sys.path.append("current_dir")
+sys.path.append(r"current_dir")
 
 from dictionaries import (
     COLORS_DICT,
@@ -53,6 +53,7 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
+        row.label(text="Welcome to Post Library!", icon="INFO")
 
 
 class COMP_PT_RENDER(bpy.types.Panel):
@@ -71,10 +72,10 @@ class COMP_PT_RENDER(bpy.types.Panel):
         row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
 
 
-class COMP_PT_LASTEFFECTS(bpy.types.Panel):
-    bl_label = "Last Effects"
+class COMP_PT_FINALTOUCHES(bpy.types.Panel):
+    bl_label = "Final Touches"
     bl_parent_id = 'COMP_PT_MAINPANEL'
-    bl_idname = "COMP_PT_LASTEFFECTS"
+    bl_idname = "COMP_PT_FINALTOUCHES"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_category = 'PLib'
@@ -209,7 +210,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 def register():
     bpy.utils.register_class(COMP_PT_MAINPANEL)
     bpy.utils.register_class(COMP_PT_RENDER)
-    bpy.utils.register_class(COMP_PT_LASTEFFECTS)
+    bpy.utils.register_class(COMP_PT_FINALTOUCHES)
     bpy.utils.register_class(NODE_OT_MULTIDENOISER)
     bpy.utils.register_class(NODE_OT_PASSMIXER)
     bpy.utils.register_class(NODE_OT_LENSDISTORTION)
@@ -219,7 +220,7 @@ def register():
 def unregister():
     bpy.utils.unregister_class(COMP_PT_MAINPANEL)
     bpy.utils.unregister_class(COMP_PT_RENDER)
-    bpy.utils.unregister_class(COMP_PT_LASTEFFECTS)
+    bpy.utils.unregister_class(COMP_PT_FINALTOUCHES)
     bpy.utils.unregister_class(NODE_OT_MULTIDENOISER)
     bpy.utils.unregister_class(NODE_OT_PASSMIXER)
     bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)
