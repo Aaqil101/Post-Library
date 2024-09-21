@@ -213,7 +213,22 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
 
+# Register and unregister list variable
+classes = [
+    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_MULTIDENOISER, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE
+]
+
 def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+
+# Old register and unregister method
+
+""" def register():
     bpy.utils.register_class(COMP_PT_MAINPANEL)
     bpy.utils.register_class(COMP_PT_RENDER)
     bpy.utils.register_class(COMP_PT_FINALTOUCHES)
@@ -231,7 +246,7 @@ def unregister():
     bpy.utils.unregister_class(NODE_OT_PASSMIXER)
     bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)
     bpy.utils.unregister_class(NODE_OT_FILMGRAIN)
-    bpy.utils.unregister_class(NODE_OT_VIGNETTE)
+    bpy.utils.unregister_class(NODE_OT_VIGNETTE) """
 
 if __name__ == "__main__":
     register()
