@@ -28,9 +28,11 @@ import pathlib
 import sys
 
 current_dir = pathlib.Path()
-sys.path.append(current_dir)
+sys.path.append("current_dir")
 
-from dictionaries import COLORS_DICT
+from dictionaries import (
+    COLORS_DICT,
+)
 
 from functions import (
     multidenoiser_node_group,
@@ -39,7 +41,6 @@ from functions import (
     film_grain_node_group,
     vignette_node_group,
 )
-
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"
@@ -52,8 +53,35 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
+
+
+class COMP_PT_RENDER(bpy.types.Panel):
+    bl_label = "Render"
+    bl_parent_id = 'COMP_PT_MAINPANEL'
+    bl_idname = "COMP_PT_RENDER"
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = 'PLib'
+
+    def draw(self, context):
+        layout = self.layout
+        
+        row = layout.row()
         row.operator('node.multidenoiser_operator', icon= 'RENDER_RESULT')
         row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
+
+
+class COMP_PT_LASTEFFECTS(bpy.types.Panel):
+    bl_label = "Last Effects"
+    bl_parent_id = 'COMP_PT_MAINPANEL'
+    bl_idname = "COMP_PT_LASTEFFECTS"
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = 'PLib'
+
+    def draw(self, context):
+        layout = self.layout
+        
         row = layout.row()
         row.operator('node.lensdistortion_operator', icon= 'DRIVER_DISTANCE')
         row.operator('node.filmgrain_operator', icon= 'FILE_MOVIE')
@@ -180,6 +208,8 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(COMP_PT_MAINPANEL)
+    bpy.utils.register_class(COMP_PT_RENDER)
+    bpy.utils.register_class(COMP_PT_LASTEFFECTS)
     bpy.utils.register_class(NODE_OT_MULTIDENOISER)
     bpy.utils.register_class(NODE_OT_PASSMIXER)
     bpy.utils.register_class(NODE_OT_LENSDISTORTION)
@@ -188,6 +218,8 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(COMP_PT_MAINPANEL)
+    bpy.utils.unregister_class(COMP_PT_RENDER)
+    bpy.utils.unregister_class(COMP_PT_LASTEFFECTS)
     bpy.utils.unregister_class(NODE_OT_MULTIDENOISER)
     bpy.utils.unregister_class(NODE_OT_PASSMIXER)
     bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)

@@ -1,5 +1,7 @@
 import bpy
-from dictionaries import COLORS_DICT
+from dictionaries import (
+    COLORS_DICT,
+)
 
 #initialize MultiDenoiser node group
 def multidenoiser_node_group(context, operator, group_name):
