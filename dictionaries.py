@@ -13,5 +13,5 @@ COLORS_DICT = {
         "LIGHT_PURPLE": hexcode_to_rgb("#846167"),
         "DARK_PURPLE": hexcode_to_rgb("#77535F"),
         "BROWN": hexcode_to_rgb("#866937"),
-        "GRAY": hexcode_to_rgb("#59514B"),
+        "GRAY": hexcode_to_rgb("#3C3937"),
     }

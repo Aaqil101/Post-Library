@@ -46,6 +46,7 @@ from functions import (
     lensdistortion_node,
     film_grain_node_group,
     vignette_node_group,
+    vignette_basic_node_group,
 )
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
@@ -94,6 +95,7 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
         row.operator('node.filmgrain_operator', icon= 'FILE_MOVIE')
         row = layout.row()
         row.operator('node.vignette_operator', icon= 'IMAGE_RGB')
+        row.operator('node.vignette_basic_operator', icon= 'IMAGE_RGB')
 
 class NODE_OT_MULTIDENOISER(bpy.types.Operator):
     bl_label = "MultiDenoiser"
@@ -212,10 +214,26 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
 
         return {'RUNNING_MODAL'}
+    
+class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
+    bl_label = "Vignette-Basic"
+    bl_idname = 'node.vignette_basic_operator'
+
+    def execute(shelf, context):
+
+        custom_vignette_basic_node_name = 'Vignette-Basic'
+        vignette_basic_group = vignette_basic_node_group(shelf, context, custom_vignette_basic_node_name)
+        vignette_basic_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        vignette_basic_node.node_tree = bpy.data.node_groups[vignette_basic_group.name]
+        vignette_basic_node.use_custom_color = True
+        vignette_basic_node.color = COLORS_DICT["LIGHT_PURPLE"]
+        vignette_basic_node.select = False
+
+        return {'FINISHED'}
 
 # Register and unregister list variable
 classes = [
-    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_MULTIDENOISER, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE
+    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_MULTIDENOISER, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE, NODE_OT_BASICVIGNETTE
 ]
 
 def register():
