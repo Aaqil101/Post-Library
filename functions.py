@@ -1,7 +1,5 @@
 import bpy
-from dictionaries import (
-    COLORS_DICT,
-)
+from dictionaries import (COLORS_DICT)
 
 #initialize MultiDenoiser node group
 def multidenoiser_node_group(context, operator, group_name):
@@ -1389,7 +1387,3 @@ def vignette_basic_node_group(context, operator, group_name):
     vignette_basic.links.new(vb_group_input.outputs[1], vb_multiply.inputs[0])
 
     return vignette_basic
-
-
-
-

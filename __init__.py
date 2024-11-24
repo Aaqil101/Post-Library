@@ -23,7 +23,7 @@ bl_info = {
 }
 
 import bpy
-import bpy, mathutils
+import mathutils
 import os
 import sys
 

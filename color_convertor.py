@@ -7,7 +7,7 @@ from typing import Tuple
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
 
-# and then I modifed the code to fit my needs based on this tutorial.
+# and then I modified the code to fit my needs based on this tutorial.
 # (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
 
 def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
