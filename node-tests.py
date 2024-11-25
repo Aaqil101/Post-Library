@@ -169,9 +169,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         return {"FINISHED"}
     
 # Register and unregister list variable
-classes = [
-    COMP_PT_MAINPANEL, NODE_OT_BLOOM
-]
+classes = [COMP_PT_MAINPANEL, NODE_OT_BLOOM]
 
 def register():
     for cls in classes:
