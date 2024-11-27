@@ -1,3 +1,5 @@
+import bpy
+
 def add_var(socket, data_path, name="default_value", id_type="SCENE", id=bpy.context.scene):
             """
             Adds a variable to a given socket.
