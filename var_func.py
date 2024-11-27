@@ -19,13 +19,13 @@ def add_var(socket, data_path, name="default_value", id_type="SCENE", id=bpy.con
 
             Returns
             -------
-            var : bpy.types.DriverVariable
+            driver_var : bpy.types.DriverVariable
                 The added variable.
             """
 
-            var = socket.variables.new()
-            var.name = name
-            var.targets[0].id_type = id_type
-            var.targets[0].id = id
-            var.targets[0].data_path = data_path
-            return var
+            driver_var = socket.variables.new()
+            driver_var.name = name
+            driver_var.targets[0].id_type = id_type
+            driver_var.targets[0].id = id
+            driver_var.targets[0].data_path = data_path
+            return driver_var
