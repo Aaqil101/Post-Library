@@ -75,13 +75,13 @@ def bloom_node_group(context, operator, group_name):
     bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     bloom.color_tag = 'FILTER'
-    bloom.description = ""
+    bloom.description = "Replication Of The Legacy Eevee Bloom Option"
     bloom.default_group_node_width = 160
         
     #bloom interface
     #Socket Image
     image_socket = bloom.interface.new_socket(name = "Image", in_out='OUTPUT', socket_type = 'NodeSocketColor')
-    image_socket.default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
+    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket.attribute_domain = 'POINT'
 
     #Socket Image
@@ -125,7 +125,7 @@ def bloom_node_group(context, operator, group_name):
     added_radius_socket = bloom.interface.new_socket(name = "Added Radius", in_out='INPUT', socket_type = 'NodeSocketFloat')
     added_radius_socket.default_value = 0.0
     added_radius_socket.min_value = 0.0
-    added_radius_socket.max_value = 3.4028234663852886e+38
+    added_radius_socket.max_value = 2048
     added_radius_socket.subtype = 'NONE'
     added_radius_socket.attribute_domain = 'POINT'
 
@@ -161,7 +161,7 @@ def bloom_node_group(context, operator, group_name):
     group_output.label = "Group Output"
     group_output.name = "Group Output"
     group_output.use_custom_color = True
-    group_output.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_output.color = COLORS_DICT["DARK_GRAY"]
     group_output.is_active_output = True
 
     #node Group Input 00
@@ -169,7 +169,7 @@ def bloom_node_group(context, operator, group_name):
     group_input_00.label = "Group Input 00"
     group_input_00.name = "Group Input 00"
     group_input_00.use_custom_color = True
-    group_input_00.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_input_00.color = COLORS_DICT["DARK_GRAY"]
     group_input_00.outputs[1].hide = True
     group_input_00.outputs[2].hide = True
     group_input_00.outputs[3].hide = True
@@ -197,7 +197,7 @@ def bloom_node_group(context, operator, group_name):
     color.label = "Color"
     color.name = "Color"
     color.use_custom_color = True
-    color.color = (0.5254849791526794, 0.41176897287368774, 0.21568608283996582)
+    color.color = COLORS_DICT["BROWN"]
     color.blend_type = 'COLOR'
     color.use_alpha = False
     color.use_clamp = False
@@ -223,7 +223,7 @@ def bloom_node_group(context, operator, group_name):
     blur_mix.label = "Blur Mix"
     blur_mix.name = "Blur Mix"
     blur_mix.use_custom_color = True
-    blur_mix.color = (0.5254849791526794, 0.41176897287368774, 0.21568608283996582)
+    blur_mix.color = COLORS_DICT["BROWN"]
     blur_mix.blend_type = 'SCREEN'
     blur_mix.use_alpha = False
     blur_mix.use_clamp = True
@@ -236,7 +236,7 @@ def bloom_node_group(context, operator, group_name):
     intensity.label = "Intensity"
     intensity.name = "Intensity"
     intensity.use_custom_color = True
-    intensity.color = (0.5254849791526794, 0.41176897287368774, 0.21568608283996582)
+    intensity.color = COLORS_DICT["BROWN"]
     intensity.blend_type = 'ADD'
     intensity.use_alpha = False
     intensity.use_clamp = False
@@ -261,7 +261,7 @@ def bloom_node_group(context, operator, group_name):
     knee_mix.label = "Knee Mix"
     knee_mix.name = "Knee Mix"
     knee_mix.use_custom_color = True
-    knee_mix.color = (0.5254849791526794, 0.41176897287368774, 0.21568608283996582)
+    knee_mix.color = COLORS_DICT["BROWN"]
     knee_mix.blend_type = 'ADD'
     knee_mix.use_alpha = False
     knee_mix.use_clamp = False
@@ -271,7 +271,7 @@ def bloom_node_group(context, operator, group_name):
     group_input_01.label = "Group Input 01"
     group_input_01.name = "Group Input 01"
     group_input_01.use_custom_color = True
-    group_input_01.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_input_01.color = COLORS_DICT["DARK_GRAY"]
     group_input_01.outputs[1].hide = True
     group_input_01.outputs[2].hide = True
     group_input_01.outputs[3].hide = True
@@ -286,7 +286,7 @@ def bloom_node_group(context, operator, group_name):
     group_input_02.label = "Group Input 02"
     group_input_02.name = "Group Input 02"
     group_input_02.use_custom_color = True
-    group_input_02.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_input_02.color = COLORS_DICT["DARK_GRAY"]
     group_input_02.outputs[0].hide = True
     group_input_02.outputs[2].hide = True
     group_input_02.outputs[3].hide = True
@@ -302,7 +302,7 @@ def bloom_node_group(context, operator, group_name):
     group_input_03.label = "Group Input 03"
     group_input_03.name = "Group Input 03"
     group_input_03.use_custom_color = True
-    group_input_03.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_input_03.color = COLORS_DICT["DARK_GRAY"]
     group_input_03.outputs[0].hide = True
     group_input_03.outputs[1].hide = True
     group_input_03.outputs[2].hide = True
@@ -339,7 +339,7 @@ def bloom_node_group(context, operator, group_name):
     kb_switch.label = "KB Switch"
     kb_switch.name = "KB Switch"
     kb_switch.use_custom_color = True
-    kb_switch.color = (0.349015474319458, 0.31764522194862366, 0.2941189408302307)
+    kb_switch.color = COLORS_DICT["LIGHT_GRAY"]
     kb_switch.check = False
 
     #node OB Switch
@@ -347,7 +347,7 @@ def bloom_node_group(context, operator, group_name):
     ob_switch.label = "OB Switch"
     ob_switch.name = "OB Switch"
     ob_switch.use_custom_color = True
-    ob_switch.color = (0.349015474319458, 0.31764522194862366, 0.2941189408302307)
+    ob_switch.color = COLORS_DICT["LIGHT_GRAY"]
     ob_switch.check = False
 
     #node Original Bloom Low
@@ -393,7 +393,7 @@ def bloom_node_group(context, operator, group_name):
     clamp.label = "Clamp"
     clamp.name = "Clamp"
     clamp.use_custom_color = True
-    clamp.color = (0.5254849791526794, 0.41176897287368774, 0.21568608283996582)
+    clamp.color = COLORS_DICT["BROWN"]
 
     #mapping settings
     clamp.mapping.extend = 'EXTRAPOLATED'
@@ -682,6 +682,22 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         add_var(
             bloom_obls_driver,
             'node_tree.nodes["Group"].inputs[8].default_value'
+        )
+
+        # Added Radius X
+        bloom_arx_driver = bloom_tree.nodes['Group'].node_tree.nodes['Blur'].driver_add('size_x').driver
+        bloom_arx_driver.type = "AVERAGE"
+        add_var(
+            bloom_arx_driver,
+            'node_tree.nodes["Group"].inputs[5].default_value'
+        )
+
+        # Added Radius Y
+        bloom_ary_driver = bloom_tree.nodes['Group'].node_tree.nodes['Blur'].driver_add('size_y').driver
+        bloom_ary_driver.type = "AVERAGE"
+        add_var(
+            bloom_ary_driver,
+            'node_tree.nodes["Group"].inputs[5].default_value'
         )
 
 
