@@ -1,8 +1,8 @@
 bl_info = {
     "name": "Post Library",
     "author": "Aaqil",
-    "version": (1, 0),
-    "blender": (4, 2, 1),
+    "version": (1, 2, 0),
+    "blender": (4, 3, 0),
     "location": "Compositor > Toolshelf",
     "description": "Boost your Blender workflow with essential tools for efficient VFX and post-processing. Simplify compositing, and finishing touches with this powerful addon.",
     "warning": "",
@@ -11,11 +11,10 @@ bl_info = {
 }
 
 import bpy
-from pathlib import Path
 import sys
 
 # Get the path to the lib directory
-lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library\lib")
+lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library")
 
 # Add the module path to sys.path
 if lib_path not in sys.path:
