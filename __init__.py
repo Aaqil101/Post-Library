@@ -21,8 +21,10 @@ if lib_path not in sys.path:
     sys.path.append(lib_path)
 
 from dictionaries import (COLORS_DICT)
+from var_func import (add_var)
 from pass_mixer import (passmixer_node_group)
 from lens_distortion import (lensdistortion_node)
+from bloom import (bloom_node_group)
 
 from functions import (
     film_grain_node_group,
@@ -195,6 +197,96 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class NODE_OT_BLOOM(bpy.types.Operator):
+    bl_label = "Bloom"
+    bl_idname = "node.bloom_operator"
+
+
+    def execute(shelf, context):
+
+        custom_bloom_node_name = "Bloom"
+        bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
+        bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
+        bloom_node.name = "Bloom"
+        bloom_node.width = 168
+        bloom_node.node_tree = bpy.data.node_groups[bloom_group.name]
+        bloom_node.use_custom_color = True
+        bloom_node.color = COLORS_DICT["DARK_PURPLE"]
+        bloom_node.select = False
+
+        """
+        * The ability to add drivers to nodes is made possible by Victor Stepanov
+        * (https://www.skool.com/cgpython/how-to-add-drivers-to-node-group-sockets-using-python?p=0be0f439)
+        * (https://www.skool.com/cgpython/how-do-i-add-the-drivers-to-a-node-group-every-time?p=4220eddf)
+        * His youtube channel (https://www.youtube.com/@CGPython)
+        """
+
+        # Original Bloom Switch
+        bloom_obs_driver = bloom_node.node_tree.nodes['OB Switch'].driver_add('check').driver
+        bloom_obs_driver.type = "AVERAGE"
+        add_var(
+            bloom_obs_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
+        )
+
+        # Knee Bloom Switch
+        bloom_kbs_driver = bloom_node.node_tree.nodes['KB Switch'].driver_add('check').driver
+        bloom_kbs_driver.type = "AVERAGE"
+        add_var(
+            bloom_kbs_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
+        )
+
+        # Original Bloom High
+        bloom_obh_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('threshold').driver
+        bloom_obh_driver.type = "AVERAGE"
+        add_var(
+            bloom_obh_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
+        )
+
+        # Original Bloom Low
+        bloom_obl_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('threshold').driver
+        bloom_obl_driver.type = "AVERAGE"
+        add_var(
+            bloom_obl_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
+        )
+
+        # Original Bloom High Size
+        bloom_obhs_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('size').driver
+        bloom_obhs_driver.type = "AVERAGE"
+        add_var(
+            bloom_obhs_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
+        )
+
+        # Original Bloom Low Size
+        bloom_obls_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('size').driver
+        bloom_obls_driver.type = "AVERAGE"
+        add_var(
+            bloom_obls_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
+        )
+
+        # Added Radius X
+        bloom_arx_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_x').driver
+        bloom_arx_driver.type = "AVERAGE"
+        add_var(
+            bloom_arx_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
+        )
+
+        # Added Radius Y
+        bloom_ary_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_y').driver
+        bloom_ary_driver.type = "AVERAGE"
+        add_var(
+            bloom_ary_driver,
+            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
+        )
+
+        return {"FINISHED"}
+
 # Register and unregister list variable
 classes = [
     # Panels
@@ -207,7 +299,8 @@ classes = [
     NODE_OT_LENSDISTORTION,
     NODE_OT_FILMGRAIN,
     NODE_OT_VIGNETTE,
-    NODE_OT_BASICVIGNETTE
+    NODE_OT_BASICVIGNETTE,
+    NODE_OT_BLOOM
 ]
 
 def register():
