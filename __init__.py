@@ -23,18 +23,19 @@ bl_info = {
 }
 
 import bpy
+import pathlib
 import mathutils
 import os
 import sys
 
 # Specify the directory where your module is located
-module_path = (r"C:\Users\User\Documents\GitHub\Post-Library")
+module_path = (r"C:\Users\User\Documents\GitHub\Post-Library\lib")
 
 # Add the module path to sys.path
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-    print(f"Added {module_path} to sys.path")
+    # print(f"Added {module_path} to sys.path")
 
 from dictionaries import (
     COLORS_DICT,
