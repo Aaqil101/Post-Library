@@ -1,15 +1,3 @@
-# ##### BEGIN LICENSE BLOCK #####
-#
-#  Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0) 
-#
-#  This work is licensed under the Creative Commons
-#  Attribution-NonCommercial-NoDerivatives 4.0 International License. 
-#
-#  To view a copy of this license,
-#  visit http://creativecommons.org/licenses/by-nc-nd/4.0/.
-#
-# ##### END LICENSE BLOCK #####
-
 bl_info = {
     "name": "Post Library",
     "author": "Aaqil",
@@ -23,26 +11,19 @@ bl_info = {
 }
 
 import bpy
-import pathlib
-import mathutils
-import os
+from pathlib import Path
 import sys
 
-# Specify the directory where your module is located
-module_path = (r"C:\Users\User\Documents\GitHub\Post-Library\lib")
+# Get the path to the lib directory
+lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library\lib")
 
 # Add the module path to sys.path
-if module_path not in sys.path:
-    sys.path.append(module_path)
+if lib_path not in sys.path:
+    sys.path.append(lib_path)
 
-    # print(f"Added {module_path} to sys.path")
-
-from dictionaries import (
-    COLORS_DICT,
-)
+from dictionaries import (COLORS_DICT)
 
 from functions import (
-    multidenoiser_node_group,
     passmixer_node_group,
     lensdistortion_node,
     film_grain_node_group,
@@ -76,7 +57,6 @@ class COMP_PT_RENDER(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.operator('node.multidenoiser_operator', icon= 'RENDER_RESULT')
         row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
 
 
@@ -97,23 +77,6 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
         row = layout.row()
         row.operator('node.vignette_operator', icon= 'IMAGE_RGB')
         row.operator('node.vignette_basic_operator', icon= 'IMAGE_RGB')
-
-class NODE_OT_MULTIDENOISER(bpy.types.Operator):
-    bl_label = "MultiDenoiser"
-    bl_idname = 'node.multidenoiser_operator'
-
-    def execute(shelf, context):
-
-        custom_multidenoiser_node_name = 'MultiDenoiser'
-        multidenoiser_group = multidenoiser_node_group(shelf, context, custom_multidenoiser_node_name)
-        multidenoiser_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
-        multidenoiser_node.node_tree = bpy.data.node_groups[multidenoiser_group.name]
-        multidenoiser_node.use_custom_color = True
-        bpy.data.node_groups["MultiDenoiser"].color_tag = 'FILTER'
-        multidenoiser_node.color = COLORS_DICT["LIGHT_PURPLE"]
-        multidenoiser_node.select = False
-
-        return {'FINISHED'}
 
 class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
@@ -234,7 +197,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
 
 # Register and unregister list variable
 classes = [
-    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_MULTIDENOISER, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE, NODE_OT_BASICVIGNETTE
+    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE, NODE_OT_BASICVIGNETTE
 ]
 
 def register():
