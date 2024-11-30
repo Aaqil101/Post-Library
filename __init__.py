@@ -88,7 +88,6 @@ class NODE_OT_PASSMIXER(bpy.types.Operator):
         passmixer_group = passmixer_node_group(shelf, context, custom_passmixer_node_name)
         passmixer_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
         passmixer_node.name = "PassMixer"
-        passmixer_node.width = 150
         passmixer_node.node_tree = bpy.data.node_groups[passmixer_group.name]
         passmixer_node.use_custom_color = True
         passmixer_node.color = COLORS_DICT["DARK_BLUE"]
@@ -220,27 +219,28 @@ def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-# Old register and unregister method
-
-""" def register():
-    bpy.utils.register_class(COMP_PT_MAINPANEL)
-    bpy.utils.register_class(COMP_PT_RENDER)
-    bpy.utils.register_class(COMP_PT_FINALTOUCHES)
-    bpy.utils.register_class(NODE_OT_MULTIDENOISER)
-    bpy.utils.register_class(NODE_OT_PASSMIXER)
-    bpy.utils.register_class(NODE_OT_LENSDISTORTION)
-    bpy.utils.register_class(NODE_OT_FILMGRAIN)
-    bpy.utils.register_class(NODE_OT_VIGNETTE)
-
-def unregister():
-    bpy.utils.unregister_class(COMP_PT_MAINPANEL)
-    bpy.utils.unregister_class(COMP_PT_RENDER)
-    bpy.utils.unregister_class(COMP_PT_FINALTOUCHES)
-    bpy.utils.unregister_class(NODE_OT_MULTIDENOISER)
-    bpy.utils.unregister_class(NODE_OT_PASSMIXER)
-    bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)
-    bpy.utils.unregister_class(NODE_OT_FILMGRAIN)
-    bpy.utils.unregister_class(NODE_OT_VIGNETTE) """
+"""
+!Old register and unregister method
+!def register():
+!    bpy.utils.register_class(COMP_PT_MAINPANEL)
+!    bpy.utils.register_class(COMP_PT_RENDER)
+!    bpy.utils.register_class(COMP_PT_FINALTOUCHES)
+!    bpy.utils.register_class(NODE_OT_MULTIDENOISER)
+!    bpy.utils.register_class(NODE_OT_PASSMIXER)
+!    bpy.utils.register_class(NODE_OT_LENSDISTORTION)
+!    bpy.utils.register_class(NODE_OT_FILMGRAIN)
+!    bpy.utils.register_class(NODE_OT_VIGNETTE)
+!
+!def unregister():
+!    bpy.utils.unregister_class(COMP_PT_MAINPANEL)
+!    bpy.utils.unregister_class(COMP_PT_RENDER)
+!    bpy.utils.unregister_class(COMP_PT_FINALTOUCHES)
+!    bpy.utils.unregister_class(NODE_OT_MULTIDENOISER)
+!    bpy.utils.unregister_class(NODE_OT_PASSMIXER)
+!    bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)
+!    bpy.utils.unregister_class(NODE_OT_FILMGRAIN)
+!    bpy.utils.unregister_class(NODE_OT_VIGNETTE)
+"""
 
 if __name__ == "__main__":
     register()
