@@ -22,10 +22,10 @@ if lib_path not in sys.path:
     sys.path.append(lib_path)
 
 from dictionaries import (COLORS_DICT)
+from pass_mixer import (passmixer_node_group)
+from lens_distortion import (lensdistortion_node)
 
 from functions import (
-    passmixer_node_group,
-    lensdistortion_node,
     film_grain_node_group,
     vignette_node_group,
     vignette_basic_node_group,
@@ -80,13 +80,15 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
 
 class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
-    bl_idname = 'node.passmixer_operator'
+    bl_idname = "node.passmixer_operator"
 
     def execute(shelf, context):
 
-        custom_passmixer_node_name = 'PassMixer'
+        custom_passmixer_node_name = "PassMixer"
         passmixer_group = passmixer_node_group(shelf, context, custom_passmixer_node_name)
         passmixer_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        passmixer_node.name = "PassMixer"
+        passmixer_node.width = 150
         passmixer_node.node_tree = bpy.data.node_groups[passmixer_group.name]
         passmixer_node.use_custom_color = True
         passmixer_node.color = COLORS_DICT["DARK_BLUE"]
@@ -197,7 +199,17 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
 
 # Register and unregister list variable
 classes = [
-    COMP_PT_MAINPANEL, COMP_PT_RENDER, COMP_PT_FINALTOUCHES, NODE_OT_PASSMIXER, NODE_OT_LENSDISTORTION, NODE_OT_FILMGRAIN, NODE_OT_VIGNETTE, NODE_OT_BASICVIGNETTE
+    # Panels
+    COMP_PT_MAINPANEL,
+    COMP_PT_RENDER,
+    COMP_PT_FINALTOUCHES,
+
+    # Node Groups
+    NODE_OT_PASSMIXER,
+    NODE_OT_LENSDISTORTION,
+    NODE_OT_FILMGRAIN,
+    NODE_OT_VIGNETTE,
+    NODE_OT_BASICVIGNETTE
 ]
 
 def register():
