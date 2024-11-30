@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Post Library",
     "author": "Aaqil",
-    "version": (1, 2, 0),
+    "version": (1, 3, 0),
     "blender": (4, 3, 0),
     "location": "Compositor > Toolshelf",
     "description": "Boost your Blender workflow with essential tools for efficient VFX and post-processing. Simplify compositing, and finishing touches with this powerful addon.",
@@ -20,17 +20,14 @@ lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library")
 if lib_path not in sys.path:
     sys.path.append(lib_path)
 
-from dictionaries import (COLORS_DICT)
-from var_func import (add_var)
-from pass_mixer import (passmixer_node_group)
-from lens_distortion import (lensdistortion_node)
-from bloom import (bloom_node_group)
-
-from functions import (
-    film_grain_node_group,
-    vignette_node_group,
-    vignette_basic_node_group,
-)
+from dictionaries import COLORS_DICT
+from var_func import add_var
+from pass_mixer import passmixer_node_group
+from lens_distortion import lensdistortion_node
+from bloom import bloom_node_group
+from file_film_grain import file_film_grain_node_group
+from vignette import vignette_node_group
+from vignette_basic import vignette_basic_node_group
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"
@@ -89,6 +86,7 @@ class NODE_OT_PASSMIXER(bpy.types.Operator):
         passmixer_group = passmixer_node_group(shelf, context, custom_passmixer_node_name)
         passmixer_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
         passmixer_node.name = "PassMixer"
+        passmixer_node.width = 160
         passmixer_node.node_tree = bpy.data.node_groups[passmixer_group.name]
         passmixer_node.use_custom_color = True
         passmixer_node.color = COLORS_DICT["DARK_BLUE"]
@@ -106,9 +104,9 @@ class NODE_OT_LENSDISTORTION(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class NODE_OT_FILMGRAIN(bpy.types.Operator):
-    bl_label = "Film Grain"
-    bl_idname = 'node.filmgrain_operator'
+class NODE_OT_FFGRAIN(bpy.types.Operator):
+    bl_label = "FF Grain"
+    bl_idname = "node.filmgrain_operator"
 
     # I don't know why it says like this but it works so i am might not worie about it for know
     # and I did search for a solution but I didn't find any. (https://youtu.be/P8w-tswp0JI?list=PLB8-FQgROBmlqzZ4HBzIAGpho-xp0Bn_h)
@@ -124,16 +122,17 @@ class NODE_OT_FILMGRAIN(bpy.types.Operator):
 
     def execute(self, context):
 
-        custom_film_grain_node_name = 'Film Grain'
+        custom_ff_grain_node_name = "FF Grain"
         image_path = self.filepath
-        film_grain_group = film_grain_node_group(context, self, custom_film_grain_node_name, image_path)
-        film_grain_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
-        film_grain_node.name = "Film Grain"
-        film_grain_node.label = "Film Grain"
-        film_grain_node.node_tree = bpy.data.node_groups[film_grain_group.name]
-        film_grain_node.use_custom_color = True
-        film_grain_node.color = COLORS_DICT["LIGHT_PURPLE"]
-        film_grain_node.select = False
+        ff_grain_group = file_film_grain_node_group(context, self, custom_ff_grain_node_name, image_path)
+        ff_grain_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        ff_grain_node.name = "FF Grain"
+        ff_grain_node.label = "FF Grain"
+        ff_grain_node.width = 140
+        ff_grain_node.node_tree = bpy.data.node_groups[ff_grain_group.name]
+        ff_grain_node.use_custom_color = True
+        ff_grain_node.color = COLORS_DICT["LIGHT_PURPLE"]
+        ff_grain_node.select = False
 
         return {'FINISHED'}
     
@@ -161,12 +160,13 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 
     def execute(self, context):
 
-        custom_vignette_node_name = 'Vignette'
+        custom_vignette_node_name = "Vignette"
         image_path = self.filepath
         vignette_group = vignette_node_group(context, self, custom_vignette_node_name, image_path)
         vignette_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
         vignette_node.name = "Vignette"
         vignette_node.label = "Vignette"
+        vignette_node.width = 140
         vignette_node.node_tree = bpy.data.node_groups[vignette_group.name]
         vignette_node.use_custom_color = True
         vignette_node.color = COLORS_DICT["LIGHT_PURPLE"]
@@ -184,12 +184,16 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
     bl_label = "Vignette-Basic"
     bl_idname = 'node.vignette_basic_operator'
+    bl_description = "A basic node group for vignette effect"
 
     def execute(shelf, context):
 
-        custom_vignette_basic_node_name = 'Vignette-Basic'
+        custom_vignette_basic_node_name = "Vignette-Basic"
         vignette_basic_group = vignette_basic_node_group(shelf, context, custom_vignette_basic_node_name)
         vignette_basic_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        vignette_basic_node.name = "Vignette-Basic"
+        vignette_basic_node.label = "Vignette-Basic"
+        vignette_basic_node.width = 165
         vignette_basic_node.node_tree = bpy.data.node_groups[vignette_basic_group.name]
         vignette_basic_node.use_custom_color = True
         vignette_basic_node.color = COLORS_DICT["LIGHT_PURPLE"]
@@ -297,7 +301,7 @@ classes = [
     # Node Groups
     NODE_OT_PASSMIXER,
     NODE_OT_LENSDISTORTION,
-    NODE_OT_FILMGRAIN,
+    NODE_OT_FFGRAIN,
     NODE_OT_VIGNETTE,
     NODE_OT_BASICVIGNETTE,
     NODE_OT_BLOOM

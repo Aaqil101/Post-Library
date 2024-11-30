@@ -1,5 +1,5 @@
 import bpy
-from dictionaries import (COLORS_DICT)
+from dictionaries import COLORS_DICT
 
 #initialize Bloom node group
 def bloom_node_group(context, operator, group_name):
@@ -10,7 +10,7 @@ def bloom_node_group(context, operator, group_name):
     bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     bloom.color_tag = "FILTER"
-    bloom.default_group_node_width = 160
+    bloom.default_group_node_width = 168
     bloom.description = "Replication Of The Legacy Eevee Bloom Option"
         
     #bloom interface
