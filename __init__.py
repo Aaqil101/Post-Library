@@ -21,7 +21,7 @@ if lib_path not in sys.path:
     sys.path.append(lib_path)
 
 from dictionaries import COLORS_DICT
-from var_func import add_var
+from driver_var_func import add_var
 from pass_mixer import passmixer_node_group
 from lens_distortion import lensdistortion_node
 from bloom import bloom_node_group
