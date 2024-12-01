@@ -13,6 +13,11 @@ bl_info = {
 import bpy
 import sys
 
+"""
+* This whole addon is possibly by the node to python add-on.
+* (https://extensions.blender.org/add-ons/node-to-python/)
+"""
+
 # Get the path to the lib directory
 lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library")
 
@@ -21,13 +26,14 @@ if lib_path not in sys.path:
     sys.path.append(lib_path)
 
 from dictionaries import COLORS_DICT
-from driver_var_func import add_var
+from driver_var_func import add_driver_var
 from pass_mixer import passmixer_node_group
 from lens_distortion import lensdistortion_node
 from bloom import bloom_node_group
 from file_film_grain import file_film_grain_node_group
 from vignette import vignette_node_group
 from vignette_basic import vignette_basic_node_group
+from beauty_mixer import beautymixer_node_group
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"
@@ -42,22 +48,6 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         row = layout.row()
         row.label(text="Welcome to Post Library!", icon="INFO")
 
-
-class COMP_PT_RENDER(bpy.types.Panel):
-    bl_label = "Render"
-    bl_parent_id = 'COMP_PT_MAINPANEL'
-    bl_idname = "COMP_PT_RENDER"
-    bl_space_type = 'NODE_EDITOR'
-    bl_region_type = 'UI'
-    bl_category = 'PLib'
-
-    def draw(self, context):
-        layout = self.layout
-        
-        row = layout.row()
-        row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
-
-
 class COMP_PT_FINALTOUCHES(bpy.types.Panel):
     bl_label = "Final Touches"
     bl_parent_id = 'COMP_PT_MAINPANEL'
@@ -70,11 +60,17 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
+        row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
+        row = layout.row()
         row.operator('node.lensdistortion_operator', icon= 'DRIVER_DISTANCE')
         row.operator('node.filmgrain_operator', icon= 'FILE_MOVIE')
         row = layout.row()
         row.operator('node.vignette_operator', icon= 'IMAGE_RGB')
         row.operator('node.vignette_basic_operator', icon= 'IMAGE_RGB')
+        row = layout.row()
+        row.operator('node.bloom_operator', icon= 'LIGHT_SUN')
+        row = layout.row()
+        row.operator('node.beautymixer_operator', icon= 'RENDERLAYERS')
 
 class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
@@ -196,7 +192,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
         vignette_basic_node.width = 165
         vignette_basic_node.node_tree = bpy.data.node_groups[vignette_basic_group.name]
         vignette_basic_node.use_custom_color = True
-        vignette_basic_node.color = COLORS_DICT["LIGHT_PURPLE"]
+        vignette_basic_node.color = COLORS_DICT["DARK_PURPLE"]
         vignette_basic_node.select = False
 
         return {'FINISHED'}
@@ -204,6 +200,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
 class NODE_OT_BLOOM(bpy.types.Operator):
     bl_label = "Bloom"
     bl_idname = "node.bloom_operator"
+    bl_description = "Replication Of The Legacy Eevee Bloom Option, But Can Be Used In Cycles As Well"
 
 
     def execute(shelf, context):
@@ -228,7 +225,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Original Bloom Switch
         bloom_obs_driver = bloom_node.node_tree.nodes['OB Switch'].driver_add('check').driver
         bloom_obs_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_obs_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
         )
@@ -236,7 +233,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Knee Bloom Switch
         bloom_kbs_driver = bloom_node.node_tree.nodes['KB Switch'].driver_add('check').driver
         bloom_kbs_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_kbs_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
         )
@@ -244,7 +241,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Original Bloom High
         bloom_obh_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('threshold').driver
         bloom_obh_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_obh_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
         )
@@ -252,7 +249,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Original Bloom Low
         bloom_obl_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('threshold').driver
         bloom_obl_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_obl_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
         )
@@ -260,7 +257,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Original Bloom High Size
         bloom_obhs_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('size').driver
         bloom_obhs_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_obhs_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
         )
@@ -268,7 +265,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Original Bloom Low Size
         bloom_obls_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('size').driver
         bloom_obls_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_obls_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
         )
@@ -276,7 +273,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Added Radius X
         bloom_arx_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_x').driver
         bloom_arx_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_arx_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
         )
@@ -284,18 +281,37 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Added Radius Y
         bloom_ary_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_y').driver
         bloom_ary_driver.type = "AVERAGE"
-        add_var(
+        add_driver_var(
             bloom_ary_driver,
             f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
         )
 
         return {"FINISHED"}
 
-# Register and unregister list variable
+class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
+    bl_label = "BeautyMixer"
+    bl_idname = "node.beautymixer_operator"
+    bl_description = "To Mix All the Beauty Passes"
+
+    def execute(shelf, context):
+
+        custom_beautymixer_node_name = "BeautyMixer"
+        beautymixer_group = beautymixer_node_group(shelf, context, custom_beautymixer_node_name)
+        beautymixer_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        beautymixer_node.name = "BeautyMixer"
+        beautymixer_node.label = "BeautyMixer"
+        beautymixer_node.width = 162
+        beautymixer_node.node_tree = bpy.data.node_groups[beautymixer_group.name]
+        beautymixer_node.use_custom_color = True
+        beautymixer_node.color = COLORS_DICT["DARK_BLUE"]
+        beautymixer_node.select = False
+
+        return {'FINISHED'}
+
+# Register and unregister
 classes = [
     # Panels
     COMP_PT_MAINPANEL,
-    COMP_PT_RENDER,
     COMP_PT_FINALTOUCHES,
 
     # Node Groups
@@ -304,7 +320,8 @@ classes = [
     NODE_OT_FFGRAIN,
     NODE_OT_VIGNETTE,
     NODE_OT_BASICVIGNETTE,
-    NODE_OT_BLOOM
+    NODE_OT_BLOOM,
+    NODE_OT_BEAUTYMIXER
 ]
 
 def register():
