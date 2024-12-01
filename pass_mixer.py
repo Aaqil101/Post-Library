@@ -15,10 +15,10 @@ def passmixer_node_group(context, operator, group_name):
 
 	#passmixer interface
 
-    #Socket Opt_
-    opt__socket = passmixer.interface.new_socket(name = "Opt_", in_out='OUTPUT', socket_type = 'NodeSocketColor')
-    opt__socket.default_value = (1.0, 1.0, 1.0, 1.0)
-    opt__socket.attribute_domain = 'POINT'
+    #Socket Image
+    image_socket = passmixer.interface.new_socket(name = "Image", in_out='OUTPUT', socket_type = 'NodeSocketColor')
+    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    image_socket.attribute_domain = 'POINT'
 
     #Socket Direct
     direct_socket = passmixer.interface.new_socket(name = "Direct", in_out='INPUT', socket_type = 'NodeSocketColor')
@@ -109,7 +109,7 @@ def passmixer_node_group(context, operator, group_name):
     #pmr_group_input.Direct -> add_passmixer.Image
     passmixer.links.new(pmr_group_input.outputs[0], add_passmixer.inputs[1])
 
-    #multiply_passmixer.Image -> pmr_group_output.Opt_
+    #multiply_passmixer.Image -> pmr_group_output.Image
     passmixer.links.new(multiply_passmixer.outputs[0], pmr_group_output.inputs[0])
 
     return passmixer
