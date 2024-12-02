@@ -3,7 +3,6 @@ from dictionaries import COLORS_DICT
 
 #initialize Bloom node group
 def bloom_node_group(context, operator, group_name):
-
     #enable use nodes
     bpy.context.scene.use_nodes = True
 
@@ -11,7 +10,7 @@ def bloom_node_group(context, operator, group_name):
 
     bloom.color_tag = "FILTER"
     bloom.default_group_node_width = 168
-    bloom.description = "Replication Of The Legacy Eevee Bloom Option"
+    bloom.description = "Replication of the legacy eevee bloom option"
         
     #bloom interface
     #Socket Image
