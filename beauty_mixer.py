@@ -428,7 +428,7 @@ def beautymixer_node_group(context, operator, group_name):
     beautymixer = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
         
     beautymixer.color_tag = "CONVERTER"
-    beautymixer.description = "Mix All the Beauty Passes"
+    beautymixer.description = "Mix all the beauty passes"
     beautymixer.default_group_node_width = 162
 
     #beautymixer interface
@@ -454,7 +454,7 @@ def beautymixer_node_group(context, operator, group_name):
 
     #Panel Diffuse
     diffuse_panel = beautymixer.interface.new_panel("Diffuse", default_closed=True)
-    diffuse_panel.description = "For Mixing Diffuse Pass"
+    diffuse_panel.description = "For mixing diffuse pass"
 
     #Socket DiffDir
     diffdir_socket_1 = beautymixer.interface.new_socket(name = "DiffDir", in_out='INPUT', socket_type = 'NodeSocketColor', parent = diffuse_panel)
@@ -476,7 +476,7 @@ def beautymixer_node_group(context, operator, group_name):
 
     #Panel Glossy
     glossy_panel = beautymixer.interface.new_panel("Glossy", default_closed=True)
-    glossy_panel.description = "For Mixing Glossy Pass"
+    glossy_panel.description = "For mixing glossy pass"
     
     #Socket GlossDir
     glossdir_socket_1 = beautymixer.interface.new_socket(name = "GlossDir", in_out='INPUT', socket_type = 'NodeSocketColor', parent = glossy_panel)
@@ -498,7 +498,7 @@ def beautymixer_node_group(context, operator, group_name):
 
     #Panel Transmission
     transmission_panel = beautymixer.interface.new_panel("Transmission", default_closed=True)
-    transmission_panel.description = "For Mixing Transmission Pass"
+    transmission_panel.description = "For mixing transmission pass"
 
     #Socket TransDir
     transdir_socket_1 = beautymixer.interface.new_socket(name = "TransDir", in_out='INPUT', socket_type = 'NodeSocketColor', parent = transmission_panel)
@@ -520,7 +520,7 @@ def beautymixer_node_group(context, operator, group_name):
 
     #Panel Volume
     volume_panel = beautymixer.interface.new_panel("Volume", default_closed=True)
-    volume_panel.description = "For Mixing Volume Pass"
+    volume_panel.description = "For mixing volume pass"
 
     #Socket VolumeDir
     volumedir_socket_1 = beautymixer.interface.new_socket(name = "VolumeDir", in_out='INPUT', socket_type = 'NodeSocketColor', parent = volume_panel)
