@@ -34,6 +34,10 @@ from file_film_grain import file_film_grain_node_group
 from vignette import vignette_node_group
 from vignette_basic import vignette_basic_node_group
 from beauty_mixer import beautymixer_node_group
+from chromatic_aberration import chromatic_aberration_node_group
+from contrast import contrast_node_group
+from exponential_glare import exponential_glare_node_group
+from glow import glow_node_group
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"
@@ -62,15 +66,24 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
         row = layout.row()
         row.operator('node.passmixer_operator', icon= 'STICKY_UVS_DISABLE')
         row = layout.row()
+
         row.operator('node.lensdistortion_operator', icon= 'DRIVER_DISTANCE')
         row.operator('node.filmgrain_operator', icon= 'FILE_MOVIE')
         row = layout.row()
         row.operator('node.vignette_operator', icon= 'IMAGE_RGB')
         row.operator('node.vignette_basic_operator', icon= 'IMAGE_RGB')
+
         row = layout.row()
+        row.operator('node.chromatic_aberration_operator', icon= 'IMAGE_RGB')
+        row = layout.row()
+
         row.operator('node.bloom_operator', icon= 'LIGHT_SUN')
-        row = layout.row()
         row.operator('node.beautymixer_operator', icon= 'RENDERLAYERS')
+        row = layout.row()
+        row.operator('node.exponential_glare_operator', icon= 'FREEZE')
+        row = layout.row()
+        row.operator('node.contrast_operator', icon= 'IMAGE_RGB')
+        row.operator('node.glow_operator', icon= 'LIGHT_SUN')
 
 class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
@@ -200,7 +213,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
 class NODE_OT_BLOOM(bpy.types.Operator):
     bl_label = "Bloom"
     bl_idname = "node.bloom_operator"
-    bl_description = "Replication Of The Legacy Eevee Bloom Option, But Can Be Used In Cycles As Well"
+    bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
 
 
     def execute(shelf, context):
@@ -291,7 +304,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
 class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
     bl_label = "BeautyMixer"
     bl_idname = "node.beautymixer_operator"
-    bl_description = "To Mix All the Beauty Passes"
+    bl_description = "To mix all the beauty passes"
 
     def execute(shelf, context):
 
@@ -308,6 +321,245 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class NODE_OT_CHROMATICABERRATION(bpy.types.Operator):
+    bl_label = "Chromatic Aberration"
+    bl_idname = "node.chromatic_aberration_operator"
+    bl_description = "This node group is used to create a chromatic aberration effect."
+
+    def execute(shelf, context):
+
+        custom_chromatic_aberration_node_name = "Chromatic Aberration"
+        chromatic_aberration_group = chromatic_aberration_node_group(shelf, context, custom_chromatic_aberration_node_name)
+        chromatic_aberration_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        chromatic_aberration_node.name = "Chromatic Aberration"
+        chromatic_aberration_node.label = "Chromatic Aberration"
+        chromatic_aberration_node.width = 197
+        chromatic_aberration_node.node_tree = bpy.data.node_groups[chromatic_aberration_group.name]
+        chromatic_aberration_node.use_custom_color = True
+        chromatic_aberration_node.color = COLORS_DICT["DARK_PURPLE"]
+        chromatic_aberration_node.select = False
+
+        return {'FINISHED'}
+
+class NODE_OT_CONTRAST(bpy.types.Operator):
+    bl_label = "Contrast"
+    bl_idname = "node.contrast_operator"
+    bl_description = "This node group is used to add contrast to an image."
+
+    def execute(shelf, context):
+
+        custom_contrast_node_name = "Contrast"
+        contrast_group = contrast_node_group(shelf, context, custom_contrast_node_name)
+        contrast_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        contrast_node.name = "Contrast"
+        contrast_node.label = "Contrast"
+        contrast_node.width = 149
+        contrast_node.node_tree = bpy.data.node_groups[contrast_group.name]
+        contrast_node.use_custom_color = True
+        contrast_node.color = COLORS_DICT["BROWN"]
+        contrast_node.select = False
+        
+        # Blur Size X
+        contrast_bsx_driver = contrast_node.node_tree.nodes['C Blur'].driver_add('size_x').driver
+        contrast_bsx_driver.type = "AVERAGE"
+        add_driver_var(
+            contrast_bsx_driver,
+            f'node_tree.nodes["{contrast_node.name}"].inputs[2].default_value'
+        )
+
+        # Blur Size Y
+        contrast_bsy_driver = contrast_node.node_tree.nodes['C Blur'].driver_add('size_y').driver
+        contrast_bsy_driver.type = "AVERAGE"
+        add_driver_var(
+            contrast_bsy_driver,
+            f'node_tree.nodes["{contrast_node.name}"].inputs[3].default_value'
+        )
+
+        return {'FINISHED'}
+
+class NODE_OT_EXPONENTIALGLARE(bpy.types.Operator):
+    bl_label = "Exponential Glare"
+    bl_idname = "node.exponential_glare_operator"
+    bl_description = "This node group is used to add exponential glare to an image."
+
+    def execute(shelf, context):
+
+        custom_exponential_glare_node_name = "Exponential Glare"
+        exponential_glare_group = exponential_glare_node_group(shelf, context, custom_exponential_glare_node_name)
+        exponential_glare_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        exponential_glare_node.name = "Exponential Glare"
+        exponential_glare_node.label = "Exponential Glare"
+        exponential_glare_node.width = 194
+        exponential_glare_node.node_tree = bpy.data.node_groups[exponential_glare_group.name]
+        exponential_glare_node.use_custom_color = True
+        exponential_glare_node.color = COLORS_DICT["DARK_PURPLE"]
+        exponential_glare_node.select = False
+
+        return {'FINISHED'}
+
+class NODE_OT_GLOW(bpy.types.Operator):
+    bl_label = "Glow"
+    bl_idname = "node.glow_operator"
+    bl_description = "This node group is used to add glow to an image."
+
+    def execute(shelf, context):
+
+        custom_glow_node_name = "Glow"
+        glow_group = glow_node_group(shelf, context, custom_glow_node_name)
+        glow_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        glow_node.name = "Glow"
+        glow_node.width = 197
+        glow_node.node_tree = bpy.data.node_groups[glow_group.name]
+        glow_node.use_custom_color = True
+        glow_node.color = COLORS_DICT["DARK_PURPLE"]
+        glow_node.select = False
+        
+        # G Switch 01
+        g_switch_01_driver = glow_node.node_tree.nodes['G Switch 01'].driver_add('check').driver
+        g_switch_01_driver.type = "AVERAGE"
+        add_driver_var(
+            g_switch_01_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[1].default_value'
+        )
+
+        # G Switch 00
+        g_switch_00_driver = glow_node.node_tree.nodes['G Switch 00'].driver_add('check').driver
+        g_switch_00_driver.type = "AVERAGE"
+        add_driver_var(
+            g_switch_00_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[1].default_value'
+        )
+
+        # G Bloom Low Threshold
+        g_bloom_low_threshold_driver = glow_node.node_tree.nodes['G Bloom Low'].driver_add('threshold').driver
+        g_bloom_low_threshold_driver.type = "AVERAGE"
+        add_driver_var(
+            g_bloom_low_threshold_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[4].default_value'
+        )
+
+        # G Bloom High Threshold
+        g_bloom_high_threshold_driver = glow_node.node_tree.nodes['G Bloom High'].driver_add('threshold').driver
+        g_bloom_high_threshold_driver.type = "AVERAGE"
+        add_driver_var(
+            g_bloom_high_threshold_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[4].default_value'
+        )
+
+        # G Bloom Low Size
+        g_bloom_low_size_driver = glow_node.node_tree.nodes['G Bloom Low'].driver_add('size').driver
+        g_bloom_low_size_driver.type = "AVERAGE"
+        add_driver_var(
+            g_bloom_low_size_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[5].default_value'
+        )
+
+        # G Bloom High Size
+        g_bloom_high_size_driver = glow_node.node_tree.nodes['G Bloom High'].driver_add('size').driver
+        g_bloom_high_size_driver.type = "AVERAGE"
+        add_driver_var(
+            g_bloom_high_size_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[5].default_value'
+        )
+
+        # G Streaks Low Iterations
+        g_streaks_low_iterations_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('iterations').driver
+        g_streaks_low_iterations_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_iterations_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[7].default_value'
+        )
+
+        # G Streaks High Iterations
+        g_streaks_high_iterations_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('iterations').driver
+        g_streaks_high_iterations_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_iterations_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[7].default_value'
+        )
+
+        # G Streaks Low Color Modulation
+        g_streaks_low_color_modulation_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('color_modulation').driver
+        g_streaks_low_color_modulation_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_color_modulation_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[8].default_value'
+        )
+
+        # G Streaks High Color Modulation
+        g_streaks_high_color_modulation_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('color_modulation').driver
+        g_streaks_high_color_modulation_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_color_modulation_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[8].default_value'
+        )
+
+        # G Streaks Low Threshold
+        g_streaks_low_threshold_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('threshold').driver
+        g_streaks_low_threshold_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_threshold_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[9].default_value'
+        )
+
+        # G Streaks High Threshold
+        g_streaks_high_threshold_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('threshold').driver
+        g_streaks_high_threshold_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_threshold_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[9].default_value'  
+        )
+
+        # G Streaks Low Streaks
+        g_streaks_low_streaks_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('streaks').driver
+        g_streaks_low_streaks_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_streaks_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[10].default_value'
+        )
+
+        # G Streaks High Streaks
+        g_streaks_high_streaks_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('streaks').driver
+        g_streaks_high_streaks_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_streaks_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[10].default_value'
+        )
+
+        # G Streaks Low Angle Offset
+        g_streaks_low_angle_offset_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('angle_offset').driver
+        g_streaks_low_angle_offset_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_angle_offset_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[11].default_value'
+        )
+
+        # G Streaks High Angle Offset
+        g_streaks_high_angle_offset_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('angle_offset').driver
+        g_streaks_high_angle_offset_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_angle_offset_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[11].default_value'
+        )
+
+        # G Streaks Low Fade
+        g_streaks_low_fade_driver = glow_node.node_tree.nodes['G Streaks Low'].driver_add('fade').driver
+        g_streaks_low_fade_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_low_fade_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[12].default_value'
+        )
+
+        # G Streaks High Fade
+        g_streaks_high_fade_driver = glow_node.node_tree.nodes['G Streaks High'].driver_add('fade').driver
+        g_streaks_high_fade_driver.type = "AVERAGE"
+        add_driver_var(
+            g_streaks_high_fade_driver,
+            f'node_tree.nodes["{glow_node.name}"].inputs[12].default_value'
+        )
+        
+        return {'FINISHED'}
+
 # Register and unregister
 classes = [
     # Panels
@@ -321,7 +573,9 @@ classes = [
     NODE_OT_VIGNETTE,
     NODE_OT_BASICVIGNETTE,
     NODE_OT_BLOOM,
-    NODE_OT_BEAUTYMIXER
+    NODE_OT_BEAUTYMIXER,
+    NODE_OT_CHROMATICABERRATION,
+    NODE_OT_CONTRAST,
 ]
 
 def register():
