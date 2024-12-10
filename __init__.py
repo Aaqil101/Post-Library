@@ -576,6 +576,7 @@ classes = [
     NODE_OT_BEAUTYMIXER,
     NODE_OT_CHROMATICABERRATION,
     NODE_OT_CONTRAST,
+    NODE_OT_GLOW,
 ]
 
 def register():
