@@ -9,15 +9,14 @@ def glow_node_group(context, operator, group_name):
     glow = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     glow.color_tag = 'FILTER'
-    glow.description = "This node group is used to create a glow effect for enhancing image highlights."
+    glow.description = ""
     glow.default_group_node_width = 197
 
     #glow interface
     #Socket Image
     image_socket = glow.interface.new_socket(name = "Image", in_out='OUTPUT', socket_type = 'NodeSocketColor')
-    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    image_socket.default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
     image_socket.attribute_domain = 'POINT'
-    image_socket.hide_value = True
     image_socket.description = "Standard color output"
 
     #Socket Image
@@ -58,9 +57,8 @@ def glow_node_group(context, operator, group_name):
     bloom_panel.description = "Simulates the glow around bright objects caused by light scattering in eyes and cameras"
     #Socket BPrevis
     bprevis_socket = glow.interface.new_socket(name = "BPrevis", in_out='OUTPUT', socket_type = 'NodeSocketColor', parent = bloom_panel)
-    bprevis_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    bprevis_socket.default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
     bprevis_socket.attribute_domain = 'POINT'
-    bprevis_socket.hide_value = True
     bprevis_socket.description = "A preview output for the bloom node"
 
     #Socket Threshold
@@ -87,15 +85,13 @@ def glow_node_group(context, operator, group_name):
     bloom_socket.attribute_domain = 'POINT'
     bloom_socket.description = "Input for bloom"
 
-
     #Panel Streaks
     streaks_panel = glow.interface.new_panel("Streaks")
     streaks_panel.description = "Creates bright streaks used to simulate lens flares"
     #Socket SPrevis
     sprevis_socket = glow.interface.new_socket(name = "SPrevis", in_out='OUTPUT', socket_type = 'NodeSocketColor', parent = streaks_panel)
-    sprevis_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    sprevis_socket.default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
     sprevis_socket.attribute_domain = 'POINT'
-    sprevis_socket.hide_value = True
     sprevis_socket.description = "A preview output for the streaks node"
 
     #Socket Iterations
@@ -139,9 +135,9 @@ def glow_node_group(context, operator, group_name):
     angle_offset_socket.default_value = 0.0
     angle_offset_socket.min_value = 0.0
     angle_offset_socket.max_value = 180.0
-    angle_offset_socket.subtype = 'NONE'
+    angle_offset_socket.subtype = 'ANGLE'
     angle_offset_socket.attribute_domain = 'POINT'
-    angle_offset_socket.description = "The rotation offset factor of the streaks, Max is 180°"
+    angle_offset_socket.description = "The rotation offset factor of the streaks. Max is 180°"
 
     #Socket Fade
     fade_socket = glow.interface.new_socket(name = "Fade", in_out='INPUT', socket_type = 'NodeSocketFloat', parent = streaks_panel)
@@ -165,14 +161,8 @@ def glow_node_group(context, operator, group_name):
     ggi_opt.name = "GGI Opt"
     ggi_opt.use_custom_color = True
     ggi_opt.color = COLORS_DICT["DARK_GRAY"]
-    ggi_opt.is_active_output = False
-    ggi_opt.inputs[1].hide = True
-    ggi_opt.inputs[2].hide = True
+    ggi_opt.is_active_output = True
     ggi_opt.inputs[3].hide = True
-    #Socket_21
-    ggi_opt.inputs[1].default_value = (1.0, 1.0, 1.0, 1.0)
-    #Socket_20
-    ggi_opt.inputs[2].default_value = (1.0, 1.0, 1.0, 1.0)
 
     #node GGI Streaks
     ggi_streaks = glow.nodes.new("NodeGroupInput")
@@ -275,13 +265,17 @@ def glow_node_group(context, operator, group_name):
     g_switch_00 = glow.nodes.new("CompositorNodeSwitch")
     g_switch_00.label = "G Switch 00"
     g_switch_00.name = "G Switch 00"
-    g_switch_00.check = True
+    g_switch_00.use_custom_color = True
+    g_switch_00.color = COLORS_DICT["LIGHT_GRAY"]
+    g_switch_00.check = False
 
     #node G Switch 01
     g_switch_01 = glow.nodes.new("CompositorNodeSwitch")
     g_switch_01.label = "G Switch 01"
     g_switch_01.name = "G Switch 01"
-    g_switch_01.check = True
+    g_switch_01.use_custom_color = True
+    g_switch_01.color = COLORS_DICT["LIGHT_GRAY"]
+    g_switch_01.check = False
 
     #node G Bloom High && Low
     g_bloom_high____low = glow.nodes.new("NodeFrame")
@@ -385,36 +379,6 @@ def glow_node_group(context, operator, group_name):
     ggi_bloom.outputs[13].hide = True
     ggi_bloom.outputs[14].hide = True
 
-    #node GGI Streaks Preview
-    ggi_streaks_preview = glow.nodes.new("NodeGroupOutput")
-    ggi_streaks_preview.label = "GGI Streaks Preview"
-    ggi_streaks_preview.name = "GGI Streaks Preview"
-    ggi_streaks_preview.use_custom_color = True
-    ggi_streaks_preview.color = COLORS_DICT["DARK_GRAY"]
-    ggi_streaks_preview.is_active_output = False
-    ggi_streaks_preview.inputs[0].hide = True
-    ggi_streaks_preview.inputs[1].hide = True
-    ggi_streaks_preview.inputs[3].hide = True
-    #Socket_0
-    ggi_streaks_preview.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
-    #Socket_21
-    ggi_streaks_preview.inputs[1].default_value = (1.0, 1.0, 1.0, 1.0)
-
-    #node GGI Bloom Preview
-    ggi_bloom_preview = glow.nodes.new("NodeGroupOutput")
-    ggi_bloom_preview.label = "GGI Bloom Preview"
-    ggi_bloom_preview.name = "GGI Bloom Preview"
-    ggi_bloom_preview.use_custom_color = True
-    ggi_bloom_preview.color = COLORS_DICT["DARK_GRAY"]
-    ggi_bloom_preview.is_active_output = True
-    ggi_bloom_preview.inputs[0].hide = True
-    ggi_bloom_preview.inputs[2].hide = True
-    ggi_bloom_preview.inputs[3].hide = True
-    #Socket_0
-    ggi_bloom_preview.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
-    #Socket_20
-    ggi_bloom_preview.inputs[2].default_value = (1.0, 1.0, 1.0, 1.0)
-
     #Set parents
     ggi_streaks.parent = g_streaks_high____low
     g_bloom_high.parent = g_bloom_high____low
@@ -424,8 +388,6 @@ def glow_node_group(context, operator, group_name):
     g_switch_00.parent = g_streaks_high____low
     g_switch_01.parent = g_bloom_high____low
     ggi_bloom.parent = g_bloom_high____low
-    ggi_streaks_preview.parent = g_streaks_high____low
-    ggi_bloom_preview.parent = g_bloom_high____low
 
     #Set locations
     ggi_opt.location = (260.0, 112.5940933227539)
@@ -444,8 +406,6 @@ def glow_node_group(context, operator, group_name):
     ggi_global_fac.location = (-120.0, 128.199951171875)
     ggi_streaks_fac.location = (-120.0, -220.0)
     ggi_bloom.location = (-407.0, -78.0)
-    ggi_streaks_preview.location = (63.0, 205.0)
-    ggi_bloom_preview.location = (53.0, -18.0)
 
     #Set dimensions
     ggi_opt.width, ggi_opt.height = 140.0, 100.0
@@ -458,14 +418,12 @@ def glow_node_group(context, operator, group_name):
     g_streaks_low.width, g_streaks_low.height = 178.03497314453125, 100.0
     g_switch_00.width, g_switch_00.height = 140.0, 100.0
     g_switch_01.width, g_switch_01.height = 140.0, 100.0
-    g_bloom_high____low.width, g_bloom_high____low.height = 660.873779296875, 504.0
-    g_streaks_high____low.width, g_streaks_high____low.height = 660.873779296875, 704.0
+    g_bloom_high____low.width, g_bloom_high____low.height = 660.0, 504.0
+    g_streaks_high____low.width, g_streaks_high____low.height = 660.0, 704.0
     ggi_image.width, ggi_image.height = 140.0, 100.0
     ggi_global_fac.width, ggi_global_fac.height = 140.0, 100.0
     ggi_streaks_fac.width, ggi_streaks_fac.height = 140.0, 100.0
     ggi_bloom.width, ggi_bloom.height = 140.0, 100.0
-    ggi_streaks_preview.width, ggi_streaks_preview.height = 140.873779296875, 100.0
-    ggi_bloom_preview.width, ggi_bloom_preview.height = 140.873779296875, 100.0
 
     #initialize glow links
     #g_add_00.Image -> g_add_01.Image
@@ -504,19 +462,19 @@ def glow_node_group(context, operator, group_name):
     #ggi_streaks.Streaks -> g_streaks_high.Image
     glow.links.new(ggi_streaks.outputs[13], g_streaks_high.inputs[0])
 
-    #g_switch_00.Image -> ggi_streaks_preview.SPrevis
-    glow.links.new(g_switch_00.outputs[0], ggi_streaks_preview.inputs[2])
-
     #g_add_01.Image -> ggi_opt.Image
     glow.links.new(g_add_01.outputs[0], ggi_opt.inputs[0])
-
-    #g_switch_01.Image -> ggi_bloom_preview.BPrevis
-    glow.links.new(g_switch_01.outputs[0], ggi_bloom_preview.inputs[1])
 
     #g_switch_00.Image -> g_add_00.Image
     glow.links.new(g_switch_00.outputs[0], g_add_00.inputs[2])
 
     #g_switch_01.Image -> g_add_00.Image
     glow.links.new(g_switch_01.outputs[0], g_add_00.inputs[1])
+
+    #g_switch_01.Image -> ggi_opt.BPrevis
+    glow.links.new(g_switch_01.outputs[0], ggi_opt.inputs[1])
+
+    #g_switch_00.Image -> ggi_opt.SPrevis
+    glow.links.new(g_switch_00.outputs[0], ggi_opt.inputs[2])
 
     return glow
