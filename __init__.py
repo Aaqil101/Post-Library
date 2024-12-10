@@ -178,7 +178,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
         vignette_node.width = 140
         vignette_node.node_tree = bpy.data.node_groups[vignette_group.name]
         vignette_node.use_custom_color = True
-        vignette_node.color = COLORS_DICT["LIGHT_PURPLE"]
+        vignette_node.color = COLORS_DICT["DARK_PURPLE"]
         vignette_node.select = False
 
         return {'FINISHED'}
