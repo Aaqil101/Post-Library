@@ -11,7 +11,7 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.operator("node.multiexposure_operator", icon="IMAGE_RGB")
+        row.operator("wm.select_passes", icon="IMAGE_RGB")
 
 from typing import Tuple
 
@@ -714,9 +714,9 @@ def beautymixer_node_group(context, operator, group_name):
     return beautymixer
 
 class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
+    """To mix all the beauty passes"""
     bl_label = "BeautyMixer"
     bl_idname = "node.beautymixer_operator"
-    bl_description = "To mix all the beauty passes"
 
     def execute(shelf, context):
 
@@ -732,9 +732,27 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
         beautymixer_node.select = False
 
         return {'FINISHED'}
+
+
+class WM_OT_SELECT_PASSES(bpy.types.Operator):
+    bl_idname = "wm.select_passes"
+    bl_label = "Passes Selection"
+
+    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False)
+    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False)
+    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False)
+    volume_bool: bpy.props.BoolProperty(name="Volume", default=False)
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+ 
+    def execute(self, context):
+ 
+        return {'FINISHED'}
     
 # Register and unregister
-classes = [COMP_PT_MAINPANEL, NODE_OT_MULTIEXPOSURE]
+classes = [COMP_PT_MAINPANEL, NODE_OT_BEAUTYMIXER, WM_OT_SELECT_PASSES]
 
 def register():
     for cls in classes:
