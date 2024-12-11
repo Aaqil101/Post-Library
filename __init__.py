@@ -14,8 +14,7 @@ import bpy
 import sys
 
 """
-* This whole addon is possibly by the node to python add-on.
-* (https://extensions.blender.org/add-ons/node-to-python/)
+* I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
 """
 
 # Get the path to the lib directory
@@ -38,6 +37,7 @@ from chromatic_aberration import chromatic_aberration_node_group
 from contrast import contrast_node_group
 from exponential_glare import exponential_glare_node_group
 from glow import glow_node_group
+from halation import halation_node_group
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"
@@ -84,6 +84,8 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
         row = layout.row()
         row.operator('node.contrast_operator', icon= 'IMAGE_RGB')
         row.operator('node.glow_operator', icon= 'LIGHT_SUN')
+        row = layout.row()
+        row.operator('node.halation_operator', icon= 'IMAGE_RGB')
 
 class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
@@ -560,7 +562,42 @@ class NODE_OT_GLOW(bpy.types.Operator):
         
         return {'FINISHED'}
 
-# Register and unregister
+class NODE_OT_HALATION(bpy.types.Operator):
+    bl_label = "Halation"
+    bl_idname = "node.halation_operator"
+    bl_description = "This node group is used to add halation to an image."
+
+    def execute(shelf, context):
+
+        custom_halation_node_name = "Halation"
+        halation_group = halation_node_group(shelf, context, custom_halation_node_name)
+        halation_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
+        halation_node.name = "Halation"
+        halation_node.width = 151
+        halation_node.node_tree = bpy.data.node_groups[halation_group.name]
+        halation_node.use_custom_color = True
+        halation_node.color = COLORS_DICT["DARK_PURPLE"]
+        halation_node.select = False
+        
+        # H Blur Size X
+        h_blur_size_x_driver = halation_node.node_tree.nodes['H Blur'].driver_add('size_x').driver
+        h_blur_size_x_driver.type = "AVERAGE"
+        add_driver_var(
+            h_blur_size_x_driver,
+            f'node_tree.nodes["{halation_node.name}"].inputs[1].default_value'
+        )
+
+        # H Blur Size Y
+        h_blur_size_y_driver = halation_node.node_tree.nodes['H Blur'].driver_add('size_y').driver
+        h_blur_size_y_driver.type = "AVERAGE"
+        add_driver_var(
+            h_blur_size_y_driver,
+            f'node_tree.nodes["{halation_node.name}"].inputs[2].default_value'
+        )
+
+        return {'FINISHED'}
+
+# Register and Unregister
 classes = [
     # Panels
     COMP_PT_MAINPANEL,
