@@ -11,7 +11,7 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.operator("wm.select_passes", icon="IMAGE_RGB")
+        row.operator("node.beautymixer_operator", text= "BeautyMixer", icon="IMAGE_RGB")
 
 from typing import Tuple
 
@@ -486,7 +486,6 @@ def volume_node_group():
 
 #initialize BeautyMixer node group
 def beautymixer_node_group(context, operator, group_name):
-
     #enable use nodes
     bpy.context.scene.use_nodes = True
 
@@ -713,6 +712,66 @@ def beautymixer_node_group(context, operator, group_name):
 
     return beautymixer
 
+class WM_OT_SELECT_PASSES(bpy.types.Operator):
+    bl_idname = "wm.select_passes"
+    bl_label = "Passes Selection"
+
+    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False) # type: ignore
+    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False) # type: ignore
+    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False) # type: ignore
+    volume_bool: bpy.props.BoolProperty(name="Volume", default=False) # type: ignore
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def execute(self, context):
+        # Get boolean values for passes
+        db = self.diffuse_bool
+        gb = self.glossy_bool
+        tb = self.transmission_bool
+        vb = self.volume_bool
+
+        node_tree = bpy.context.scene.node_tree
+        parent_node_group_name = "BeautyMixer"
+        parent_node_group = bpy.data.node_groups.get(parent_node_group_name)
+
+        # find the selected mixer node
+        beauty_mixer_node = None
+        for node in node_tree.nodes:
+            if "BeautyMixer" in node.name and node.select:
+                beauty_mixer_node = node
+                break
+
+        if beauty_mixer_node is None:
+            self.report({'WARNING'}, "Please select a BeautyMixer node!")
+            return
+        
+        # If diffuse pass is selected, remove all other passes
+        if db == True:
+            if parent_node_group:
+                # Remove nodes from the parent node group
+                # Node names to remove
+                db_remove_nodes = [
+                    "Glossy",  # Glossy pass
+                    "Transmission",  # Transmission pass
+                    "Volume"  # Volume pass
+                ]
+                nodes_to_remove = []
+                # Iterate through nodes in the parent node group
+                for node in parent_node_group.nodes:
+                    if node.type == 'GROUP' and node.node_tree.name in db_remove_nodes:
+                        # Add nodes to the list to remove
+                        nodes_to_remove.append(node)
+                # Remove nodes from the parent node group
+                for node in nodes_to_remove:
+                    parent_node_group.nodes.remove(node)
+            else:
+                print(f"Parent node group '{parent_node_group_name}' not found")
+
+
+        return {'FINISHED'}
+
 class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
     """To mix all the beauty passes"""
     bl_label = "BeautyMixer"
@@ -729,26 +788,13 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
         beautymixer_node.node_tree = bpy.data.node_groups[beautymixer_group.name]
         beautymixer_node.use_custom_color = True
         beautymixer_node.color = COLORS_DICT["DARK_BLUE"]
-        beautymixer_node.select = False
+        beautymixer_node.select = True
 
-        return {'FINISHED'}
+        # Invoking WM_OT_SELECT_PASSES operator to let the user select the passes
+        # The 'INVOKE_DEFAULT' argument is used to show the dialog box
+        # https://docs.blender.org/api/blender_python_api_current/bpy.ops.html
+        bpy.ops.wm.select_passes('INVOKE_DEFAULT')
 
-
-class WM_OT_SELECT_PASSES(bpy.types.Operator):
-    bl_idname = "wm.select_passes"
-    bl_label = "Passes Selection"
-
-    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False)
-    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False)
-    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False)
-    volume_bool: bpy.props.BoolProperty(name="Volume", default=False)
-    
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
- 
-    def execute(self, context):
- 
         return {'FINISHED'}
     
 # Register and unregister
