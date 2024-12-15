@@ -114,7 +114,6 @@ def glossy_node_group():
     glossy.color_tag = "CONVERTER"
     glossy.description = ""
     glossy.default_group_node_width = 163
-        
 
     #glossy interface
     #Socket Gloss
@@ -421,7 +420,6 @@ def volume_node_group():
 
 #initialize BeautyMixer node group
 def beautymixer_node_group(context, operator, group_name):
-
     #enable use nodes
     bpy.context.scene.use_nodes = True
 
