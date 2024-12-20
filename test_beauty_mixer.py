@@ -712,66 +712,6 @@ def beautymixer_node_group(context, operator, group_name):
 
     return beautymixer
 
-class WM_OT_SELECT_PASSES(bpy.types.Operator):
-    bl_idname = "wm.select_passes"
-    bl_label = "Passes Selection"
-
-    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False) # type: ignore
-    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False) # type: ignore
-    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False) # type: ignore
-    volume_bool: bpy.props.BoolProperty(name="Volume", default=False) # type: ignore
-    
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-
-    def execute(self, context):
-        # Get boolean values for passes
-        db = self.diffuse_bool
-        gb = self.glossy_bool
-        tb = self.transmission_bool
-        vb = self.volume_bool
-
-        node_tree = bpy.context.scene.node_tree
-        parent_node_group_name = "BeautyMixer"
-        parent_node_group = bpy.data.node_groups.get(parent_node_group_name)
-
-        # find the selected mixer node
-        beauty_mixer_node = None
-        for node in node_tree.nodes:
-            if "BeautyMixer" in node.name and node.select:
-                beauty_mixer_node = node
-                break
-
-        if beauty_mixer_node is None:
-            self.report({'WARNING'}, "Please select a BeautyMixer node!")
-            return
-        
-        # If diffuse pass is selected, remove all other passes
-        if db == True:
-            if parent_node_group:
-                # Remove nodes from the parent node group
-                # Node names to remove
-                db_remove_nodes = [
-                    "Glossy",  # Glossy pass
-                    "Transmission",  # Transmission pass
-                    "Volume"  # Volume pass
-                ]
-                nodes_to_remove = []
-                # Iterate through nodes in the parent node group
-                for node in parent_node_group.nodes:
-                    if node.type == 'GROUP' and node.node_tree.name in db_remove_nodes:
-                        # Add nodes to the list to remove
-                        nodes_to_remove.append(node)
-                # Remove nodes from the parent node group
-                for node in nodes_to_remove:
-                    parent_node_group.nodes.remove(node)
-            else:
-                print(f"Parent node group '{parent_node_group_name}' not found")
-
-
-        return {'FINISHED'}
-
 class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
     """To mix all the beauty passes"""
     bl_label = "BeautyMixer"
@@ -794,6 +734,78 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
         # The 'INVOKE_DEFAULT' argument is used to show the dialog box
         # https://docs.blender.org/api/blender_python_api_current/bpy.ops.html
         bpy.ops.wm.select_passes('INVOKE_DEFAULT')
+
+        return {'FINISHED'}
+
+class WM_OT_SELECT_PASSES(bpy.types.Operator):
+    bl_idname = "wm.select_passes"
+    bl_label = "Passes Selection"
+
+    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False) # type: ignore
+    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False) # type: ignore
+    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False) # type: ignore
+    volume_bool: bpy.props.BoolProperty(name="Volume", default=False) # type: ignore
+    
+    def invoke(self, context, event):
+
+        node_tree = bpy.context.scene.node_tree
+
+        # find the selected mixer node
+        self.beauty_mixer_node = None
+        for node in node_tree.nodes:
+            if "BeautyMixer" in node.name and node.select:
+                self.beauty_mixer_node = node
+                break
+            
+        if self.beauty_mixer_node is None:
+            self.report({'WARNING'}, "Please select a BeautyMixer node!")
+            return {'CANCELLED'}
+
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def execute(self, context):
+        # Get boolean values for passes
+        db = self.diffuse_bool
+        gb = self.glossy_bool
+        tb = self.transmission_bool
+        vb = self.volume_bool
+
+        def remove_nodes_from_group(parent_node_group, node_names_to_remove):
+            """
+            Removes specified nodes from a given parent node group in Blender.
+
+            Args:
+                parent_node_group (bpy.types.NodeTree): The parent node group to remove nodes from.
+                node_names_to_remove (list of str): A list of node names to remove from the group.
+
+            Returns:
+                None
+            """
+            if not parent_node_group:
+                print(f"Parent node group not provided or not found.")
+                return
+    
+            nodes_to_remove = []
+
+            # Iterate through nodes in the parent node group
+            for node in parent_node_group.node_tree.nodes:
+                if node.type == 'GROUP' and any(name in node.node_tree.name for name in node_names_to_remove):
+                    # Add nodes to the list to remove
+                    nodes_to_remove.append(node)
+
+            # Remove nodes from the parent node group
+            for node in nodes_to_remove:
+                parent_node_group.node_tree.nodes.remove(node)
+     
+        # If diffuse pass is selected, remove all other passes
+        if db == True:
+            db_remove_node_groups = ["Glossy", "Transmission", "Volume"]
+            remove_nodes_from_group(
+                self.beauty_mixer_node,
+                db_remove_node_groups
+            )
+
 
         return {'FINISHED'}
     
