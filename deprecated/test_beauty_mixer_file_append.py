@@ -1,5 +1,5 @@
 import bpy
-from pathlib import Path
+import pathlib
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "test"
@@ -155,8 +155,24 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         if db == True:
             remove_libraries(["diffuse.blend"])
 
-            # define the path to the blend file
-            blend_file_path = str(Path(__file__).parent / "beauty_mixer" / "diff.blend")
+            # check if we are running from the Text Editor
+            if bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
+                # get the path to the SAVED TO DISK script when running from blender
+                print("bpy.context.space_data script_path")
+                script_path = bpy.context.space_data.text.filepath
+            else:
+                print("__file__ script_path")
+                # __file__ is built-in Python variable that represents the path to the script
+                script_path = __file__
+
+            print(f"script_path -> {script_path}")
+
+            script_dir = pathlib.Path(script_path).resolve().parent
+            print(f"[pathlib] script_dir -> {script_dir}")
+
+            # get a path to a file that is next to the script
+            blend_file_path = str(script_dir / "beauty_mixer" / "diff.blend")
+            print(f"path_to_file -> {blend_file_path}")
 
             link_blend_file_node_groups(blend_file_path)
 
