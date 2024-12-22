@@ -1,5 +1,5 @@
 import bpy
-from dictionaries import COLORS_DICT
+from functions import COLORS_DICT
 
 #initialize Exponential Glare node group
 def exponential_glare_node_group(context, operator, group_name):

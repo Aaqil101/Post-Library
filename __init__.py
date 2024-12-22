@@ -42,7 +42,7 @@ print(f"[pathlib] script_dir -> {script_dir}")
 path_to_nodes_folder = str(script_dir / "nodes")
 print(f"path_to_nodes_folder -> {path_to_nodes_folder}")
 
-# get the pathe to the functions folder
+# get the path to the functions folder
 path_to_functions_folder = str(script_dir / "functions")
 print(f"path_to_functions_folder -> {path_to_functions_folder}")
 
@@ -68,20 +68,15 @@ else:
     print(f"{path_to_functions_folder} already in sys.path")
 
 
-from functions.dictionaries import COLORS_DICT
-from driver_var_func import add_driver_var
-from pass_mixer import passmixer_node_group
-from lens_distortion import lensdistortion_node
-from bloom import bloom_node_group
-from file_film_grain import file_film_grain_node_group
-from vignette import vignette_node_group
-from vignette_basic import vignette_basic_node_group
-from beauty_mixer import beautymixer_node_group
-from chromatic_aberration import chromatic_aberration_node_group
-from contrast import contrast_node_group
-from exponential_glare import exponential_glare_node_group
-from glow import glow_node_group
-from halation import halation_node_group
+from functions import(
+    COLORS_DICT, add_driver_var
+)
+
+from nodes import(
+    passmixer_node_group, lensdistortion_node, bloom_node_group, file_film_grain_node_group,
+    vignette_node_group, vignette_basic_node_group, beautymixer_node_group, chromatic_aberration_node_group,
+    contrast_node_group, exponential_glare_node_group, glow_node_group, halation_node_group
+)
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "Post Library"

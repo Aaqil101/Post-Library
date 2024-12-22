@@ -1,5 +1,5 @@
 import bpy
-from dictionaries import COLORS_DICT
+from functions import COLORS_DICT
 
 #initialize Diffuse node group
 def diffuse_node_group():
