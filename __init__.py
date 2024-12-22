@@ -38,6 +38,14 @@ print(f"script_path -> {script_path}")
 script_dir = pathlib.Path(script_path).resolve().parent
 print(f"[pathlib] script_dir -> {script_dir}")
 
+# get the path to the nodes folder
+path_to_nodes_folder = str(script_dir / "nodes")
+print(f"path_to_nodes_folder -> {path_to_nodes_folder}")
+
+# get the pathe to the functions folder
+path_to_functions_folder = str(script_dir / "functions")
+print(f"path_to_functions_folder -> {path_to_functions_folder}")
+
 # Add the script's directory to sys.path if not already there
 if str(script_dir) not in sys.path:
     sys.path.append(str(script_dir))
@@ -45,8 +53,22 @@ if str(script_dir) not in sys.path:
 else:
     print(f"{script_dir} already in sys.path")
 
+# Add the path to the nodes folder to sys.path
+if path_to_nodes_folder not in sys.path:
+    sys.path.append(path_to_nodes_folder)
+    print(f"Added {path_to_nodes_folder} to sys.path")
+else:
+    print(f"{path_to_nodes_folder} already in sys.path")
 
-from dictionaries import COLORS_DICT
+# Add the path to the functions folder to sys.path
+if path_to_functions_folder not in sys.path:
+    sys.path.append(path_to_functions_folder)
+    print(f"Added {path_to_functions_folder} to sys.path")
+else:
+    print(f"{path_to_functions_folder} already in sys.path")
+
+
+from functions.dictionaries import COLORS_DICT
 from driver_var_func import add_driver_var
 from pass_mixer import passmixer_node_group
 from lens_distortion import lensdistortion_node
