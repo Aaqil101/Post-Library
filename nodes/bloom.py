@@ -1,5 +1,5 @@
 import bpy
-from dictionaries import COLORS_DICT
+from functions import COLORS_DICT
 
 #initialize Bloom node group
 def bloom_node_group(context, operator, group_name):

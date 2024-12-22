@@ -1,5 +1,5 @@
 import bpy
-from dictionaries import COLORS_DICT
+from functions import COLORS_DICT
 
 #initialize Vignette node group
 def vignette_node_group(context, operator, group_name, image_path):
