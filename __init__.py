@@ -12,17 +12,39 @@ bl_info = {
 
 import bpy
 import sys
+import pathlib
 
 """
 * I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
 """
 
-# Get the path to the lib directory
-lib_path = (r"C:\Users\User\Documents\GitHub\Post-Library")
+# Check if the script is run from Blender's Text Editor
+if bpy.context.space_data is not None and bpy.context.space_data.type == "TEXT_EDITOR":
+    print("Running from Blender Text Editor")
+    script_path = bpy.context.space_data.text.filepath
+else:
+    try:
+        print("Running from external Python environment")
+        script_path = __file__
+    except NameError:
+        raise RuntimeError("Unable to determine script path. Are you running this in Blender?")
 
-# Add the module path to sys.path
-if lib_path not in sys.path:
-    sys.path.append(lib_path)
+if not script_path:
+    raise RuntimeError("The script needs to be saved to disk before running!")
+
+print(f"script_path -> {script_path}")
+
+# Resolve the directory of the script
+script_dir = pathlib.Path(script_path).resolve().parent
+print(f"[pathlib] script_dir -> {script_dir}")
+
+# Add the script's directory to sys.path if not already there
+if str(script_dir) not in sys.path:
+    sys.path.append(str(script_dir))
+    print(f"Added {script_dir} to sys.path")
+else:
+    print(f"{script_dir} already in sys.path")
+
 
 from dictionaries import COLORS_DICT
 from driver_var_func import add_driver_var
@@ -611,9 +633,11 @@ classes = [
     NODE_OT_BASICVIGNETTE,
     NODE_OT_BLOOM,
     NODE_OT_BEAUTYMIXER,
+    NODE_OT_EXPONENTIALGLARE,
     NODE_OT_CHROMATICABERRATION,
     NODE_OT_CONTRAST,
     NODE_OT_GLOW,
+    NODE_OT_HALATION,
 ]
 
 def register():
