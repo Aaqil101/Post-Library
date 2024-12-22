@@ -68,7 +68,7 @@ COLORS_DICT = {
 
 #initialize Diffuse node group
 def diffuse_node_group():
-    diffuse = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Diffuse")
+    diffuse = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Diff")
 
     diffuse.color_tag = "CONVERTER"
     diffuse.description = ""
@@ -174,7 +174,7 @@ def diffuse_node_group():
 
 #initialize Glossy node group
 def glossy_node_group():
-    glossy = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Glossy")
+    glossy = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Gloss")
 
     glossy.color_tag = "CONVERTER"
     glossy.description = ""
@@ -281,7 +281,7 @@ def glossy_node_group():
 
 #initialize Transmission node group
 def transmission_node_group():
-    transmission = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Transmission")
+    transmission = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Trans")
 
     transmission.color_tag = "CONVERTER"
     transmission.description = ""
@@ -387,7 +387,7 @@ def transmission_node_group():
 
 #initialize Volume node group
 def volume_node_group():
-    volume = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Volume")
+    volume = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Vol")
 
     volume.color_tag = "CONVERTER"
     volume.description = ""
@@ -512,12 +512,12 @@ def beautymixer_node_group(context, operator, group_name):
     trans_socket_1.attribute_domain = 'POINT'
 
     #Socket Volume
-    volume_socket_1 = beautymixer.interface.new_socket(name = "Volume", in_out='OUTPUT', socket_type = 'NodeSocketColor')
+    volume_socket_1 = beautymixer.interface.new_socket(name = "Vol", in_out='OUTPUT', socket_type = 'NodeSocketColor')
     volume_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     volume_socket_1.attribute_domain = 'POINT'
 
     #Panel Diffuse
-    diffuse_panel = beautymixer.interface.new_panel("Diffuse", default_closed=True)
+    diffuse_panel = beautymixer.interface.new_panel("Diffuse", default_closed=False)
     diffuse_panel.description = "For mixing diffuse pass"
 
     #Socket DiffDir
@@ -539,7 +539,7 @@ def beautymixer_node_group(context, operator, group_name):
     diffcol_socket_1.hide_value = True
 
     #Panel Glossy
-    glossy_panel = beautymixer.interface.new_panel("Glossy", default_closed=True)
+    glossy_panel = beautymixer.interface.new_panel("Glossy", default_closed=False)
     glossy_panel.description = "For mixing glossy pass"
     
     #Socket GlossDir
@@ -561,7 +561,7 @@ def beautymixer_node_group(context, operator, group_name):
     glosscol_socket_1.hide_value = True
 
     #Panel Transmission
-    transmission_panel = beautymixer.interface.new_panel("Transmission", default_closed=True)
+    transmission_panel = beautymixer.interface.new_panel("Transmission", default_closed=False)
     transmission_panel.description = "For mixing transmission pass"
 
     #Socket TransDir
@@ -583,7 +583,7 @@ def beautymixer_node_group(context, operator, group_name):
     transcol_socket_1.hide_value = True
 
     #Panel Volume
-    volume_panel = beautymixer.interface.new_panel("Volume", default_closed=True)
+    volume_panel = beautymixer.interface.new_panel("Volume", default_closed=False)
     volume_panel.description = "For mixing volume pass"
 
     #Socket VolumeDir
@@ -771,13 +771,13 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         tb = self.transmission_bool
         vb = self.volume_bool
 
-        def remove_nodes_from_group(parent_node_group, node_names_to_remove):
+        def rm_nodes_from_group(parent_node_group, node_names_to_remove):
             """
-            Removes specified nodes from a given parent node group in Blender.
+            Removes nodes from a node group that have names matching any of the ones in node_names_to_remove.
 
             Args:
-                parent_node_group (bpy.types.NodeTree): The parent node group to remove nodes from.
-                node_names_to_remove (list of str): A list of node names to remove from the group.
+                parent_node_group (bpy.types.NodeTree): The node group to remove nodes from.
+                node_names_to_remove (list of str): A list of node group names to remove from the parent node group.
 
             Returns:
                 None
@@ -797,15 +797,116 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             # Remove nodes from the parent node group
             for node in nodes_to_remove:
                 parent_node_group.node_tree.nodes.remove(node)
+
+            # Remove the node groups from the data
+            removed_count = 0
+            for name in node_names_to_remove:
+                node_group = bpy.data.node_groups.get(name)
+                if node_group: # Check if the node group exists
+                    print(f"Removing node group: {name}")
+                    bpy.data.node_groups.remove(node_group)
+                    removed_count += 1
+                else:
+                    print(f"Node group '{name}' not found.")
+
+            # Final Summary
+            print(f"Removed {removed_count} node group(s) out of {len(node_names_to_remove)} requested.")
+
+        def rm_sockets_and_panels(parent_node_group, socket_names, panels_names):
+            """
+            Removes sockets and panels from a parent node group in Blender.
+
+            Args:
+                parent_node_group (bpy.types.NodeTree): The parent node group to remove sockets and panels from.
+                socket_names (list of str): A list of socket names to remove from the group.
+                panels_names (list of str): A list of panel names to remove from the group.
+
+            Returns:
+                None
+            """
+            for socket_name in socket_names:
+                socket = parent_node_group.node_tree.interface.items_tree[socket_name]
+                parent_node_group.node_tree.interface.remove(socket)
+            
+            for panel_name in panels_names:
+                panel = parent_node_group.node_tree.interface.items_tree[panel_name]
+                parent_node_group.node_tree.interface.remove(panel)
      
-        # If diffuse pass is selected, remove all other passes
+        # If diffuse pass is selected
         if db == True:
-            db_remove_node_groups = ["Glossy", "Transmission", "Volume"]
-            remove_nodes_from_group(
+            db_rm_node_groups = ["Gloss", "Trans", "Vol"]
+            rm_nodes_from_group(
                 self.beauty_mixer_node,
-                db_remove_node_groups
+                db_rm_node_groups
             )
 
+            db_rm_sockets = ["Gloss", "Trans", "Vol", "GlossDir", "GlossInd", "GlossCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
+            db_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_rm_sockets,
+                db_rm_panels
+            )
+
+            self.beauty_mixer_node.name = "Diffuse"
+            self.beauty_mixer_node.node_tree.name = "Diffuse"
+
+        # If glossy pass is selected
+        if gb == True:
+            gb_rm_node_groups = ["Diff", "Trans", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                gb_rm_node_groups
+            )
+
+            gb_rm_sockets = ["Diff", "Trans", "Vol", "DiffDir", "DiffInd", "DiffCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
+            gb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                gb_rm_sockets,
+                gb_rm_panels
+            )
+
+            self.beauty_mixer_node.name = "Glossy"
+            self.beauty_mixer_node.node_tree.name = "Glossy"
+
+        # If transmission pass is selected
+        if tb == True:
+            tb_rm_node_groups = ["Diff", "Gloss", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                tb_rm_node_groups
+            )
+
+            tb_rm_sockets = ["Diff", "Gloss", "Vol", "DiffDir", "DiffInd", "DiffCol", "GlossDir", "GlossInd", "GlossCol", "VolumeDir", "VolumeInd"]
+            tb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                tb_rm_sockets,
+                tb_rm_panels
+            )
+
+            self.beauty_mixer_node.name = "Transmission"
+            self.beauty_mixer_node.node_tree.name = "Transmission"
+
+        # If volume pass is selected
+        if vb == True:
+            vb_rm_node_groups = ["Diff", "Gloss", "Trans"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                vb_rm_node_groups
+            )
+
+            vb_rm_sockets = ["Diff", "Gloss", "Trans", "DiffDir", "DiffInd", "DiffCol", "GlossDir", "GlossInd", "GlossCol", "TransDir", "TransInd", "TransCol"]
+            vb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                vb_rm_sockets,
+                vb_rm_panels
+            )
+
+            self.beauty_mixer_node.name = "Volume"
+            self.beauty_mixer_node.node_tree.name = "Volume"
 
         return {'FINISHED'}
     
