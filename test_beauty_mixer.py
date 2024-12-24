@@ -15,7 +15,6 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         row = layout.row()
         row.operator("node.beautymixer_operator", text="BeautyMixer", icon="IMAGE_RGB")
 
-
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
 
@@ -719,6 +718,11 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
 
     def execute(shelf, context):
 
+        # Deselect all selected nodes
+        for node in context.scene.node_tree.nodes:
+            node.select = False
+
+        # Create a new node group for the BeautyMixer
         custom_beautymixer_node_name = "BeautyMixer"
         beautymixer_group = beautymixer_node_group(shelf, context, custom_beautymixer_node_name)
         beautymixer_node = context.scene.node_tree.nodes.new('CompositorNodeGroup')
@@ -798,15 +802,10 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         tb = self.transmission_bool
         vb = self.volume_bool
         enum = self.group_ungroup_enum
-
-        # Retrieve the nodes for each pass from the beauty mixer node tree
-        diffuse_node = self.beauty_mixer_node.node_tree.nodes.get("Diff")
-        glossy_node = self.beauty_mixer_node.node_tree.nodes.get("Gloss")
-        transmission_node = self.beauty_mixer_node.node_tree.nodes.get("Trans")
-        volume_node = self.beauty_mixer_node.node_tree.nodes.get("Vol")
         
         # Get the current node tree
         node_tree = bpy.context.scene.node_tree
+        node_selected = bpy.context.selected_nodes
 
         def rm_nodes_from_group(parent_node_group, node_names_to_remove):
             """
@@ -926,6 +925,77 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                     if optional_width:
                         node.width = optional_width[0]
 
+        def get_nodes(names, tree=None):
+            """
+            Gets multiple nodes from a node tree by their names.
+
+            Args:
+                names (list of str): A list of node names to get.
+                tree (bpy.types.NodeTree, optional): The node tree to get nodes from. Defaults to None.
+
+            Returns:
+                dict: A dictionary with node names and indices as keys, and the corresponding nodes as values.
+            """
+            if tree is None:
+                tree = node_tree
+            
+            nodes = {}
+            for i, name in enumerate(names):
+                nodes[i] = tree.nodes.get(name)  # Access by index
+                nodes[name] = tree.nodes.get(name)  # Access by name
+            return nodes
+        
+        def group_ungroup_node(parent_node_group):
+            """
+            Groups or ungroups nodes within a parent node group in Blender's compositor.
+
+            If nodes are selected, this function will ungroup them. If not, it checks if the 
+            specified node group exists in the compositor's node tree. If it exists, it purges 
+            orphaned data. If not, it attempts to remove the node group from Blender's data and 
+            reports the results.
+
+            Args:
+                parent_node_group (str): The name of the parent node group to be processed.
+
+            Returns:
+                None
+            """
+            # Ensure the correct context before ungrouping
+            if node_selected:
+                bpy.ops.node.group_ungroup()
+
+            group_name = parent_node_group
+
+            # Check if the node group already exists in the compositor's node tree
+            group_found = any(
+                node.type == 'GROUP' and getattr(node, "node_tree", None) and node.node_tree.name == group_name
+                for node in node_tree.nodes
+            )
+
+            if group_found:
+                bpy.ops.outliner.orphans_purge(
+                    do_local_ids=True,
+                    do_linked_ids=True,
+                    do_recursive=True
+                )
+            else:
+                # Attempt to remove the node group from Blender's data
+                try:
+                    rm_ngs_result = rm_ngs_from_data([parent_node_group])
+                    # Report the results of the removal operation
+                    self.report({'INFO'}, f"Removed: {rm_ngs_result['removed']}, Not Found: {rm_ngs_result['not_found']}, Errors: {rm_ngs_result['errors']}")
+                except Exception as e:
+                    self.report({'ERROR'}, f"Failed to remove node group: {str(e)}")
+
+        # Retrieve the nodes for each pass from the beauty mixer node tree
+        default_nodes = get_nodes(
+            names=["Diff", "Gloss", "Trans", "Vol"],
+            tree=self.beauty_mixer_node.node_tree
+        )
+        diffuse_node = default_nodes[0]
+        glossy_node = default_nodes[1]
+        transmission_node = default_nodes[2]
+        volume_node = default_nodes[3]
 
         # 15 If all passes are selected
         if all([db, gb, tb, vb]):
@@ -939,47 +1009,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             rename_and_label_nodes(DGTV_node_data)
 
             if enum == "UNGROUP":
-                # Ensure the correct context before ungrouping
-                if bpy.context.selected_nodes:
-                    bpy.ops.node.group_ungroup()
+                group_ungroup_node("BeautyMixer")
 
-                # Remove a specific node group from the data
-                rm_ngs_result = rm_ngs_from_data(["BeautyMixer"])
-
-                # Output the rm_ngs_result
-                self.report({'INFO'}, f"Removed: {rm_ngs_result['removed']}, Not Found: {rm_ngs_result['not_found']}, Errors: {rm_ngs_result['errors']}")
-
-                # Fetch nodes and handle missing nodes
-                if not node_tree:
-                    self.report({'WARNING'}, "No node tree found in the current scene.")
-                    return
-
-                DGTV_Diff_Mixer = node_tree.nodes.get("DGTV_Diff_Mixer")
-                DGTV_Gloss_Mixer = node_tree.nodes.get("DGTV_Gloss_Mixer")
-                DGTV_Trans_Mixer = node_tree.nodes.get("DGTV_Trans_Mixer")
-                DGTV_Vol_Mixer = node_tree.nodes.get("DGTV_Vol_Mixer")
-
-                # Prepare node data
-                DGTV_DM_node_data = [
-                    (DGTV_Diff_Mixer, "Diffuse"),
-                    (DGTV_Gloss_Mixer, "Glossy"),
-                    (DGTV_Trans_Mixer, "Transmission"),
-                    (DGTV_Vol_Mixer, "Volume")
+                DGTV_NODES = get_nodes(names=["DGTV_Diff_Mixer", "DGTV_Gloss_Mixer", "DGTV_Trans_Mixer", "DGTV_Vol_Mixer"])
+                DGTV_NLW_node_data = [
+                    (DGTV_NODES[0], "Diffuse", 155),
+                    (DGTV_NODES[1], "Glossy", 155),
+                    (DGTV_NODES[2], "Transmission", 155),
+                    (DGTV_NODES[3], "Volume", 155)
                 ]
 
-                # Rename and label nodes, ensuring none are None
-                valid_nodes = [(node, label) for node, label in DGTV_DM_node_data if node]
-                if not valid_nodes:
-                    self.report({'WARNING'}, "No valid nodes found to rename or label.")
-                else:
-                    rename_and_label_nodes(valid_nodes)
-            else:
-                self.report({'WARNING'}, "Active node group not found.")
-
-            if enum == "GROUP":
+                rename_and_label_nodes(DGTV_NLW_node_data)
+            elif enum == "GROUP":
                 # Intentionally does nothing, as this case is not implemented by design.
                 pass
-
 
         # 14 If glossy, transmission and volume passes are selected
         elif gb and tb and vb:
@@ -1006,8 +1049,24 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             rename_and_label_nodes(GTV_node_data)
 
             self.beauty_mixer_node.name = "Gloss&Trans&Vol"
+            self.beauty_mixer_node.label = "Gloss&Trans&Vol"
             self.beauty_mixer_node.node_tree.name = "Gloss&Trans&Vol"
             self.beauty_mixer_node.width = 178
+
+            if enum == "UNGROUP":
+                group_ungroup_node("Gloss&Trans&Vol")
+
+                GTV_NODES = get_nodes(names=["GTV_Gloss_Mixer", "GTV_Trans_Mixer", "GTV_Vol_Mixer"])
+                GTV_NLW_node_data = [
+                    (GTV_NODES[0], "Glossy", 155),
+                    (GTV_NODES[1], "Transmission", 155),
+                    (GTV_NODES[2], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(GTV_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
 
         # 13 If diffuse, transmission and volume passes are selected
         elif db and tb and vb:
@@ -1038,6 +1097,21 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.node_tree.name = "Diff&Trans&Vol"
             self.beauty_mixer_node.width = 166
 
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Trans&Vol")
+
+                DTV_NODES = get_nodes(names=["DTV_Diff_Mixer", "DTV_Trans_Mixer", "DTV_Vol_Mixer"])
+                DTV_NLW_node_data = [
+                    (DTV_NODES[0], "Diffuse", 155),
+                    (DTV_NODES[1], "Transmission", 155),
+                    (DTV_NODES[2], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(DTV_NLW_node_data)
+            if enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
         # 12 If diffuse, glossy and volume passes are selected
         elif db and gb and vb:
             db_gb_vb_rm_node_groups = ["Trans"]
@@ -1066,6 +1140,21 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.label = "Diff&Gloss&Vol"
             self.beauty_mixer_node.node_tree.name = "Diff&Gloss&Vol"
             self.beauty_mixer_node.width = 166
+
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Gloss&Vol")
+
+                DGV_NODES = get_nodes(names=["DGV_Diff_Mixer", "DGV_Gloss_Mixer", "DGV_Vol_Mixer"])
+                DGV_NLW_node_data = [
+                    (DGV_NODES[0], "Diffuse", 155),
+                    (DGV_NODES[1], "Glossy", 155),
+                    (DGV_NODES[2], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(DGV_NLW_node_data)
+            if enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
 
         # 11 If diffuse, glossy and transmission passes are selected
         elif db and gb and tb:
@@ -1096,6 +1185,21 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.node_tree.name = "Diff&Gloss&Trans"
             self.beauty_mixer_node.width = 178
 
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Gloss&Trans")
+
+                DGT_NODES = get_nodes(names=["DGT_Diff_Mixer", "DGT_Gloss_Mixer", "DGT_Trans_Mixer"])
+                DGT_NLW_node_data = [
+                    (DGT_NODES[0], "Diffuse", 155),
+                    (DGT_NODES[1], "Glossy", 155),
+                    (DGT_NODES[2], "Transmission", 155)
+                ]
+
+                rename_and_label_nodes(DGT_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
         # 10 If transmission and volume passes are selected
         elif tb and vb:
             tb_vb_rm_node_groups = ["Diff", "Gloss"]
@@ -1122,6 +1226,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.name = "Trans&Volume"
             self.beauty_mixer_node.label = "Trans&Volume"
             self.beauty_mixer_node.node_tree.name = "Trans&Volume"
+
+            if enum == "UNGROUP":
+                group_ungroup_node("Trans&Volume")
+
+                TV_NODES = get_nodes(names=["TV_Trans_Mixer", "TV_Vol_Mixer"])
+                TV_NLW_node_data = [
+                    (TV_NODES[0], "Transmission", 155),
+                    (TV_NODES[1], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(TV_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
 
         # 9 If glossy and volume passes are selected
         elif gb and vb:
@@ -1150,6 +1268,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.label = "Gloss&Volume"
             self.beauty_mixer_node.node_tree.name = "Gloss&Volume"
 
+            if enum == "UNGROUP":
+                group_ungroup_node("Gloss&Volume")
+
+                GV_NODES = get_nodes(names=["GV_Gloss_Mixer", "GV_Vol_Mixer"])
+                GV_NLW_node_data = [
+                    (GV_NODES[0], "Glossy", 155),
+                    (GV_NODES[1], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(GV_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
         # 8 If glossy and transmission passes are selected
         elif gb and tb:
             gb_tb_rm_node_groups = ["Diff", "Vol"]
@@ -1176,6 +1308,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.name = "Gloss&Trans"
             self.beauty_mixer_node.label = "Gloss&Trans"
             self.beauty_mixer_node.node_tree.name = "Gloss&Trans"
+
+            if enum == "UNGROUP":
+                group_ungroup_node("Gloss&Trans")
+
+                GT_NODES = get_nodes(names=["GT_Gloss_Mixer", "GT_Trans_Mixer"])
+                GT_NLW_node_data = [
+                    (GT_NODES[0], "Glossy", 155),
+                    (GT_NODES[1], "Transmission", 155)
+                ]
+
+                rename_and_label_nodes(GT_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
 
         # 7 If diffuse and volume passes are selected
         elif db and vb:
@@ -1204,6 +1350,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.label = "Diff&Volume"
             self.beauty_mixer_node.node_tree.name = "Diff&Volume"
 
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Volume")
+
+                DV_NODES = get_nodes(names=["DV_Diff_Mixer", "DV_Vol_Mixer"])
+                DV_NLW_node_data = [
+                    (DV_NODES[0], "Diffuse", 155),
+                    (DV_NODES[1], "Volume", 155)
+                ]
+
+                rename_and_label_nodes(DV_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
         # 6 If diffuse and transmission passes are selected
         elif db and tb:
             db_tb_rm_node_groups = ["Gloss", "Vol"]
@@ -1231,6 +1391,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.label = "Diff&Trans"
             self.beauty_mixer_node.node_tree.name = "Diff&Trans"
 
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Trans")
+
+                DT_NODES = get_nodes(names=["DT_Diff_Mixer", "DT_Trans_Mixer"])
+                DT_NLW_node_data = [
+                    (DT_NODES[0], "Diffuse", 155),
+                    (DT_NODES[1], "Transmission", 155),
+                ]
+
+                rename_and_label_nodes(DT_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
         # 5 If diffuse and glossy passes are selected
         elif db and gb:
             db_gb_rm_node_groups = ["Trans", "Vol"]
@@ -1257,6 +1431,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.name = "Diff&Gloss"
             self.beauty_mixer_node.label = "Diff&Gloss"
             self.beauty_mixer_node.node_tree.name = "Diff&Gloss"
+
+            if enum == "UNGROUP":
+                group_ungroup_node("Diff&Gloss")
+
+                DG_NODES = get_nodes(names=["DG_Diff_Mixer", "DG_Gloss_Mixer"])
+                DG_NLW_node_data = [
+                    (DG_NODES[0], "Diffuse", 155),
+                    (DG_NODES[1], "Glossy", 155),
+                ]
+
+                rename_and_label_nodes(DG_NLW_node_data)
+            elif enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
         
         # 4 If volume pass is selected
         elif vb:
