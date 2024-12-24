@@ -1,4 +1,6 @@
 import bpy
+from typing import Tuple
+from bpy.props import BoolProperty, EnumProperty
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "test"
@@ -11,9 +13,8 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.operator("node.beautymixer_operator", text= "BeautyMixer", icon="IMAGE_RGB")
+        row.operator("node.beautymixer_operator", text="BeautyMixer", icon="IMAGE_RGB")
 
-from typing import Tuple
 
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
@@ -71,7 +72,7 @@ def diffuse_node_group():
     diffuse = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Diff")
 
     diffuse.color_tag = "CONVERTER"
-    diffuse.description = ""
+    diffuse.description = "A node group for mixing diffuse passes together."
     diffuse.default_group_node_width = 163
 
     #diffuse interface
@@ -177,9 +178,8 @@ def glossy_node_group():
     glossy = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Gloss")
 
     glossy.color_tag = "CONVERTER"
-    glossy.description = ""
-    glossy.default_group_node_width = 163
-        
+    glossy.description = "A node group for mixing glossy passes together."
+    glossy.default_group_node_width = 163     
 
     #glossy interface
     #Socket Gloss
@@ -284,7 +284,7 @@ def transmission_node_group():
     transmission = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Trans")
 
     transmission.color_tag = "CONVERTER"
-    transmission.description = ""
+    transmission.description = "A node group for mixing transmission passes together."
     transmission.default_group_node_width = 163
 
     #transmission interface
@@ -390,7 +390,7 @@ def volume_node_group():
     volume = bpy.data.node_groups.new(type = 'CompositorNodeTree', name = "Vol")
 
     volume.color_tag = "CONVERTER"
-    volume.description = ""
+    volume.description = "A node group for mixing volume passes together."
     volume.default_group_node_width = 163
 
     #volume interface
@@ -618,32 +618,32 @@ def beautymixer_node_group(context, operator, group_name):
 
     #node Diffuse
     diffuse_1 = beautymixer.nodes.new("CompositorNodeGroup")
-    diffuse_1.label = "Diffuse"
-    diffuse_1.name = "Diffuse"
+    diffuse_1.label = "Diff"
+    diffuse_1.name = "Diff"
     diffuse_1.use_custom_color = True
     diffuse_1.color = COLORS_DICT["DARK_BLUE"]
     diffuse_1.node_tree = diffuse_node_group()
 
     #node Glossy
     glossy_1 = beautymixer.nodes.new("CompositorNodeGroup")
-    glossy_1.label = "Glossy"
-    glossy_1.name = "Glossy"
+    glossy_1.label = "Gloss"
+    glossy_1.name = "Gloss"
     glossy_1.use_custom_color = True
     glossy_1.color = COLORS_DICT["DARK_BLUE"]
     glossy_1.node_tree = glossy_node_group()
 
     #node Transmission
     transmission_1 = beautymixer.nodes.new("CompositorNodeGroup")
-    transmission_1.label = "Transmission"
-    transmission_1.name = "Transmission"
+    transmission_1.label = "Trans"
+    transmission_1.name = "Trans"
     transmission_1.use_custom_color = True
     transmission_1.color = COLORS_DICT["DARK_BLUE"]
     transmission_1.node_tree = transmission_node_group()
 
     #node Volume
     volume_1 = beautymixer.nodes.new("CompositorNodeGroup")
-    volume_1.label = "Volume"
-    volume_1.name = "Volume"
+    volume_1.label = "Vol"
+    volume_1.name = "Vol"
     volume_1.use_custom_color = True
     volume_1.color = COLORS_DICT["DARK_BLUE"]
     volume_1.node_tree = volume_node_group()
@@ -739,12 +739,22 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
 
 class WM_OT_SELECT_PASSES(bpy.types.Operator):
     bl_idname = "wm.select_passes"
-    bl_label = "Passes Selection"
+    bl_label = "Pass/Passes Selector"
 
-    diffuse_bool: bpy.props.BoolProperty(name="Diffuse", default=False) # type: ignore
-    glossy_bool: bpy.props.BoolProperty(name="Glossy", default=False) # type: ignore
-    transmission_bool: bpy.props.BoolProperty(name="Transmission", default=False) # type: ignore
-    volume_bool: bpy.props.BoolProperty(name="Volume", default=False) # type: ignore
+    diffuse_bool: BoolProperty(name="Diffuse", default=False) # type: ignore
+    glossy_bool: BoolProperty(name="Glossy", default=False) # type: ignore
+    transmission_bool: BoolProperty(name="Transmission", default=False) # type: ignore
+    volume_bool: BoolProperty(name="Volume", default=False) # type: ignore
+
+    group_ungroup_enum: EnumProperty(
+        name="Group/Ungroup",
+        description="Choose whether to group or ungroup selected nodes",
+        items=[
+            ("GROUP", "Group", "Combine selected nodes into a node group", "NODETREE", 0),
+            ("UNGROUP", "Ungroup", "Break apart the node group into individual nodes", "X", 1)
+        ],
+        default="GROUP"
+    ) # type: ignore
     
     def invoke(self, context, event):
 
@@ -764,12 +774,39 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
+    def draw(self, context):
+        layout = self.layout
+
+        layout.label(text= "Choose the pass or passes that you want to keep:")
+
+        row = layout.row()
+        row.prop(self, "diffuse_bool", text="Diffuse", icon='MATERIAL')
+        row.prop(self, "glossy_bool", text="Glossy", icon='SHADING_RENDERED')
+
+        row = layout.row()
+        row.prop(self, "transmission_bool", text="Transmission", icon='OUTLINER_OB_LIGHT')
+        row.prop(self, "volume_bool", text="Volume", icon='MOD_FLUID')
+
+        if sum([self.diffuse_bool, self.glossy_bool, self.transmission_bool, self.volume_bool]) >= 2:
+            layout.alignment = 'RIGHT'
+            layout.prop(self, "group_ungroup_enum")
+
     def execute(self, context):
-        # Get boolean values for passes
+        # Retrieve the boolean values for each pass and the enum property
         db = self.diffuse_bool
         gb = self.glossy_bool
         tb = self.transmission_bool
         vb = self.volume_bool
+        enum = self.group_ungroup_enum
+
+        # Retrieve the nodes for each pass from the beauty mixer node tree
+        diffuse_node = self.beauty_mixer_node.node_tree.nodes.get("Diff")
+        glossy_node = self.beauty_mixer_node.node_tree.nodes.get("Gloss")
+        transmission_node = self.beauty_mixer_node.node_tree.nodes.get("Trans")
+        volume_node = self.beauty_mixer_node.node_tree.nodes.get("Vol")
+        
+        # Get the current node tree
+        node_tree = bpy.context.scene.node_tree
 
         def rm_nodes_from_group(parent_node_group, node_names_to_remove):
             """
@@ -810,7 +847,44 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                     print(f"Node group '{name}' not found.")
 
             # Final Summary
-            print(f"Removed {removed_count} node group(s) out of {len(node_names_to_remove)} requested.")
+            self.report({'INFO'}, f"Removed {removed_count} node group(s) out of {len(node_names_to_remove)} requested.")
+            # print(f"Removed {removed_count} node group(s) out of {len(node_names_to_remove)} requested.")
+
+        def rm_ngs_from_data(ngs_names_to_rm):
+            """
+            Removes specified node groups from the Blender data.
+
+            Args:
+                ngs_names_to_rm (list of str): List of node group names to remove.
+
+            Returns:
+                dict: A dictionary with counts and details:
+                      {'removed': int, 'not_found': int, 'errors': list}
+            """
+            if not isinstance(ngs_names_to_rm, (list, tuple)):
+                raise ValueError("Expected a list or tuple of node group names.")
+
+            results = {
+                'removed': 0,
+                'not_found': 0,
+                'errors': []
+            }
+
+            for name in ngs_names_to_rm:
+                node_group = bpy.data.node_groups.get(name)
+                if node_group:  # Check if the node group exists
+                    try:
+                        print(f"Removing node group: {name}")
+                        bpy.data.node_groups.remove(node_group)
+                        results['removed'] += 1
+                    except Exception as e:
+                        print(f"Error removing node group '{name}': {e}")
+                        results['errors'].append((name, str(e)))
+                else:
+                    print(f"Node group '{name}' not found.")
+                    results['not_found'] += 1
+
+            return results
 
         def rm_sockets_and_panels(parent_node_group, socket_names, panels_names):
             """
@@ -831,66 +905,361 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             for panel_name in panels_names:
                 panel = parent_node_group.node_tree.interface.items_tree[panel_name]
                 parent_node_group.node_tree.interface.remove(panel)
-     
-        # If diffuse pass is selected
-        if db == True:
-            db_rm_node_groups = ["Gloss", "Trans", "Vol"]
+
+        def rename_and_label_nodes(node_data):
+            """
+            Renames multiple nodes and assigns labels to them. If a node is a group type, it also renames the node tree.
+            If width is provided, it will also set the width of the node.
+
+            Args:
+                node_data (list of tuple): A list of tuples, each containing:
+                    - node (bpy.types.Node): The node to rename and label.
+                    - name (str): The new name and label for the node.
+                    - width (int, optional): The new width of the node. Defaults to None.
+            """
+            for node, name, *optional_width in node_data:
+                if node:
+                    node.name = name
+                    node.label = name
+                    if hasattr(node, "node_tree") and node.node_tree:
+                        node.node_tree.name = name
+                    if optional_width:
+                        node.width = optional_width[0]
+
+
+        # 15 If all passes are selected
+        if all([db, gb, tb, vb]):
+            DGTV_node_data = [
+                (diffuse_node, "DGTV_Diff_Mixer", 186),
+                (glossy_node, "DGTV_Gloss_Mixer", 186),
+                (transmission_node, "DGTV_Trans_Mixer", 186),
+                (volume_node, "DGTV_Vol_Mixer", 186)
+            ]
+
+            rename_and_label_nodes(DGTV_node_data)
+
+            if enum == "UNGROUP":
+                # Ensure the correct context before ungrouping
+                if bpy.context.selected_nodes:
+                    bpy.ops.node.group_ungroup()
+
+                # Remove a specific node group from the data
+                rm_ngs_result = rm_ngs_from_data(["BeautyMixer"])
+
+                # Output the rm_ngs_result
+                self.report({'INFO'}, f"Removed: {rm_ngs_result['removed']}, Not Found: {rm_ngs_result['not_found']}, Errors: {rm_ngs_result['errors']}")
+
+                # Fetch nodes and handle missing nodes
+                if not node_tree:
+                    self.report({'WARNING'}, "No node tree found in the current scene.")
+                    return
+
+                DGTV_Diff_Mixer = node_tree.nodes.get("DGTV_Diff_Mixer")
+                DGTV_Gloss_Mixer = node_tree.nodes.get("DGTV_Gloss_Mixer")
+                DGTV_Trans_Mixer = node_tree.nodes.get("DGTV_Trans_Mixer")
+                DGTV_Vol_Mixer = node_tree.nodes.get("DGTV_Vol_Mixer")
+
+                # Prepare node data
+                DGTV_DM_node_data = [
+                    (DGTV_Diff_Mixer, "Diffuse"),
+                    (DGTV_Gloss_Mixer, "Glossy"),
+                    (DGTV_Trans_Mixer, "Transmission"),
+                    (DGTV_Vol_Mixer, "Volume")
+                ]
+
+                # Rename and label nodes, ensuring none are None
+                valid_nodes = [(node, label) for node, label in DGTV_DM_node_data if node]
+                if not valid_nodes:
+                    self.report({'WARNING'}, "No valid nodes found to rename or label.")
+                else:
+                    rename_and_label_nodes(valid_nodes)
+            else:
+                self.report({'WARNING'}, "Active node group not found.")
+
+            if enum == "GROUP":
+                # Intentionally does nothing, as this case is not implemented by design.
+                pass
+
+
+        # 14 If glossy, transmission and volume passes are selected
+        elif gb and tb and vb:
+            gb_tb_vb_rm_node_groups = ["Diff"]
             rm_nodes_from_group(
                 self.beauty_mixer_node,
-                db_rm_node_groups
+                gb_tb_vb_rm_node_groups
             )
 
-            db_rm_sockets = ["Gloss", "Trans", "Vol", "GlossDir", "GlossInd", "GlossCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
-            db_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            gb_tb_vb_rm_sockets = ["Diff", "DiffDir", "DiffInd", "DiffCol"]
+            gb_tb_vb_rm_panels = ["Diffuse"]
             rm_sockets_and_panels(
                 self.beauty_mixer_node,
-                db_rm_sockets,
-                db_rm_panels
+                gb_tb_vb_rm_sockets,
+                gb_tb_vb_rm_panels
             )
 
-            self.beauty_mixer_node.name = "Diffuse"
-            self.beauty_mixer_node.node_tree.name = "Diffuse"
+            GTV_node_data = [
+                (glossy_node, "GTV_Gloss_Mixer", 178),
+                (transmission_node, "GTV_Trans_Mixer", 178),
+                (volume_node, "GTV_Vol_Mixer", 178)
+            ]
+            
+            rename_and_label_nodes(GTV_node_data)
 
-        # If glossy pass is selected
-        if gb == True:
-            gb_rm_node_groups = ["Diff", "Trans", "Vol"]
+            self.beauty_mixer_node.name = "Gloss&Trans&Vol"
+            self.beauty_mixer_node.node_tree.name = "Gloss&Trans&Vol"
+            self.beauty_mixer_node.width = 178
+
+        # 13 If diffuse, transmission and volume passes are selected
+        elif db and tb and vb:
+            db_tb_vb_rm_node_groups = ["Gloss"]
             rm_nodes_from_group(
                 self.beauty_mixer_node,
-                gb_rm_node_groups
+                db_tb_vb_rm_node_groups
             )
 
-            gb_rm_sockets = ["Diff", "Trans", "Vol", "DiffDir", "DiffInd", "DiffCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
-            gb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            db_tb_vb_rm_sockets = ["Gloss", "GlossDir", "GlossInd", "GlossCol"]
+            db_tb_vb_rm_panels = ["Glossy"]
             rm_sockets_and_panels(
                 self.beauty_mixer_node,
-                gb_rm_sockets,
-                gb_rm_panels
+                db_tb_vb_rm_sockets,
+                db_tb_vb_rm_panels
             )
 
-            self.beauty_mixer_node.name = "Glossy"
-            self.beauty_mixer_node.node_tree.name = "Glossy"
+            DTV_node_data = [
+                (diffuse_node, "DTV_Diff_Mixer", 178),
+                (transmission_node, "DTV_Trans_Mixer", 178),
+                (volume_node, "DTV_Vol_Mixer", 178)
+            ]
+            
+            rename_and_label_nodes(DTV_node_data)
 
-        # If transmission pass is selected
-        if tb == True:
-            tb_rm_node_groups = ["Diff", "Gloss", "Vol"]
+            self.beauty_mixer_node.name = "Diff&Trans&Vol"
+            self.beauty_mixer_node.label = "Diff&Trans&Vol"
+            self.beauty_mixer_node.node_tree.name = "Diff&Trans&Vol"
+            self.beauty_mixer_node.width = 166
+
+        # 12 If diffuse, glossy and volume passes are selected
+        elif db and gb and vb:
+            db_gb_vb_rm_node_groups = ["Trans"]
             rm_nodes_from_group(
                 self.beauty_mixer_node,
-                tb_rm_node_groups
+                db_gb_vb_rm_node_groups
             )
-
-            tb_rm_sockets = ["Diff", "Gloss", "Vol", "DiffDir", "DiffInd", "DiffCol", "GlossDir", "GlossInd", "GlossCol", "VolumeDir", "VolumeInd"]
-            tb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            
+            db_gb_vb_rm_sockets = ["Trans", "TransDir", "TransInd", "TransCol"]
+            db_gb_vb_rm_panels = ["Transmission"]
             rm_sockets_and_panels(
                 self.beauty_mixer_node,
-                tb_rm_sockets,
-                tb_rm_panels
+                db_gb_vb_rm_sockets,
+                db_gb_vb_rm_panels
             )
 
-            self.beauty_mixer_node.name = "Transmission"
-            self.beauty_mixer_node.node_tree.name = "Transmission"
+            DGV_node_data = [
+                (diffuse_node, "DGV_Diff_Mixer", 178),
+                (glossy_node, "DGV_Gloss_Mixer", 178),
+                (volume_node, "DGV_Vol_Mixer", 178)
+            ]
+            
+            rename_and_label_nodes(DGV_node_data)
 
-        # If volume pass is selected
-        if vb == True:
+            self.beauty_mixer_node.name = "Diff&Gloss&Vol"
+            self.beauty_mixer_node.label = "Diff&Gloss&Vol"
+            self.beauty_mixer_node.node_tree.name = "Diff&Gloss&Vol"
+            self.beauty_mixer_node.width = 166
+
+        # 11 If diffuse, glossy and transmission passes are selected
+        elif db and gb and tb:
+            db_gb_tb_rm_node_groups = ["Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                db_gb_tb_rm_node_groups
+            )
+            
+            db_gb_tb_rm_sockets = ["Vol", "VolumeDir", "VolumeInd"]
+            db_gb_tb_rm_panels = ["Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_gb_tb_rm_sockets,
+                db_gb_tb_rm_panels
+            )
+
+            DGT_node_data = [
+                (diffuse_node, "DGT_Diff_Mixer", 178),
+                (glossy_node, "DGT_Gloss_Mixer", 178),
+                (transmission_node, "DGT_Trans_Mixer", 178)
+            ]
+            
+            rename_and_label_nodes(DGT_node_data)
+
+            self.beauty_mixer_node.name = "Diff&Gloss&Trans"
+            self.beauty_mixer_node.label = "Diff&Gloss&Trans"
+            self.beauty_mixer_node.node_tree.name = "Diff&Gloss&Trans"
+            self.beauty_mixer_node.width = 178
+
+        # 10 If transmission and volume passes are selected
+        elif tb and vb:
+            tb_vb_rm_node_groups = ["Diff", "Gloss"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                tb_vb_rm_node_groups
+            )
+
+            tb_vb_rm_sockets = ["Diff", "Gloss", "DiffDir", "DiffInd", "DiffCol", "GlossDir", "GlossInd", "GlossCol"]
+            tb_vb_rm_panels = ["Diffuse", "Glossy"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                tb_vb_rm_sockets,
+                tb_vb_rm_panels
+            )
+
+            TV_node_data = [
+                (transmission_node, "TV_Trans_Mixer", 170),
+                (volume_node, "TV_Vol_Mixer", 170)
+            ]
+
+            rename_and_label_nodes(TV_node_data)
+
+            self.beauty_mixer_node.name = "Trans&Volume"
+            self.beauty_mixer_node.label = "Trans&Volume"
+            self.beauty_mixer_node.node_tree.name = "Trans&Volume"
+
+        # 9 If glossy and volume passes are selected
+        elif gb and vb:
+            gb_vb_rm_node_groups = ["Diff", "Trans"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                gb_vb_rm_node_groups
+            )
+
+            gb_vb_rm_sockets = ["Diff", "Trans", "DiffDir", "DiffInd", "DiffCol", "TransDir", "TransInd", "TransCol"]
+            gb_vb_rm_panels = ["Diffuse", "Transmission"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                gb_vb_rm_sockets,
+                gb_vb_rm_panels
+            )
+
+            GV_node_data = [
+                (glossy_node, "GV_Gloss_Mixer", 174),
+                (volume_node, "GV_Vol_Mixer", 174)
+            ]
+
+            rename_and_label_nodes(GV_node_data)
+
+            self.beauty_mixer_node.name = "Gloss&Volume"
+            self.beauty_mixer_node.label = "Gloss&Volume"
+            self.beauty_mixer_node.node_tree.name = "Gloss&Volume"
+
+        # 8 If glossy and transmission passes are selected
+        elif gb and tb:
+            gb_tb_rm_node_groups = ["Diff", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                gb_tb_rm_node_groups
+            )
+
+            gb_tb_rm_sockets = ["Diff", "Vol", "DiffDir", "DiffInd", "DiffCol", "VolumeDir", "VolumeInd"]
+            gb_tb_rm_panels = ["Diffuse", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                gb_tb_rm_sockets,
+                gb_tb_rm_panels
+            )
+
+            GT_node_data = [
+                (glossy_node, "GT_Gloss_Mixer", 174),
+                (transmission_node, "GT_Trans_Mixer", 174)
+            ]
+
+            rename_and_label_nodes(GT_node_data)
+
+            self.beauty_mixer_node.name = "Gloss&Trans"
+            self.beauty_mixer_node.label = "Gloss&Trans"
+            self.beauty_mixer_node.node_tree.name = "Gloss&Trans"
+
+        # 7 If diffuse and volume passes are selected
+        elif db and vb:
+            db_vb_rm_node_groups = ["Gloss", "Trans"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                db_vb_rm_node_groups
+            )
+            
+            db_vb_rm_sockets = ["Gloss", "Trans", "GlossDir", "GlossInd", "GlossCol", "TransDir", "TransInd", "TransCol"]
+            db_vb_rm_panels = ["Glossy", "Transmission"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_vb_rm_sockets,
+                db_vb_rm_panels
+            )
+
+            DV_node_data = [
+                (diffuse_node, "DV_Diff_Mixer"),
+                (volume_node, "DV_Vol_Mixer")
+            ]
+
+            rename_and_label_nodes(DV_node_data)
+
+            self.beauty_mixer_node.name = "Diff&Volume"
+            self.beauty_mixer_node.label = "Diff&Volume"
+            self.beauty_mixer_node.node_tree.name = "Diff&Volume"
+
+        # 6 If diffuse and transmission passes are selected
+        elif db and tb:
+            db_tb_rm_node_groups = ["Gloss", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                db_tb_rm_node_groups
+            )
+
+            db_tb_rm_sockets = ["Gloss", "Vol", "GlossDir", "GlossInd", "GlossCol", "VolumeDir", "VolumeInd"]
+            db_tb_rm_panels = ["Glossy", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_tb_rm_sockets,
+                db_tb_rm_panels
+            )
+
+            DT_node_data = [
+                (diffuse_node, "DT_Diff_Mixer", 172),
+                (transmission_node, "DT_Trans_Mixer", 172)
+            ]
+
+            rename_and_label_nodes(DT_node_data)
+
+            self.beauty_mixer_node.name = "Diff&Trans"
+            self.beauty_mixer_node.label = "Diff&Trans"
+            self.beauty_mixer_node.node_tree.name = "Diff&Trans"
+
+        # 5 If diffuse and glossy passes are selected
+        elif db and gb:
+            db_gb_rm_node_groups = ["Trans", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                db_gb_rm_node_groups
+            )
+
+            db_gb_rm_sockets = ["Trans", "Vol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
+            db_gb_rm_panels = ["Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_gb_rm_sockets,
+                db_gb_rm_panels
+            )
+
+            DG_node_data = [
+                (diffuse_node, "DG_Diff_Mixer", 174),
+                (glossy_node, "DG_Gloss_Mixer", 174)
+            ]
+
+            rename_and_label_nodes(DG_node_data)
+
+            self.beauty_mixer_node.name = "Diff&Gloss"
+            self.beauty_mixer_node.label = "Diff&Gloss"
+            self.beauty_mixer_node.node_tree.name = "Diff&Gloss"
+        
+        # 4 If volume pass is selected
+        elif vb:
             vb_rm_node_groups = ["Diff", "Gloss", "Trans"]
             rm_nodes_from_group(
                 self.beauty_mixer_node,
@@ -905,8 +1274,93 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 vb_rm_panels
             )
 
+            V_node_data = [
+                (volume_node, "Vol_Mixer")
+            ]
+
+            rename_and_label_nodes(V_node_data)
+
             self.beauty_mixer_node.name = "Volume"
+            self.beauty_mixer_node.label = "Volume"
             self.beauty_mixer_node.node_tree.name = "Volume"
+        
+        # 3 If transmission pass is selected
+        elif tb:
+            tb_rm_node_groups = ["Diff", "Gloss", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                tb_rm_node_groups
+            )
+
+            tb_rm_sockets = ["Diff", "Gloss", "Vol", "DiffDir", "DiffInd", "DiffCol", "GlossDir", "GlossInd", "GlossCol", "VolumeDir", "VolumeInd"]
+            tb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                tb_rm_sockets,
+                tb_rm_panels
+            )
+
+            T_node_data = [
+                (transmission_node, "Trans_Mixer")
+            ]
+
+            rename_and_label_nodes(T_node_data)
+                
+            self.beauty_mixer_node.name = "Transmission"
+            self.beauty_mixer_node.label = "Transmission"
+            self.beauty_mixer_node.node_tree.name = "Transmission"
+
+        # 2 If glossy pass is selected
+        elif gb:
+            gb_rm_node_groups = ["Diff", "Trans", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                gb_rm_node_groups
+            )
+
+            gb_rm_sockets = ["Diff", "Trans", "Vol", "DiffDir", "DiffInd", "DiffCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
+            gb_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                gb_rm_sockets,
+                gb_rm_panels
+            )
+
+            G_node_data = [
+                (glossy_node, "Gloss_Mixer")
+            ]
+
+            rename_and_label_nodes(G_node_data)
+
+            self.beauty_mixer_node.name = "Glossy"
+            self.beauty_mixer_node.label = "Glossy"
+            self.beauty_mixer_node.node_tree.name = "Glossy"
+
+        # 1 If diffuse pass is selected
+        elif db:
+            db_rm_node_groups = ["Gloss", "Trans", "Vol"]
+            rm_nodes_from_group(
+                self.beauty_mixer_node,
+                db_rm_node_groups
+            )
+
+            db_rm_sockets = ["Gloss", "Trans", "Vol", "GlossDir", "GlossInd", "GlossCol", "TransDir", "TransInd", "TransCol", "VolumeDir", "VolumeInd"]
+            db_rm_panels = ["Diffuse", "Glossy", "Transmission", "Volume"]
+            rm_sockets_and_panels(
+                self.beauty_mixer_node,
+                db_rm_sockets,
+                db_rm_panels
+            )
+
+            D_node_data = [
+                (diffuse_node, "Diff_Mixer")
+            ]
+
+            rename_and_label_nodes(D_node_data)
+                
+            self.beauty_mixer_node.name = "Diffuse"
+            self.beauty_mixer_node.label = "Diffuse"
+            self.beauty_mixer_node.node_tree.name = "Diffuse"
 
         return {'FINISHED'}
     
