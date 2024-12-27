@@ -2,43 +2,26 @@ import bpy
 from typing import Tuple
 from bpy.props import BoolProperty
 
-class PROP_PT_BLOOM(bpy.types.Panel):
-    bl_label = 'Bloom'
-    bl_idname = 'PROP_PT_BLOOM'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'render'
-    bl_description = 'Old Eevee Bloom In Both Eevee And Cycles'
-    bl_category = ""
-    bl_order = 3
-    bl_ui_units_x = 0
+def toggle_bloom_mute(self, context):
+    """
+    Callback function to mute or unmute the OE_Bloom node group in the Compositor node tree.
 
-    @classmethod
-    def poll(cls, context):
-        """
-        Determines whether the panel should be displayed in the UI.
+    Args:
+        self: The current context owner (usually the scene).
+        context: The Blender context.
+    """
+    scene = context.scene
+    node_tree = bpy.context.scene.node_tree  # Access the active Compositor node tree
 
-        Args:
-            context (bpy.types.Context): The current Blender context.
-
-        Returns:
-            bool: True if the panel should be displayed, False otherwise.
-        """
-        return True  # Always display the panel
-
-    def draw_header(self, context):
-        layout = self.layout
-        scene = context.scene  # Get the current scene
-        layout.prop(scene, "bloom_bool", text="")  # Add the checkbox in the header
-
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene  # Use a property attached to the scene
-        if scene.bloom_bool:  # Display extra content if bloom_bool is enabled
-            layout.label(text="Bloom is enabled", icon='CHECKBOX_HLT')
-            layout.operator("node.bloom_operator", text="Add Bloom Node", icon='NODE_MATERIAL')
-        else:
-            layout.label(text="Bloom is disabled", icon='CANCEL')
+    if node_tree:  # Ensure the node tree exists
+        for node in node_tree.nodes:
+            if node.type == 'GROUP' and node.name == "OE_Bloom":  # Check for the specific node group
+                node.mute = scene.bloom_mute_unmute_bool  # Set the mute property
+                print(f"Node group 'OE_Bloom' is now {'muted' if node.mute else 'unmuted'}.")
+                return
+        print("OE_Bloom node group not found in the Compositor node tree.")
+    else:
+        print("Compositor node tree is not active or does not exist.")
 
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
@@ -609,29 +592,22 @@ def bloom_node_group(context, operator, group_name):
     return bloom
 
 class NODE_OT_BLOOM(bpy.types.Operator):
-    bl_label = "Bloom"
-    bl_idname = "node.bloom_operator"
+    bl_label = "OE_Bloom"
+    bl_idname = "node.oe_bloom_operator"
     bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
-
 
     def execute(shelf, context):
 
-        custom_bloom_node_name = "Bloom"
-        bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
-        bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
-        bloom_node.name = "Bloom"
-        bloom_node.width = 168
-        bloom_node.node_tree = bpy.data.node_groups[bloom_group.name]
-        bloom_node.use_custom_color = True
-        bloom_node.color = COLORS_DICT["DARK_PURPLE"]
-        bloom_node.select = False
-
-        """
-        * The ability to add drivers to nodes is made possible by Victor Stepanov
-        * (https://www.skool.com/cgpython/how-to-add-drivers-to-node-group-sockets-using-python?p=0be0f439)
-        * (https://www.skool.com/cgpython/how-do-i-add-the-drivers-to-a-node-group-every-time?p=4220eddf)
-        * His youtube channel (https://www.youtube.com/@CGPython)
-        """
+        custom_bloom_node_name = "OE_Bloom"
+        oe_bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
+        oe_bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
+        oe_bloom_node.name = "OE_Bloom"
+        oe_bloom_node.label = "OE_Bloom"
+        oe_bloom_node.width = 168
+        oe_bloom_node.node_tree = bpy.data.node_groups[oe_bloom_group.name]
+        oe_bloom_node.use_custom_color = True
+        oe_bloom_node.color = COLORS_DICT["DARK_PURPLE"]
+        oe_bloom_node.select = True
 
         def add_driver_var(socket, data_path, name="default_value", id_type="SCENE", id=bpy.context.scene):
             """
@@ -663,86 +639,119 @@ class NODE_OT_BLOOM(bpy.types.Operator):
             driver_var.targets[0].data_path = data_path
             return driver_var
 
+        """
+        * The ability to add drivers to nodes is made possible by Victor Stepanov
+        * (https://www.skool.com/cgpython/how-to-add-drivers-to-node-group-sockets-using-python?p=0be0f439)
+        * (https://www.skool.com/cgpython/how-do-i-add-the-drivers-to-a-node-group-every-time?p=4220eddf)
+        * His youtube channel (https://www.youtube.com/@CGPython)
+        """
+
         # Original Bloom Switch
-        bloom_obs_driver = bloom_node.node_tree.nodes['OB Switch'].driver_add('check').driver
+        bloom_obs_driver = oe_bloom_node.node_tree.nodes['OB Switch'].driver_add('check').driver
         bloom_obs_driver.type = "AVERAGE"
         add_driver_var(
             bloom_obs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
         )
 
         # Knee Bloom Switch
-        bloom_kbs_driver = bloom_node.node_tree.nodes['KB Switch'].driver_add('check').driver
+        bloom_kbs_driver = oe_bloom_node.node_tree.nodes['KB Switch'].driver_add('check').driver
         bloom_kbs_driver.type = "AVERAGE"
         add_driver_var(
             bloom_kbs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
         )
 
         # Original Bloom High
-        bloom_obh_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('threshold').driver
+        bloom_obh_driver = oe_bloom_node.node_tree.nodes['Original Bloom High'].driver_add('threshold').driver
         bloom_obh_driver.type = "AVERAGE"
         add_driver_var(
             bloom_obh_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
         )
 
         # Original Bloom Low
-        bloom_obl_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('threshold').driver
+        bloom_obl_driver = oe_bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('threshold').driver
         bloom_obl_driver.type = "AVERAGE"
         add_driver_var(
             bloom_obl_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
         )
 
         # Original Bloom High Size
-        bloom_obhs_driver = bloom_node.node_tree.nodes['Original Bloom High'].driver_add('size').driver
+        bloom_obhs_driver = oe_bloom_node.node_tree.nodes['Original Bloom High'].driver_add('size').driver
         bloom_obhs_driver.type = "AVERAGE"
         add_driver_var(
             bloom_obhs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[8].default_value'
         )
 
         # Original Bloom Low Size
-        bloom_obls_driver = bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('size').driver
+        bloom_obls_driver = oe_bloom_node.node_tree.nodes['Original Bloom Low'].driver_add('size').driver
         bloom_obls_driver.type = "AVERAGE"
         add_driver_var(
             bloom_obls_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[8].default_value'
         )
 
         # Added Radius X
-        bloom_arx_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_x').driver
+        bloom_arx_driver = oe_bloom_node.node_tree.nodes['Blur'].driver_add('size_x').driver
         bloom_arx_driver.type = "AVERAGE"
         add_driver_var(
             bloom_arx_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[5].default_value'
         )
 
         # Added Radius Y
-        bloom_ary_driver = bloom_node.node_tree.nodes['Blur'].driver_add('size_y').driver
+        bloom_ary_driver = oe_bloom_node.node_tree.nodes['Blur'].driver_add('size_y').driver
         bloom_ary_driver.type = "AVERAGE"
         add_driver_var(
             bloom_ary_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[5].default_value'
         )
 
         return {"FINISHED"}
+
+class PROP_PT_BLOOM(bpy.types.Panel):
+    bl_label = 'Bloom'
+    bl_idname = 'PROP_PT_BLOOM'
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'render'
+    bl_description = 'Old Eevee Bloom In Both Eevee And Cycles'
+    bl_order = 3
+
+    @classmethod
+    def poll(cls, context):
+        return True  # Always display the panel
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        node_tree = bpy.context.scene.node_tree  # Access the Compositor node tree
+
+        if node_tree:
+            # Check if the OE_Bloom node group exists
+            if any(node.type == 'GROUP' and node.name == "OE_Bloom" for node in node_tree.nodes):
+                layout.prop(scene, "bloom_mute_unmute_bool", text="Mute/Unmute", icon='CHECKBOX_HLT' if scene.bloom_mute_unmute_bool else 'CANCEL')
+            else:
+                layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
 
 # Register and unregister
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
 
 def register():
-    bpy.types.Scene.bloom_bool = BoolProperty(
-        name="Bloom",
-        description="Enable or disable Bloom",
-        default=False
+    bpy.types.Scene.bloom_mute_unmute_bool = BoolProperty(
+        name="Bloom Mute/Unmute",
+        description="Mute or unmute the OE_Bloom node group in the Compositor",
+        default=False,
+        update=toggle_bloom_mute  # Attach the callback function
     )
     for cls in classes:
         bpy.utils.register_class(cls)
 
 def unregister():
-    del bpy.types.Scene.bloom_bool  # Unregister the property
+    del bpy.types.Scene.bloom_mute_unmute_bool
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
