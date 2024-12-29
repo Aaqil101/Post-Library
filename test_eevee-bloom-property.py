@@ -107,10 +107,12 @@ class OE_Bloom_Names:
 
 #initialize Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
-    #enable use nodes
-    bpy.context.scene.use_nodes = True
-
+    scene = bpy.context.scene
     oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
+
+    #enable use nodes
+    if scene.use_nodes == False:
+        scene.use_nodes = True
 
     oe_bloom.color_tag = "FILTER"
     oe_bloom.default_group_node_width = 149
@@ -628,6 +630,20 @@ class NODE_OT_BLOOM(bpy.types.Operator):
     bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
 
     def execute(shelf, context):
+        # Get the compositor node tree
+        node_tree = context.scene.node_tree
+        nodes = node_tree.nodes
+        links = node_tree.links
+
+        # Check if nodes exist, otherwise create them
+        render_layer_node = nodes.get("Render Layers") or nodes.new(type="CompositorNodeRLayers")
+        render_layer_node.location = (-300, 0)
+
+        composite_node = nodes.get("Composite") or nodes.new(type="CompositorNodeComposite")
+        composite_node.location = (300, 86)
+
+        viewer_node = nodes.get("Viewer") or nodes.new(type="CompositorNodeViewer")
+        viewer_node.location = (300, -24)
 
         custom_oe_bloom_node_name = OE_Bloom_Names.OE_Bloom
         oe_bloom_group = oe_bloom_node_group(shelf, context, custom_oe_bloom_node_name)
@@ -740,6 +756,38 @@ class NODE_OT_BLOOM(bpy.types.Operator):
             oe_bloom_ary_driver,
             f'node_tree.nodes["{oe_bloom_node.name}"].inputs[5].default_value'
         )
+
+        # Ensure all connections exist
+        def ensure_connection(output_node, output_socket_name, input_node, input_socket_name):
+            """
+            Ensures that a connection exists between two nodes
+
+            Args:
+                output_node (bpy.types.Node): The node that the connection comes from
+                output_socket_name (str): The name of the output socket
+                input_node (bpy.types.Node): The node that the connection goes to
+                input_socket_name (str): The name of the input socket
+
+            Returns:
+                None
+            """
+            # Check if a link already exists
+            for link in links:
+                if (
+                    link.from_node == output_node
+                    and link.to_node == input_node
+                    and link.from_socket.name == output_socket_name
+                    and link.to_socket.name == input_socket_name
+                ):
+                    return  # Connection already exists
+
+            # Create the link if not found
+            links.new(output_node.outputs[output_socket_name], input_node.inputs[input_socket_name])
+
+        # Connect the nodes
+        ensure_connection(render_layer_node, "Image", oe_bloom_node, "Image")
+        ensure_connection(oe_bloom_node, "Image", composite_node, "Image")
+        ensure_connection(oe_bloom_node, "Image", viewer_node, "Image")
 
         return {"FINISHED"}
 
