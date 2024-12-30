@@ -59,3 +59,23 @@ def hex_color_add(color1, color2):
     
     # Combine the components back into a hex color
     return f'{r:02X}{g:02X}{b:02X}'
+
+class Color:
+    """
+    Class to store color values converted from hex codes to RGB
+
+    Example:
+        Import the Color class
+        
+        color.LIGHT_RED
+    """
+
+    LIGHT_RED = hexcode_to_rgb("#94493E")
+    DARK_RED = hexcode_to_rgb("#823A35")
+    LIGHT_BLUE = hexcode_to_rgb("#646E66")
+    DARK_BLUE = hexcode_to_rgb("#4C6160")
+    LIGHT_PURPLE = hexcode_to_rgb("#846167")
+    DARK_PURPLE = hexcode_to_rgb("#77535F")
+    BROWN = hexcode_to_rgb("#866937")
+    DARK_GRAY = hexcode_to_rgb("#3C3937")
+    LIGHT_GRAY = hexcode_to_rgb("#59514B")
