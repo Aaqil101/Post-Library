@@ -42,3 +42,20 @@ def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
     srgb_blue = blue / 255
 
     return tuple([srgb_red, srgb_green, srgb_blue])
+
+def hex_color_add(color1, color2):
+    """
+    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
+    The resulting RGB components are then combined back into a hex color code.
+    """
+    # Split the hex codes into RGB components
+    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
+    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
+    
+    # Add the components and clamp each to a maximum of 255
+    r = min(r1 + r2, 255)
+    g = min(g1 + g2, 255)
+    b = min(b1 + b2, 255)
+    
+    # Combine the components back into a hex color
+    return f'{r:02X}{g:02X}{b:02X}'
