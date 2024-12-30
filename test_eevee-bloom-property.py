@@ -2,7 +2,7 @@ import bpy
 from typing import Tuple
 from bpy.props import BoolProperty
 
-def toggle_bloom_mute(self, context):
+def toggle_oe_bloom_mute(self, context):
     """
     Callback function to mute or unmute the OE_Bloom node group in the Compositor node tree.
 
@@ -14,12 +14,12 @@ def toggle_bloom_mute(self, context):
     node_tree = bpy.context.scene.node_tree  # Access the active Compositor node tree
 
     if node_tree:  # Ensure the node tree exists
-        for node in node_tree.nodes:
+        for node in node_tree.nodes: 
             if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom:  # Check for the specific node group
                 node.mute = scene.bloom_mute_unmute_bool  # Set the mute property
-                self.report({'INFO'}, f"Node group 'OE_Bloom' is now {'muted' if node.mute else 'unmuted'}.")
+                print(f"Node group 'OE_Bloom' is now {'muted' if node.mute else 'unmuted'}.")
                 return
-        print("OE_Bloom node group not found in the Compositor node tree.")
+        print("Node group 'OE_Bloom' not found in the Compositor node tree.")
     else:
         print("Compositor node tree is not active.")
 
@@ -979,7 +979,7 @@ def register():
         name="Bloom Mute/Unmute",
         description="Mute or unmute the OE_Bloom node group in the Compositor",
         default=False,
-        update=toggle_bloom_mute  # Attach the callback function
+        update=toggle_oe_bloom_mute  # Attach the callback function
     )
     for cls in classes:
         bpy.utils.register_class(cls)
