@@ -58,7 +58,7 @@ def hex_color_add(color1, color2):
     b = min(b1 + b2, 255)
     
     # Combine the components back into a hex color
-    return f'{r:02X}{g:02X}{b:02X}'
+    return f"{r:02X}{g:02X}{b:02X}"
 
 class Color:
     """
