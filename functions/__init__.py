@@ -1,6 +1,13 @@
-from .dictionaries import COLORS_DICT
+"""
+Functions and Classes
+
+This module contains functions and classes that are used throughout the add-on.
+
+"""
 from .driver_var_func import add_driver_var
-from .hex_color_tools import (
+
+from .color_utils import (
     hexcode_to_rgb,
-    hex_color_add
+    hex_color_add,
+    Color
 )
