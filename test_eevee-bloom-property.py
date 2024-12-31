@@ -11,7 +11,7 @@ def toggle_oe_bloom_mute(self, context):
         context: The Blender context.
     """
     scene = context.scene
-    node_tree = bpy.context.scene.node_tree  # Access the active Compositor node tree
+    node_tree = context.scene.node_tree  # Access the active Compositor node tree
 
     if node_tree:  # Ensure the node tree exists
         for node in node_tree.nodes: 
@@ -954,22 +954,74 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 
         if node_tree:
             # Check if the OE_Bloom node group exists
-            bloom_node = next((node for node in node_tree.nodes if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom), None)
-            if bloom_node:
+            oe_bloom_node = next(
+                (
+                    node for node in node_tree.nodes
+                    if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom
+                ),
+                None
+            )
+            if oe_bloom_node:
                 # Add Mute/Unmute property
-                layout.prop(scene, "bloom_mute_unmute_bool", text="Mute/Unmute", icon='CHECKBOX_HLT' if scene.bloom_mute_unmute_bool else 'CANCEL')
-                
-                # Display properties of the active node
-                box = layout.box()
-                box.label(text="Properties", icon="PROPERTIES")
+                layout.prop(
+                    scene,
+                    "bloom_mute_unmute_bool",
+                    text="Mute" if scene.bloom_mute_unmute_bool else "Unmute",
+                    icon='CHECKBOX_HLT' if scene.bloom_mute_unmute_bool else 'CANCEL'
+                )
 
-                for input in bloom_node.inputs:
+                # Organize inputs into panels
+                image_inputs = []
+                clamp_inputs = []
+                other_inputs = []
+
+                for input in oe_bloom_node.inputs:
                     # Skip the "Image" input
                     if input.name == OE_Bloom_Names.Image:
                         continue
-                    box.prop(input, "default_value", text=input.name)
+                    elif input.name in [
+                        OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
+                        OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
+                        OE_Bloom_Names.Color, OE_Bloom_Names.Intensity
+                    ]:
+                        image_inputs.append(input)
+                    elif OE_Bloom_Names.Clamp in input.name:
+                        clamp_inputs.append(input)
+                    else:
+                        other_inputs.append(input)
+
+                # Draw Image Panel
+                if image_inputs:
+                    # layout.label(text="Image", icon="IMAGE_DATA")
+                    for input in image_inputs:
+                        layout.prop(
+                            input,
+                            "default_value",
+                            text=input.name
+                        )
+
+                # Clamp Panel (Collapsible)
+                row = layout.row()
+                row.prop(scene, "bloom_show_clamp", icon="RESTRICT_RENDER_OFF", emboss=False)
+                if scene.bloom_show_clamp:
+                    clamp_box = layout.box()
+                    for input in clamp_inputs:
+                        clamp_box.prop(input, "default_value", text=input.name)
+    
+                # Other Panel (Collapsible)
+                row = layout.row()
+                row.prop(scene, "bloom_show_other", icon="MODIFIER", emboss=False)
+                if scene.bloom_show_other:
+                    other_box = layout.box()
+                    for input in other_inputs:
+                        other_box.prop(input, "default_value", text=input.name)
             else:
-                layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
+                # If the node group doesn't exist, show the operator to create it
+                layout.operator(
+                    "node.oe_bloom_operator",
+                    text="Create OE_Bloom",
+                    icon='NODE_MATERIAL'
+                )
 
 # Register and unregister
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
@@ -977,15 +1029,27 @@ classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
 def register():
     bpy.types.Scene.bloom_mute_unmute_bool = BoolProperty(
         name="Bloom Mute/Unmute",
-        description="Mute or unmute the OE_Bloom node group in the Compositor",
+        description="Toggle the bloom effect on or off",
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
+    )
+    bpy.types.Scene.bloom_show_clamp = bpy.props.BoolProperty(
+        name=OE_Bloom_Names.Clamp, 
+        description="Show or hide the Clamp settings",
+        default=False
+    )
+    bpy.types.Scene.bloom_show_other = bpy.props.BoolProperty(
+        name=OE_Bloom_Names.Other, 
+        description="Show or hide the Other settings",
+        default=False
     )
     for cls in classes:
         bpy.utils.register_class(cls)
 
 def unregister():
     del bpy.types.Scene.bloom_mute_unmute_bool
+    del bpy.types.Scene.bloom_show_clamp
+    del bpy.types.Scene.bloom_show_other
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
