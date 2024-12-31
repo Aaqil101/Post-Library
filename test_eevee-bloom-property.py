@@ -107,9 +107,13 @@ class OE_Bloom_Names:
     Hue = "Hue"
     Saturation = "Saturation"
     Fac = "Fac"
+    Composite = "Composite"
+    Viewer = "Viewer"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
+    IY_Clamp = "IY Clamp"
+    Clamp_Mix = "Clamp Mix"
     Blur_Mix = "Blur Mix"
     Bloom_Size = "Bloom Size"
     Group_Output = "Group Output"
@@ -129,6 +133,7 @@ class OE_Bloom_Names:
     Original_Bloom_Low = "Original Bloom Low"
     Reroute_00 = "Reroute_00"
     Reroute_01 = "Reroute_01"
+    Render_Layers = "Render Layers"
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -207,10 +212,14 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity_socket.description = "Blend factor"
 
     #Panel Clamp
-    clamp_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Clamp, default_closed=True)
+    clamp_mix_panel = oe_bloom.interface.new_panel(
+        OE_Bloom_Names.Clamp_Mix,
+        description="The mix node clamps",
+        default_closed=True
+    )
 
     #Socket Clamp
-    clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_panel)
+    clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat')
     clamp_socket.default_value = 1.0
     clamp_socket.min_value = 0.0
     clamp_socket.max_value = 2.0
@@ -219,7 +228,7 @@ def oe_bloom_node_group(context, operator, group_name):
     clamp_socket.description = "Maximum intensity a bloom pixel can have."
 
     #Socket BM Clamp
-    bm_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_panel)
+    bm_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     bm_clamp_socket.default_value = 1.0
     bm_clamp_socket.min_value = 0.0
     bm_clamp_socket.max_value = 1.0
@@ -228,7 +237,7 @@ def oe_bloom_node_group(context, operator, group_name):
     bm_clamp_socket.description = "Blur Mix Clamp"
 
     #Socket KM Clamp
-    km_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_panel)
+    km_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     km_clamp_socket.default_value = 0.0
     km_clamp_socket.min_value = 0.0
     km_clamp_socket.max_value = 1.0
@@ -237,7 +246,7 @@ def oe_bloom_node_group(context, operator, group_name):
     km_clamp_socket.description = "Knee Mix Clamp"
 
     #Socket CR Clamp
-    cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_panel)
+    cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     cr_clamp_socket.default_value = 0.0
     cr_clamp_socket.min_value = 0.0
     cr_clamp_socket.max_value = 1.0
@@ -245,8 +254,21 @@ def oe_bloom_node_group(context, operator, group_name):
     cr_clamp_socket.attribute_domain = 'POINT'
     cr_clamp_socket.description = "Color Clamp"
 
+    #Socket IY Clamp
+    cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    cr_clamp_socket.default_value = 0.0
+    cr_clamp_socket.min_value = 0.0
+    cr_clamp_socket.max_value = 1.0
+    cr_clamp_socket.subtype = 'FACTOR'
+    cr_clamp_socket.attribute_domain = 'POINT'
+    cr_clamp_socket.description = "Intensity Clamp"
+
     #Panel Other
-    other_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Other, default_closed=True)
+    other_panel = oe_bloom.interface.new_panel(
+        OE_Bloom_Names.Other,
+        description="Additional options for customizing the bloom effect",
+        default_closed=True
+    )
 
     #Socket Hue
     hue_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Hue, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -649,7 +671,7 @@ def oe_bloom_node_group(context, operator, group_name):
     ob_switch.location = (273.0, 112.0)
     original_bloom_low.location = (53.0, 172.0)
     group_input_01.location = (-320.0, -260.0)
-    reroute_00.location = (-180.0, -340.0)
+    reroute_00.location = (-180.0, -369.0)
     reroute_01.location = (0.0, -220.0)
     clamp.location = (400.0, -40.0)
     group_input_04.location = (400.0, -220.0)
@@ -777,13 +799,13 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         links = node_tree.links
 
         # Check if nodes exist, otherwise create them
-        render_layer_node = nodes.get("Render Layers") or nodes.new(type="CompositorNodeRLayers")
+        render_layer_node = nodes.get(OE_Bloom_Names.Render_Layers) or nodes.new(type="CompositorNodeRLayers")
         render_layer_node.location = (-300, 0)
 
-        composite_node = nodes.get("Composite") or nodes.new(type="CompositorNodeComposite")
+        composite_node = nodes.get(OE_Bloom_Names.Composite) or nodes.new(type="CompositorNodeComposite")
         composite_node.location = (300, 86)
 
-        viewer_node = nodes.get("Viewer") or nodes.new(type="CompositorNodeViewer")
+        viewer_node = nodes.get(OE_Bloom_Names.Viewer) or nodes.new(type="CompositorNodeViewer")
         viewer_node.location = (300, -24)
 
         custom_oe_bloom_node_name = OE_Bloom_Names.OE_Bloom
@@ -839,7 +861,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_obs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obs_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[1].default_value'
         )
 
         # Knee Bloom Switch
@@ -847,7 +869,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_kbs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_kbs_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[1].default_value'
         )
 
         # Original Bloom High
@@ -855,7 +877,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_obh_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obh_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
         )
 
         # Original Bloom Low
@@ -863,7 +885,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_obl_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obl_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[2].default_value'
         )
 
         # Original Bloom High Size
@@ -871,7 +893,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_obhs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obhs_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[8].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[16].default_value'
         )
 
         # Original Bloom Low Size
@@ -879,23 +901,55 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oe_bloom_obls_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obls_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[8].default_value'
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[16].default_value'
         )
 
         # Radius X
-        oe_bloom_arx_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_x').driver
-        oe_bloom_arx_driver.type = "AVERAGE"
+        oe_bloom_rx_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_x').driver
+        oe_bloom_rx_driver.type = "AVERAGE"
         add_driver_var(
-            oe_bloom_arx_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[5].default_value'
+            oe_bloom_rx_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
         )
 
         # Radius Y
-        oe_bloom_ary_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_y').driver
-        oe_bloom_ary_driver.type = "AVERAGE"
+        oe_bloom_ry_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_y').driver
+        oe_bloom_ry_driver.type = "AVERAGE"
         add_driver_var(
-            oe_bloom_ary_driver,
-            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[5].default_value'
+            oe_bloom_ry_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[4].default_value'
+        )
+
+        # Blur Mix Clamp
+        oe_bloom_bxc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur_Mix].driver_add('use_clamp').driver
+        oe_bloom_bxc_driver.type = "AVERAGE"
+        add_driver_var(
+            oe_bloom_bxc_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[8].default_value'
+        )
+
+        # Knee Mix Clamp
+        oe_bloom_kxc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Knee_Mix].driver_add('use_clamp').driver
+        oe_bloom_kxc_driver.type = "AVERAGE"
+        add_driver_var(
+            oe_bloom_kxc_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[9].default_value'
+        )
+
+        # Color Clamp
+        oe_bloom_cc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Color].driver_add('use_clamp').driver
+        oe_bloom_cc_driver.type = "AVERAGE"
+        add_driver_var(
+            oe_bloom_cc_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[10].default_value'
+        )
+
+        # Intensity Clamp
+        oe_bloom_ic_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Intensity].driver_add('use_clamp').driver
+        oe_bloom_ic_driver.type = "AVERAGE"
+        add_driver_var(
+            oe_bloom_ic_driver,
+            f'node_tree.nodes["{oe_bloom_node.name}"].inputs[11].default_value'
         )
 
         # Ensure all connections exist
@@ -982,7 +1036,8 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     elif input.name in [
                         OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
                         OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
-                        OE_Bloom_Names.Color, OE_Bloom_Names.Intensity
+                        OE_Bloom_Names.Color, OE_Bloom_Names.Intensity,
+                        OE_Bloom_Names.Clamp
                     ]:
                         image_inputs.append(input)
                     elif OE_Bloom_Names.Clamp in input.name:
@@ -1002,16 +1057,26 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 
                 # Clamp Panel (Collapsible)
                 row = layout.row()
-                row.prop(scene, "bloom_show_clamp", icon="RESTRICT_RENDER_OFF", emboss=False)
-                if scene.bloom_show_clamp:
+                row.prop(
+                    scene,
+                    "bloom_clamp_mix_bool",
+                    icon="RESTRICT_RENDER_OFF",
+                    emboss=False
+                )
+                if scene.bloom_clamp_mix_bool:
                     clamp_box = layout.box()
                     for input in clamp_inputs:
                         clamp_box.prop(input, "default_value", text=input.name)
     
                 # Other Panel (Collapsible)
                 row = layout.row()
-                row.prop(scene, "bloom_show_other", icon="MODIFIER", emboss=False)
-                if scene.bloom_show_other:
+                row.prop(
+                    scene,
+                    "bloom_other_bool",
+                    icon="MODIFIER",
+                    emboss=False
+                )
+                if scene.bloom_other_bool:
                     other_box = layout.box()
                     for input in other_inputs:
                         other_box.prop(input, "default_value", text=input.name)
@@ -1033,14 +1098,14 @@ def register():
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
     )
-    bpy.types.Scene.bloom_show_clamp = bpy.props.BoolProperty(
-        name=OE_Bloom_Names.Clamp, 
-        description="Show or hide the Clamp settings",
+    bpy.types.Scene.bloom_clamp_mix_bool = bpy.props.BoolProperty(
+        name=OE_Bloom_Names.Clamp_Mix, 
+        description="The mix node clamps",
         default=False
     )
-    bpy.types.Scene.bloom_show_other = bpy.props.BoolProperty(
-        name=OE_Bloom_Names.Other, 
-        description="Show or hide the Other settings",
+    bpy.types.Scene.bloom_other_bool = bpy.props.BoolProperty(
+        name=OE_Bloom_Names.Other,
+        description="Additional options for customizing the bloom effect",
         default=False
     )
     for cls in classes:
@@ -1048,8 +1113,8 @@ def register():
 
 def unregister():
     del bpy.types.Scene.bloom_mute_unmute_bool
-    del bpy.types.Scene.bloom_show_clamp
-    del bpy.types.Scene.bloom_show_other
+    del bpy.types.Scene.bloom_clamp_mix_bool
+    del bpy.types.Scene.bloom_other_bool
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
