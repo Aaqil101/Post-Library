@@ -135,6 +135,32 @@ class OE_Bloom_Names:
     Reroute_01 = "Reroute_01"
     Render_Layers = "Render Layers"
 
+# Class to store all the descriptions of the Bloom properties
+class OE_Bloom_Descr:
+    image = "Standard color output"
+    quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    threshold = "Filters out pixels under this level of brightness"
+    knee = "Makes transition between under/over-threshold gradual"
+    radius = "Bloom spread distance"
+    color = "Color applied to the bloom effect"
+    intensity = "Blend factor"
+    clamp = "Maximum intensity a bloom pixel can have"
+    other = "Additional options for customizing the bloom effect"
+    hue = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
+    saturation = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
+    fac = "The amount of influence the node exerts on the image"
+    node_ot_bloom = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
+    prop_pt_bloom = "Old Eevee Bloom In Both Eevee And Cycles"
+    blur_mix = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
+    bloom_size = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    bloom_mute_unmute_bool = "Toggle the bloom effect on or off"
+    oe_bloom = "Replication of the legacy eevee bloom option"
+    clamp_mix = "Clamps of each mix nodes in the oe_bloom node group"
+    bm_clamp = "Blur Mix Clamp"
+    km_clamp = "Knee Mix Clamp"
+    cr_clamp = "Color Clamp"
+    iy_clamp = "Intensity Clamp"
+
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
     scene = bpy.context.scene
@@ -145,7 +171,7 @@ def oe_bloom_node_group(context, operator, group_name):
         scene.use_nodes = True
 
     oe_bloom.color_tag = 'FILTER'
-    oe_bloom.description = "Replication of the legacy eevee bloom option"
+    oe_bloom.description = OE_Bloom_Descr.oe_bloom
     oe_bloom.default_group_node_width = 149
 
     #oe_bloom interface
@@ -158,7 +184,7 @@ def oe_bloom_node_group(context, operator, group_name):
     image_socket_1 = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Image, in_out='INPUT', socket_type = 'NodeSocketColor')
     image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket_1.attribute_domain = 'POINT'
-    image_socket_1.description = "Standard color output"
+    image_socket_1.description = OE_Bloom_Descr.image
 
     #Socket Quality
     quality_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Quality, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -167,7 +193,7 @@ def oe_bloom_node_group(context, operator, group_name):
     quality_socket.max_value = 1.0
     quality_socket.subtype = 'FACTOR'
     quality_socket.attribute_domain = 'POINT'
-    quality_socket.description = "If not set to something other the High, then the glare effect will only be applied to a low resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    quality_socket.description = OE_Bloom_Descr.quality
 
     #Socket Threshold
     threshold_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -176,7 +202,7 @@ def oe_bloom_node_group(context, operator, group_name):
     threshold_socket.max_value = 1000.0
     threshold_socket.subtype = 'NONE'
     threshold_socket.attribute_domain = 'POINT'
-    threshold_socket.description = "Filters out pixels under this level of brightness"
+    threshold_socket.description = OE_Bloom_Descr.threshold
 
     #Socket Knee
     knee_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -185,7 +211,7 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_socket.max_value = 1.0
     knee_socket.subtype = 'FACTOR'
     knee_socket.attribute_domain = 'POINT'
-    knee_socket.description = "Makes transition between under/over-threshold gradual"
+    knee_socket.description = OE_Bloom_Descr.knee
 
     #Socket Radius
     radius_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -194,13 +220,13 @@ def oe_bloom_node_group(context, operator, group_name):
     radius_socket.max_value = 2048.0
     radius_socket.subtype = 'NONE'
     radius_socket.attribute_domain = 'POINT'
-    radius_socket.description = "Bloom spread distance"
+    radius_socket.description = OE_Bloom_Descr.radius
 
     #Socket Color
     color_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Color, in_out='INPUT', socket_type = 'NodeSocketColor')
     color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     color_socket.attribute_domain = 'POINT'
-    color_socket.description = "Color applied to the bloom effect"
+    color_socket.description = OE_Bloom_Descr.color
 
     #Socket Intensity
     intensity_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -209,12 +235,12 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = 'FACTOR'
     intensity_socket.attribute_domain = 'POINT'
-    intensity_socket.description = "Blend factor"
+    intensity_socket.description = OE_Bloom_Descr.intensity
 
-    #Panel Clamp
+    #Panel Clamp Mix
     clamp_mix_panel = oe_bloom.interface.new_panel(
         OE_Bloom_Names.Clamp_Mix,
-        description="The mix node clamps",
+        description=OE_Bloom_Descr.clamp_mix,
         default_closed=True
     )
 
@@ -225,7 +251,7 @@ def oe_bloom_node_group(context, operator, group_name):
     clamp_socket.max_value = 2.0
     clamp_socket.subtype = 'FACTOR'
     clamp_socket.attribute_domain = 'POINT'
-    clamp_socket.description = "Maximum intensity a bloom pixel can have."
+    clamp_socket.description = OE_Bloom_Descr.clamp
 
     #Socket BM Clamp
     bm_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -234,7 +260,7 @@ def oe_bloom_node_group(context, operator, group_name):
     bm_clamp_socket.max_value = 1.0
     bm_clamp_socket.subtype = 'FACTOR'
     bm_clamp_socket.attribute_domain = 'POINT'
-    bm_clamp_socket.description = "Blur Mix Clamp"
+    bm_clamp_socket.description = OE_Bloom_Descr.bm_clamp
 
     #Socket KM Clamp
     km_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -243,7 +269,7 @@ def oe_bloom_node_group(context, operator, group_name):
     km_clamp_socket.max_value = 1.0
     km_clamp_socket.subtype = 'FACTOR'
     km_clamp_socket.attribute_domain = 'POINT'
-    km_clamp_socket.description = "Knee Mix Clamp"
+    km_clamp_socket.description = OE_Bloom_Descr.km_clamp
 
     #Socket CR Clamp
     cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -252,7 +278,7 @@ def oe_bloom_node_group(context, operator, group_name):
     cr_clamp_socket.max_value = 1.0
     cr_clamp_socket.subtype = 'FACTOR'
     cr_clamp_socket.attribute_domain = 'POINT'
-    cr_clamp_socket.description = "Color Clamp"
+    cr_clamp_socket.description = OE_Bloom_Descr.cr_clamp
 
     #Socket IY Clamp
     cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -261,12 +287,12 @@ def oe_bloom_node_group(context, operator, group_name):
     cr_clamp_socket.max_value = 1.0
     cr_clamp_socket.subtype = 'FACTOR'
     cr_clamp_socket.attribute_domain = 'POINT'
-    cr_clamp_socket.description = "Intensity Clamp"
+    cr_clamp_socket.description = OE_Bloom_Descr.iy_clamp
 
     #Panel Other
     other_panel = oe_bloom.interface.new_panel(
         OE_Bloom_Names.Other,
-        description="Additional options for customizing the bloom effect",
+        description=OE_Bloom_Descr.other,
         default_closed=True
     )
 
@@ -277,7 +303,7 @@ def oe_bloom_node_group(context, operator, group_name):
     hue_socket.max_value = 1.0
     hue_socket.subtype = 'FACTOR'
     hue_socket.attribute_domain = 'POINT'
-    hue_socket.description = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
+    hue_socket.description = OE_Bloom_Descr.hue
 
     #Socket Saturation
     saturation_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Saturation, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -286,7 +312,7 @@ def oe_bloom_node_group(context, operator, group_name):
     saturation_socket.max_value = 2.0
     saturation_socket.subtype = 'FACTOR'
     saturation_socket.attribute_domain = 'POINT'
-    saturation_socket.description = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
+    saturation_socket.description = OE_Bloom_Descr.saturation
 
     #Socket Fac
     fac_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Fac, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -295,7 +321,7 @@ def oe_bloom_node_group(context, operator, group_name):
     fac_socket.max_value = 1.0
     fac_socket.subtype = 'FACTOR'
     fac_socket.attribute_domain = 'POINT'
-    fac_socket.description = "The amount of influence the node exerts on the image"
+    fac_socket.description = OE_Bloom_Descr.fac
 
     #Socket Blur Mix
     blur_mix_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Blur_Mix, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -304,7 +330,7 @@ def oe_bloom_node_group(context, operator, group_name):
     blur_mix_socket.max_value = 1.0
     blur_mix_socket.subtype = 'NONE'
     blur_mix_socket.attribute_domain = 'POINT'
-    blur_mix_socket.description = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
+    blur_mix_socket.description = OE_Bloom_Descr.blur_mix
 
     #Socket Bloom Size
     bloom_size_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Bloom_Size, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -313,7 +339,7 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_size_socket.max_value = 9.0
     bloom_size_socket.subtype = 'NONE'
     bloom_size_socket.attribute_domain = 'POINT'
-    bloom_size_socket.description = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    bloom_size_socket.description = OE_Bloom_Descr.bloom_size
 
     #initialize oe_bloom nodes
     #node Group Output
@@ -790,7 +816,7 @@ def oe_bloom_node_group(context, operator, group_name):
 class NODE_OT_BLOOM(bpy.types.Operator):
     bl_label = OE_Bloom_Names.OE_Bloom
     bl_idname = "node.oe_bloom_operator"
-    bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
+    bl_description = OE_Bloom_Descr.node_ot_bloom
 
     def execute(shelf, context):
         # Get the compositor node tree
@@ -992,9 +1018,8 @@ class PROP_PT_BLOOM(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'render'
-    bl_description = 'Old Eevee Bloom In Both Eevee And Cycles'
+    bl_description = OE_Bloom_Descr.prop_pt_bloom
     bl_order = 3
-    bl_ui_units_x = 0
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -1026,7 +1051,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 
                 # Organize inputs into panels
                 image_inputs = []
-                clamp_inputs = []
+                clamp_mix_inputs = []
                 other_inputs = []
 
                 for input in oe_bloom_node.inputs:
@@ -1041,7 +1066,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     ]:
                         image_inputs.append(input)
                     elif OE_Bloom_Names.Clamp in input.name:
-                        clamp_inputs.append(input)
+                        clamp_mix_inputs.append(input)
                     else:
                         other_inputs.append(input)
 
@@ -1064,9 +1089,9 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     emboss=False
                 )
                 if scene.bloom_clamp_mix_bool:
-                    clamp_box = layout.box()
-                    for input in clamp_inputs:
-                        clamp_box.prop(input, "default_value", text=input.name)
+                    clamp_mix_box = layout.box()
+                    for input in clamp_mix_inputs:
+                        clamp_mix_box.prop(input, "default_value", text=input.name)
     
                 # Other Panel (Collapsible)
                 row = layout.row()
@@ -1091,30 +1116,32 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 # Register and unregister
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
 
+prop_scene = bpy.types.Scene
+
 def register():
-    bpy.types.Scene.bloom_mute_unmute_bool = BoolProperty(
+    prop_scene.bloom_mute_unmute_bool = BoolProperty(
         name="Bloom Mute/Unmute",
-        description="Toggle the bloom effect on or off",
+        description=OE_Bloom_Descr.bloom_mute_unmute_bool,
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
     )
-    bpy.types.Scene.bloom_clamp_mix_bool = bpy.props.BoolProperty(
+    prop_scene.bloom_clamp_mix_bool = bpy.props.BoolProperty(
         name=OE_Bloom_Names.Clamp_Mix, 
-        description="The mix node clamps",
+        description=OE_Bloom_Descr.clamp_mix,
         default=False
     )
-    bpy.types.Scene.bloom_other_bool = bpy.props.BoolProperty(
+    prop_scene.bloom_other_bool = bpy.props.BoolProperty(
         name=OE_Bloom_Names.Other,
-        description="Additional options for customizing the bloom effect",
+        description=OE_Bloom_Descr.other,
         default=False
     )
     for cls in classes:
         bpy.utils.register_class(cls)
 
 def unregister():
-    del bpy.types.Scene.bloom_mute_unmute_bool
-    del bpy.types.Scene.bloom_clamp_mix_bool
-    del bpy.types.Scene.bloom_other_bool
+    del prop_scene.bloom_mute_unmute_bool
+    del prop_scene.bloom_clamp_mix_bool
+    del prop_scene.bloom_other_bool
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
