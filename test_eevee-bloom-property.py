@@ -379,17 +379,11 @@ def oe_bloom_node_group(context, operator, group_name):
     original_bloom_high.name = OE_Bloom_Names.Original_Bloom_High
     original_bloom_high.use_custom_color = True
     original_bloom_high.color = Color.DARK_PURPLE
-    original_bloom_high.angle_offset = 0.0
-    original_bloom_high.color_modulation = 0.25
-    original_bloom_high.fade = 0.9
     original_bloom_high.glare_type = 'BLOOM'
-    original_bloom_high.iterations = 3
-    original_bloom_high.mix = 1.0
     original_bloom_high.quality = 'HIGH'
-    original_bloom_high.size = 1
-    original_bloom_high.streaks = 4
-    original_bloom_high.threshold = 0.0
-    original_bloom_high.use_rotate_45 = True
+    original_bloom_high.mix = 1.0
+    original_bloom_high.threshold = 1.0
+    original_bloom_high.size = 9
 
     #node Color
     color = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -410,18 +404,9 @@ def oe_bloom_node_group(context, operator, group_name):
     blur.name = OE_Bloom_Names.Blur
     blur.use_custom_color = True
     blur.color = Color.DARK_PURPLE
-    blur.aspect_correction = 'NONE'
-    blur.factor = 0.0
-    blur.factor_x = 0.0
-    blur.factor_y = 0.0
     blur.filter_type = 'FAST_GAUSS'
-    blur.size_x = 0
-    blur.size_y = 0
-    blur.use_bokeh = False
     blur.use_extended_bounds = False
-    blur.use_gamma_correction = False
     blur.use_relative = False
-    blur.use_variable_size = False
 
     #node Blur Mix
     blur_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -452,17 +437,11 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_bloom_high.name = OE_Bloom_Names.Knee_Bloom_High
     knee_bloom_high.use_custom_color = True
     knee_bloom_high.color = Color.DARK_PURPLE
-    knee_bloom_high.angle_offset = 0.0
-    knee_bloom_high.color_modulation = 0.25
-    knee_bloom_high.fade = 0.9
     knee_bloom_high.glare_type = 'BLOOM'
-    knee_bloom_high.iterations = 3
-    knee_bloom_high.mix = 1.0
     knee_bloom_high.quality = 'HIGH'
+    knee_bloom_high.mix = 1.0
+    knee_bloom_high.threshold = 1.0
     knee_bloom_high.size = 9
-    knee_bloom_high.streaks = 4
-    knee_bloom_high.threshold = 0.0
-    knee_bloom_high.use_rotate_45 = True
 
     #node Knee Mix
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -564,17 +543,11 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
     knee_bloom_low.use_custom_color = True
     knee_bloom_low.color = Color.DARK_PURPLE
-    knee_bloom_low.angle_offset = 0.0
-    knee_bloom_low.color_modulation = 0.25
-    knee_bloom_low.fade = 0.9
     knee_bloom_low.glare_type = 'BLOOM'
-    knee_bloom_low.iterations = 3
-    knee_bloom_low.mix = 1.0
     knee_bloom_low.quality = 'LOW'
+    knee_bloom_low.mix = 1.0
+    knee_bloom_low.threshold = 1.0
     knee_bloom_low.size = 9
-    knee_bloom_low.streaks = 4
-    knee_bloom_low.threshold = 0.0
-    knee_bloom_low.use_rotate_45 = True
 
     #node KB Switch
     kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
@@ -598,17 +571,11 @@ def oe_bloom_node_group(context, operator, group_name):
     original_bloom_low.name = OE_Bloom_Names.Original_Bloom_Low
     original_bloom_low.use_custom_color = True
     original_bloom_low.color = Color.DARK_PURPLE
-    original_bloom_low.angle_offset = 0.0
-    original_bloom_low.color_modulation = 0.25
-    original_bloom_low.fade = 0.9
     original_bloom_low.glare_type = 'BLOOM'
-    original_bloom_low.iterations = 3
-    original_bloom_low.mix = 1.0
     original_bloom_low.quality = 'LOW'
-    original_bloom_low.size = 1
-    original_bloom_low.streaks = 4
-    original_bloom_low.threshold = 0.0
-    original_bloom_low.use_rotate_45 = True
+    original_bloom_low.mix = 1.0
+    original_bloom_low.threshold = 1.0
+    original_bloom_low.size = 9
 
     #node Group Input 01
     group_input_01 = oe_bloom.nodes.new("NodeGroupInput")
@@ -1107,11 +1074,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                         other_box.prop(input, "default_value", text=input.name)
             else:
                 # If the node group doesn't exist, show the operator to create it
-                layout.operator(
-                    "node.oe_bloom_operator",
-                    text="Create OE_Bloom",
-                    icon='NODE_MATERIAL'
-                )
+                layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
 
 # Register and unregister
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
