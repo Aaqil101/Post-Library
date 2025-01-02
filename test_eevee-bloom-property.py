@@ -1139,53 +1139,89 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                 # If the node group doesn't exist, show the operator to create it
                 layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
 
-# Register and unregister
+# Classes to register
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM]
 
+# Property definitions
+properties = [
+    {
+        "name": "bloom_mute_unmute_bool",
+        "type": BoolProperty,
+        "kwargs": {
+            "name": OE_Bloom_Names.Bloom_Mute_Unmute,
+            "description": OE_Bloom_Descr.bloom_mute_unmute_bool,
+            "default": False,
+            "update": toggle_oe_bloom_mute  # Attach the callback function
+        },
+    },
+    {
+        "name": "real_time_compositing_enum",
+        "type": EnumProperty,
+        "kwargs": {
+            "name": OE_Bloom_Names.Real_Time_Compositing,
+            "description": OE_Bloom_Descr.real_time_compositing,
+            "items": [
+                (
+                    OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
+                ),
+                (
+                    OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
+                ),
+                (
+                    OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
+                ),
+            ],
+            "default": OE_Bloom_Names.Disabled.upper(),
+        },
+    },
+    {
+        "name": "bloom_clamp_mix_bool",
+        "type": BoolProperty,
+        "kwargs": {
+            "name": OE_Bloom_Names.Clamp_Mix,
+            "description": OE_Bloom_Descr.clamp_mix,
+            "default": False
+        },
+    },
+    {
+        "name": "bloom_other_bool",
+        "type": BoolProperty,
+        "kwargs": {
+            "name": OE_Bloom_Names.Other,
+            "description": OE_Bloom_Descr.other,
+            "default": False
+        },
+    },
+]
+
+# Scene property reference
 prop_scene = bpy.types.Scene
 
+# Register and unregister
 def register():
-    prop_scene.bloom_mute_unmute_bool = BoolProperty(
-        name=OE_Bloom_Names.Bloom_Mute_Unmute,
-        description=OE_Bloom_Descr.bloom_mute_unmute_bool,
-        default=False,
-        update=toggle_oe_bloom_mute  # Attach the callback function
-    )
-    prop_scene.real_time_compositing_enum = EnumProperty(
-        name=OE_Bloom_Names.Real_Time_Compositing,
-        description=OE_Bloom_Descr.real_time_compositing,
-        items=[
-            (
-                OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
-            ),
-            (
-                OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
-            ),
-            (
-                OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
+    # Register properties
+    for prop in properties:
+        setattr(
+            prop_scene,
+            prop["name"],
+            prop["type"](
+                **prop["kwargs"]
             )
-        ],
-        default=OE_Bloom_Names.Disabled.upper(),
-        update=update_real_time_compositing  # Attach the callback function here
-    )
-    prop_scene.bloom_clamp_mix_bool = BoolProperty(
-        name=OE_Bloom_Names.Clamp_Mix,
-        description=OE_Bloom_Descr.clamp_mix,
-        default=False
-    )
-    prop_scene.bloom_other_bool = BoolProperty(
-        name=OE_Bloom_Names.Other,
-        description=OE_Bloom_Descr.other,
-        default=False
-    )
+        )
+
+    # Register classes
     for cls in classes:
         bpy.utils.register_class(cls)
 
 def unregister():
-    del prop_scene.bloom_mute_unmute_bool
-    del prop_scene.real_time_compositing_enum
-    del prop_scene.bloom_clamp_mix_bool
-    del prop_scene.bloom_other_bool
+    # Unregister properties
+    for prop in properties:
+        delattr(
+            prop_scene,
+            prop["name"]
+        )
+
+    # Unregister classes
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
