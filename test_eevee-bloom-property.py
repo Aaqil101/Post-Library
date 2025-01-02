@@ -1076,7 +1076,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     scene,
                     "bloom_mute_unmute_bool",
                     text="Mute" if scene.bloom_mute_unmute_bool else "Unmute",
-                    icon='CHECKBOX_HLT' if scene.bloom_mute_unmute_bool else 'CANCEL'
+                    icon='MUTE_IPO_ON' if scene.bloom_mute_unmute_bool else 'MUTE_IPO_OFF'
                 )
 
                 # Organize inputs into panels
