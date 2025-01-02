@@ -1,6 +1,6 @@
 import bpy
 from typing import Tuple
-from bpy.props import BoolProperty
+from bpy.props import BoolProperty, EnumProperty
 
 def toggle_oe_bloom_mute(self, context):
     """
@@ -22,6 +22,49 @@ def toggle_oe_bloom_mute(self, context):
         print("Node group 'OE_Bloom' not found in the Compositor node tree.")
     else:
         print("Compositor node tree is not active.")
+
+def update_real_time_compositing(self, context):
+    """
+    Callback function to update the 'use_compositor' property of the 3D Viewport's shading space based on the 'real_time_compositing_enum' property value.
+
+    Args:
+        self: The current context owner (usually the scene).
+        context: The Blender context.
+
+    Notes:
+        This function is called when the 'real_time_compositing_enum' property is updated. It iterates through all areas in the current screen and finds the 3D Viewport's shading space. It then updates the 'use_compositor' property based on the 'real_time_compositing_enum' value. If the 3D Viewport is not found, a message is printed to the console.
+    """
+    for area in context.screen.areas:  # Iterate through all areas
+        if area.type == 'VIEW_3D':  # Find the 3D Viewport
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':  # Confirm it's a 3D View space
+                    if hasattr(space.shading, 'use_compositor'):  # Ensure shading property exists
+                        if self.real_time_compositing_enum == OE_Bloom_Names.Disabled.upper():
+                            space.shading.use_compositor = OE_Bloom_Names.Disabled.upper()
+                        elif self.real_time_compositing_enum == OE_Bloom_Names.Camera.upper():
+                            space.shading.use_compositor = OE_Bloom_Names.Camera.upper()
+                        elif self.real_time_compositing_enum == OE_Bloom_Names.Always.upper():
+                            space.shading.use_compositor = OE_Bloom_Names.Always.upper()
+            break
+    else:
+        # self.report({'WARNING'}, "No 3D Viewport available to update the shading property.")
+        print("No 3D Viewport available to update the shading property.")
+
+def poll_view_3d(self, context):
+    """
+    Check if a 3D Viewport area exists in the current screen layout.
+
+    Args:
+        self: The current context owner (typically a UI panel or operator).
+        context: The Blender context containing information about the current state.
+
+    Returns:
+        bool: True if a 3D Viewport area is found, otherwise False.
+    """
+    for area in context.screen.areas:
+        if area.type == 'VIEW_3D':  # Check if VIEW_3D area exists
+            return True
+    return False
 
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
@@ -109,6 +152,9 @@ class OE_Bloom_Names:
     Fac = "Fac"
     Composite = "Composite"
     Viewer = "Viewer"
+    Disabled = "Disabled"
+    Camera = "Camera"
+    Always = "Always"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
@@ -134,6 +180,8 @@ class OE_Bloom_Names:
     Reroute_00 = "Reroute_00"
     Reroute_01 = "Reroute_01"
     Render_Layers = "Render Layers"
+    Bloom_Mute_Unmute = "Bloom Mute/Unmute"
+    Real_Time_Compositing = "Real-Time Compositor"
 
 # Class to store all the descriptions of the Bloom properties
 class OE_Bloom_Descr:
@@ -160,6 +208,10 @@ class OE_Bloom_Descr:
     km_clamp = "Knee Mix Clamp"
     cr_clamp = "Color Clamp"
     iy_clamp = "Intensity Clamp"
+    real_time_compositing = "When to preview the compositor output inside the viewport"
+    disabled = "The compositor is disabled"
+    camera = "The compositor is enabled only in camera view"
+    always = "The compositor is always enabled regardless of the view"
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -1008,6 +1060,17 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                 None
             )
             if oe_bloom_node:
+                # Add Real-Time Compositing property
+                # Conditionally display the enum property based on the presence of a VIEW_3D area
+                if poll_view_3d(self, context):
+                    layout.alignment = 'RIGHT'
+                    layout.prop(
+                        scene,
+                        "real_time_compositing_enum",
+                    ) # Show the enum property
+                # else:
+                    # layout.label(text="No 3D View found. The enum property will not be shown.")
+
                 # Add Mute/Unmute property
                 layout.prop(
                     scene,
@@ -1083,17 +1146,34 @@ prop_scene = bpy.types.Scene
 
 def register():
     prop_scene.bloom_mute_unmute_bool = BoolProperty(
-        name="Bloom Mute/Unmute",
+        name=OE_Bloom_Names.Bloom_Mute_Unmute,
         description=OE_Bloom_Descr.bloom_mute_unmute_bool,
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
     )
-    prop_scene.bloom_clamp_mix_bool = bpy.props.BoolProperty(
-        name=OE_Bloom_Names.Clamp_Mix, 
+    prop_scene.real_time_compositing_enum = EnumProperty(
+        name=OE_Bloom_Names.Real_Time_Compositing,
+        description=OE_Bloom_Descr.real_time_compositing,
+        items=[
+            (
+                OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
+            ),
+            (
+                OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
+            ),
+            (
+                OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
+            )
+        ],
+        default=OE_Bloom_Names.Disabled.upper(),
+        update=update_real_time_compositing  # Attach the callback function here
+    )
+    prop_scene.bloom_clamp_mix_bool = BoolProperty(
+        name=OE_Bloom_Names.Clamp_Mix,
         description=OE_Bloom_Descr.clamp_mix,
         default=False
     )
-    prop_scene.bloom_other_bool = bpy.props.BoolProperty(
+    prop_scene.bloom_other_bool = BoolProperty(
         name=OE_Bloom_Names.Other,
         description=OE_Bloom_Descr.other,
         default=False
@@ -1103,6 +1183,7 @@ def register():
 
 def unregister():
     del prop_scene.bloom_mute_unmute_bool
+    del prop_scene.real_time_compositing_enum
     del prop_scene.bloom_clamp_mix_bool
     del prop_scene.bloom_other_bool
     for cls in classes:
