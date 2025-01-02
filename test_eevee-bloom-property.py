@@ -45,16 +45,21 @@ def toggle_oe_bloom_mute(self, context):
 
 def update_real_time_compositing(self, context):
     """
-    Callback function to update the 'use_compositor' property of the 3D Viewport's shading space based on the 'real_time_compositing_enum' property value.
+    Update the real-time compositing settings for 3D Viewport areas based on the 
+    'real_time_compositing_enum' attribute.
+
+    This function iterates through all screen areas in the current context and checks 
+    for 3D Viewport areas. If found, it updates the 'use_compositor' attribute of the 
+    shading settings for the 3D View space based on the value of 'real_time_compositing_enum', 
+    which can be 'DISABLED', 'CAMERA', or 'ALWAYS'.
 
     Args:
-        self: The current context owner (usually the scene).
-        context: The Blender context.
+        self: The instance of the class containing the 'real_time_compositing_enum' attribute.
+        context: The Blender context, providing access to the current screen and its areas.
 
-    Notes:
-        This function is called when the 'real_time_compositing_enum' property is updated. It iterates through all areas in the current screen and finds the 3D Viewport's shading space. It then updates the 'use_compositor' property based on the 'real_time_compositing_enum' value. If the 3D Viewport is not found, a message is printed to the console.
+    Returns:
+        None
     """
-    print(f"Real-time compositing mode: {self.real_time_compositing_enum}")
     for area in context.screen.areas:  # Iterate through all areas
         if area.type == 'VIEW_3D':  # Find the 3D Viewport
             for space in area.spaces:
@@ -1093,10 +1098,16 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     None
                 )
                 if oe_bloom_node:
-                    # Show Real-Time Compositing property
+                    # Add Real-Time Compositing property
+                    # Conditionally display the enum property based on the presence of a VIEW_3D area
                     if poll_view_3d(self, context):
                         layout.alignment = 'RIGHT'
-                        layout.prop(scene, "real_time_compositing_enum")
+                        layout.prop(
+                            scene,
+                            "real_time_compositing_enum",
+                        ) # Show the enum property
+                    # else:
+                        # layout.label(text="No 3D View found. The enum property will not be shown.")
 
                     # Show Mute/Unmute property
                     layout.prop(
@@ -1150,75 +1161,56 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     # If OE_Bloom node doesn't exist, show the operator to create it
                     layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
 
-# Classes to register
-classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
-
-# Property definitions
-properties = [
-    {
-        "name": "bloom_mute_unmute_bool",
-        "type": BoolProperty,
-        "kwargs": {
-            "name": OE_Bloom_Names.Bloom_Mute_Unmute,
-            "description": OE_Bloom_Descr.bloom_mute_unmute_bool,
-            "default": False,
-            "update": toggle_oe_bloom_mute  # Attach the callback function
-        },
-    },
-    {
-        "name": "real_time_compositing_enum",
-        "type": EnumProperty,
-        "kwargs": {
-            "name": OE_Bloom_Names.Real_Time_Compositing,
-            "description": OE_Bloom_Descr.real_time_compositing,
-            "items": [
-                (
-                    OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
-                ),
-                (
-                    OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
-                ),
-                (
-                    OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
-                ),
-            ],
-            "default": OE_Bloom_Names.Disabled.upper(),
-        },
-    },
-    {
-        "name": "bloom_clamp_mix_bool",
-        "type": BoolProperty,
-        "kwargs": {
-            "name": OE_Bloom_Names.Clamp_Mix,
-            "description": OE_Bloom_Descr.clamp_mix,
-            "default": False
-        },
-    },
-    {
-        "name": "bloom_other_bool",
-        "type": BoolProperty,
-        "kwargs": {
-            "name": OE_Bloom_Names.Other,
-            "description": OE_Bloom_Descr.other,
-            "default": False
-        },
-    },
-]
-
 # Scene property reference
 prop_scene = bpy.types.Scene
+
+# Classes to Register/Unregister
+classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
+
+# Properties to Register/Unregister
+properties = [
+    prop_scene.bloom_mute_unmute_bool,
+    prop_scene.real_time_compositing_enum,
+    prop_scene.bloom_clamp_mix_bool,
+    prop_scene.bloom_other_bool
+]
 
 # Register and unregister
 def register():
     # Register properties
-    for prop in properties:
-        setattr(
-            prop_scene,
-            prop["name"],
-            prop["type"](
-                **prop["kwargs"]
+    prop_scene.bloom_mute_unmute_bool = BoolProperty(
+        name=OE_Bloom_Names.Bloom_Mute_Unmute,
+        description=OE_Bloom_Descr.bloom_mute_unmute_bool,
+        default=False,
+        update=toggle_oe_bloom_mute  # Attach the callback function
+    )
+    prop_scene.real_time_compositing_enum = EnumProperty(
+        name=OE_Bloom_Names.Real_Time_Compositing,
+        description=OE_Bloom_Descr.real_time_compositing,
+        items=[
+            (
+                OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
+            ),
+            (
+                OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
+            ),
+            (
+                OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
             )
-        )
+        ],
+        default=OE_Bloom_Names.Disabled.upper(),
+        update=update_real_time_compositing  # Attach the callback function here
+    )
+    prop_scene.bloom_clamp_mix_bool = BoolProperty(
+        name=OE_Bloom_Names.Clamp_Mix,
+        description=OE_Bloom_Descr.clamp_mix,
+        default=False
+    )
+    prop_scene.bloom_other_bool = BoolProperty(
+        name=OE_Bloom_Names.Other,
+        description=OE_Bloom_Descr.other,
+        default=False
+    )
 
     # Register classes
     for cls in classes:
@@ -1227,10 +1219,7 @@ def register():
 def unregister():
     # Unregister properties
     for prop in properties:
-        delattr(
-            prop_scene,
-            prop["name"]
-        )
+        delattr(prop_scene, prop)
 
     # Unregister classes
     for cls in classes:
