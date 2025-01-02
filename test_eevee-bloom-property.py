@@ -1167,14 +1167,6 @@ prop_scene = bpy.types.Scene
 # Classes to Register/Unregister
 classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
-# Properties to Register/Unregister
-properties = [
-    prop_scene.bloom_mute_unmute_bool,
-    prop_scene.real_time_compositing_enum,
-    prop_scene.bloom_clamp_mix_bool,
-    prop_scene.bloom_other_bool
-]
-
 # Register and unregister
 def register():
     # Register properties
@@ -1218,8 +1210,10 @@ def register():
 
 def unregister():
     # Unregister properties
-    for prop in properties:
-        delattr(prop_scene, prop)
+    del prop_scene.bloom_mute_unmute_bool
+    del prop_scene.real_time_compositing_enum
+    del prop_scene.bloom_clamp_mix_bool
+    del prop_scene.bloom_other_bool
 
     # Unregister classes
     for cls in classes:
