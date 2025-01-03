@@ -243,7 +243,6 @@ class OE_Bloom_Descr:
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
-    scene = bpy.context.scene
     oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     oe_bloom.color_tag = 'FILTER'
@@ -313,13 +312,6 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity_socket.attribute_domain = 'POINT'
     intensity_socket.description = OE_Bloom_Descr.intensity
 
-    #Panel Clamp Mix
-    clamp_mix_panel = oe_bloom.interface.new_panel(
-        OE_Bloom_Names.Clamp_Mix,
-        description=OE_Bloom_Descr.clamp_mix,
-        default_closed=True
-    )
-
     #Socket Clamp
     clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat')
     clamp_socket.default_value = 1.0
@@ -328,6 +320,10 @@ def oe_bloom_node_group(context, operator, group_name):
     clamp_socket.subtype = 'FACTOR'
     clamp_socket.attribute_domain = 'POINT'
     clamp_socket.description = OE_Bloom_Descr.clamp
+
+    #Panel Clamp Mix
+    clamp_mix_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Clamp_Mix, default_closed=True)
+    clamp_mix_panel.description = OE_Bloom_Descr.clamp_mix
 
     #Socket BM Clamp
     bm_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -357,20 +353,17 @@ def oe_bloom_node_group(context, operator, group_name):
     cr_clamp_socket.description = OE_Bloom_Descr.cr_clamp
 
     #Socket IY Clamp
-    cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
-    cr_clamp_socket.default_value = 0.0
-    cr_clamp_socket.min_value = 0.0
-    cr_clamp_socket.max_value = 1.0
-    cr_clamp_socket.subtype = 'FACTOR'
-    cr_clamp_socket.attribute_domain = 'POINT'
-    cr_clamp_socket.description = OE_Bloom_Descr.iy_clamp
+    iy_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    iy_clamp_socket.default_value = 0.0
+    iy_clamp_socket.min_value = 0.0
+    iy_clamp_socket.max_value = 1.0
+    iy_clamp_socket.subtype = 'FACTOR'
+    iy_clamp_socket.attribute_domain = 'POINT'
+    iy_clamp_socket.description = OE_Bloom_Descr.iy_clamp
 
     #Panel Other
-    other_panel = oe_bloom.interface.new_panel(
-        OE_Bloom_Names.Other,
-        description=OE_Bloom_Descr.other,
-        default_closed=True
-    )
+    other_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Other, default_closed=True)
+    other_panel.description = OE_Bloom_Descr.other
 
     #Socket Hue
     hue_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Hue, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -424,30 +417,8 @@ def oe_bloom_node_group(context, operator, group_name):
     group_output.name = OE_Bloom_Names.Group_Output
     group_output.use_custom_color = True
     group_output.color = Color.DARK_GRAY
+    group_output.inputs[1].hide = True
     group_output.is_active_output = True
-
-    #node Group Input 00
-    group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_00.label = OE_Bloom_Names.Group_Input_00
-    group_input_00.name = OE_Bloom_Names.Group_Input_00
-    group_input_00.use_custom_color = True
-    group_input_00.color = Color.DARK_GRAY
-    group_input_00.outputs[1].hide = True
-    group_input_00.outputs[2].hide = True
-    group_input_00.outputs[3].hide = True
-    group_input_00.outputs[4].hide = True
-    group_input_00.outputs[5].hide = True
-    group_input_00.outputs[6].hide = True
-    group_input_00.outputs[7].hide = True
-    group_input_00.outputs[8].hide = True
-    group_input_00.outputs[9].hide = True
-    group_input_00.outputs[10].hide = True
-    group_input_00.outputs[11].hide = True
-    group_input_00.outputs[12].hide = True
-    group_input_00.outputs[13].hide = True
-    group_input_00.outputs[14].hide = True
-    group_input_00.outputs[15].hide = True
-    group_input_00.outputs[16].hide = True
 
     #node Original Bloom High
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
@@ -455,11 +426,17 @@ def oe_bloom_node_group(context, operator, group_name):
     original_bloom_high.name = OE_Bloom_Names.Original_Bloom_High
     original_bloom_high.use_custom_color = True
     original_bloom_high.color = Color.DARK_PURPLE
+    original_bloom_high.angle_offset = 0.0
+    original_bloom_high.color_modulation = 0.25
+    original_bloom_high.fade = 0.9
     original_bloom_high.glare_type = 'BLOOM'
-    original_bloom_high.quality = 'HIGH'
+    original_bloom_high.iterations = 3
     original_bloom_high.mix = 1.0
-    original_bloom_high.threshold = 1.0
+    original_bloom_high.quality = 'HIGH'
     original_bloom_high.size = 9
+    original_bloom_high.streaks = 4
+    original_bloom_high.threshold = 1.0
+    original_bloom_high.use_rotate_45 = True
 
     #node Color
     color = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -480,9 +457,18 @@ def oe_bloom_node_group(context, operator, group_name):
     blur.name = OE_Bloom_Names.Blur
     blur.use_custom_color = True
     blur.color = Color.DARK_PURPLE
+    blur.aspect_correction = 'NONE'
+    blur.factor = 0.0
+    blur.factor_x = 0.0
+    blur.factor_y = 0.0
     blur.filter_type = 'FAST_GAUSS'
+    blur.size_x = 0
+    blur.size_y = 0
+    blur.use_bokeh = False
     blur.use_extended_bounds = False
+    blur.use_gamma_correction = False
     blur.use_relative = False
+    blur.use_variable_size = False
 
     #node Blur Mix
     blur_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -513,11 +499,17 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_bloom_high.name = OE_Bloom_Names.Knee_Bloom_High
     knee_bloom_high.use_custom_color = True
     knee_bloom_high.color = Color.DARK_PURPLE
+    knee_bloom_high.angle_offset = 0.0
+    knee_bloom_high.color_modulation = 0.25
+    knee_bloom_high.fade = 0.9
     knee_bloom_high.glare_type = 'BLOOM'
-    knee_bloom_high.quality = 'HIGH'
+    knee_bloom_high.iterations = 3
     knee_bloom_high.mix = 1.0
-    knee_bloom_high.threshold = 1.0
+    knee_bloom_high.quality = 'HIGH'
     knee_bloom_high.size = 9
+    knee_bloom_high.streaks = 4
+    knee_bloom_high.threshold = 1.0
+    knee_bloom_high.use_rotate_45 = True
 
     #node Knee Mix
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -529,50 +521,114 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_mix.use_alpha = False
     knee_mix.use_clamp = False
 
-    #node Group Input 05
-    group_input_05 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_05.label = OE_Bloom_Names.Group_Input_05
-    group_input_05.name = OE_Bloom_Names.Group_Input_05
-    group_input_05.use_custom_color = True
-    group_input_05.color = Color.DARK_GRAY
-    group_input_05.outputs[1].hide = True
-    group_input_05.outputs[2].hide = True
-    group_input_05.outputs[3].hide = True
-    group_input_05.outputs[4].hide = True
-    group_input_05.outputs[5].hide = True
-    group_input_05.outputs[7].hide = True
-    group_input_05.outputs[8].hide = True
-    group_input_05.outputs[9].hide = True
-    group_input_05.outputs[10].hide = True
-    group_input_05.outputs[11].hide = True
-    group_input_05.outputs[12].hide = True
-    group_input_05.outputs[13].hide = True
-    group_input_05.outputs[14].hide = True
-    group_input_05.outputs[15].hide = True
-    group_input_05.outputs[16].hide = True
+    #node Bloom High && Low
+    bloom_high____low = oe_bloom.nodes.new("NodeFrame")
+    bloom_high____low.label = OE_Bloom_Names.Bloom_High_Low
+    bloom_high____low.name = OE_Bloom_Names.Bloom_High_Low
+    bloom_high____low.use_custom_color = True
 
-    #node Group Input 03
-    group_input_03 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_03.label = OE_Bloom_Names.Group_Input_03
-    group_input_03.name = OE_Bloom_Names.Group_Input_03
-    group_input_03.use_custom_color = True
-    group_input_03.color = Color.DARK_GRAY
-    group_input_03.outputs[0].hide = True
-    group_input_03.outputs[1].hide = True
-    group_input_03.outputs[2].hide = True
-    group_input_03.outputs[3].hide = True
-    group_input_03.outputs[4].hide = True
-    group_input_03.outputs[6].hide = True
-    group_input_03.outputs[7].hide = True
-    group_input_03.outputs[8].hide = True
-    group_input_03.outputs[9].hide = True
-    group_input_03.outputs[10].hide = True
-    group_input_03.outputs[11].hide = True
-    group_input_03.outputs[12].hide = True
-    group_input_03.outputs[13].hide = True
-    group_input_03.outputs[14].hide = True
-    group_input_03.outputs[15].hide = True
-    group_input_03.outputs[16].hide = True
+    # Combine two hex colors into a single hex color code
+    bloom_high_low_color = hex_color_add("77535F", "3C3937")
+    
+    # Convert the combined hex color code to Linear RGB
+    bloom_high_low_color = hexcode_to_rgb(bloom_high_low_color)
+
+    bloom_high____low.color = bloom_high_low_color
+    bloom_high____low.label_size = 32
+    bloom_high____low.shrink = True
+
+    #node Knee Bloom Low
+    knee_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
+    knee_bloom_low.label = OE_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.use_custom_color = True
+    knee_bloom_low.color = Color.DARK_PURPLE
+    knee_bloom_low.angle_offset = 0.0
+    knee_bloom_low.color_modulation = 0.25
+    knee_bloom_low.fade = 0.9
+    knee_bloom_low.glare_type = 'BLOOM'
+    knee_bloom_low.iterations = 3
+    knee_bloom_low.mix = 1.0
+    knee_bloom_low.quality = 'LOW'
+    knee_bloom_low.size = 9
+    knee_bloom_low.streaks = 4
+    knee_bloom_low.threshold = 1.0
+    knee_bloom_low.use_rotate_45 = True
+
+    #node KB Switch
+    kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
+    kb_switch.label = OE_Bloom_Names.KB_Switch
+    kb_switch.name = OE_Bloom_Names.KB_Switch
+    kb_switch.use_custom_color = True
+    kb_switch.color = Color.LIGHT_GRAY
+    kb_switch.check = False
+
+    #node OB Switch
+    ob_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
+    ob_switch.label = OE_Bloom_Names.OB_Switch
+    ob_switch.name = OE_Bloom_Names.OB_Switch
+    ob_switch.use_custom_color = True
+    ob_switch.color = Color.LIGHT_GRAY
+    ob_switch.check = False
+
+    #node Original Bloom Low
+    original_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
+    original_bloom_low.label = OE_Bloom_Names.Original_Bloom_Low
+    original_bloom_low.name = OE_Bloom_Names.Original_Bloom_Low
+    original_bloom_low.use_custom_color = True
+    original_bloom_low.color = Color.DARK_PURPLE
+    original_bloom_low.angle_offset = 0.0
+    original_bloom_low.color_modulation = 0.25
+    original_bloom_low.fade = 0.9
+    original_bloom_low.glare_type = 'BLOOM'
+    original_bloom_low.iterations = 3
+    original_bloom_low.mix = 1.0
+    original_bloom_low.quality = 'LOW'
+    original_bloom_low.size = 9
+    original_bloom_low.streaks = 4
+    original_bloom_low.threshold = 1.0
+    original_bloom_low.use_rotate_45 = True
+
+    #node Reroute_00
+    reroute_00 = oe_bloom.nodes.new("NodeReroute")
+    reroute_00.label = OE_Bloom_Names.KB_Switch
+    reroute_00.name = OE_Bloom_Names.Reroute_00
+    reroute_00.socket_idname = "NodeSocketColor"
+    #node Reroute_01
+    reroute_01 = oe_bloom.nodes.new("NodeReroute")
+    reroute_01.label = OE_Bloom_Names.KB_Switch
+    reroute_01.name = OE_Bloom_Names.Reroute_01
+    reroute_01.socket_idname = "NodeSocketColor"
+    #node Clamp
+    clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
+    clamp.label = OE_Bloom_Names.Clamp
+    clamp.name = OE_Bloom_Names.Clamp
+    clamp.use_custom_color = True
+    clamp.color = Color.BROWN
+
+    #node Group Input 00
+    group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_00.label = OE_Bloom_Names.Group_Input_00
+    group_input_00.name = OE_Bloom_Names.Group_Input_00
+    group_input_00.use_custom_color = True
+    group_input_00.color = Color.DARK_GRAY
+    group_input_00.outputs[1].hide = True
+    group_input_00.outputs[2].hide = True
+    group_input_00.outputs[3].hide = True
+    group_input_00.outputs[4].hide = True
+    group_input_00.outputs[5].hide = True
+    group_input_00.outputs[6].hide = True
+    group_input_00.outputs[7].hide = True
+    group_input_00.outputs[8].hide = True
+    group_input_00.outputs[9].hide = True
+    group_input_00.outputs[10].hide = True
+    group_input_00.outputs[11].hide = True
+    group_input_00.outputs[12].hide = True
+    group_input_00.outputs[13].hide = True
+    group_input_00.outputs[14].hide = True
+    group_input_00.outputs[15].hide = True
+    group_input_00.outputs[16].hide = True
+    group_input_00.outputs[17].hide = True
 
     #node Group Input 02
     group_input_02 = oe_bloom.nodes.new("NodeGroupInput")
@@ -596,62 +652,75 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_02.outputs[14].hide = True
     group_input_02.outputs[15].hide = True
     group_input_02.outputs[16].hide = True
+    group_input_02.outputs[17].hide = True
 
-    #node Bloom High && Low
-    bloom_high____low = oe_bloom.nodes.new("NodeFrame")
-    bloom_high____low.label = OE_Bloom_Names.Bloom_High_Low
-    bloom_high____low.name = OE_Bloom_Names.Bloom_High_Low
-    bloom_high____low.use_custom_color = True
-    
-    # Combine two hex colors into a single hex color code
-    bloom_high_low_color = hex_color_add("77535F", "3C3937")
-    
-    # Convert the combined hex color code to Linear RGB
-    bloom_high_low_color = hexcode_to_rgb(bloom_high_low_color)
+    #node Group Input 03
+    group_input_03 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_03.label = OE_Bloom_Names.Group_Input_03
+    group_input_03.name = OE_Bloom_Names.Group_Input_03
+    group_input_03.use_custom_color = True
+    group_input_03.color = Color.DARK_GRAY
+    group_input_03.outputs[0].hide = True
+    group_input_03.outputs[1].hide = True
+    group_input_03.outputs[2].hide = True
+    group_input_03.outputs[3].hide = True
+    group_input_03.outputs[4].hide = True
+    group_input_03.outputs[6].hide = True
+    group_input_03.outputs[7].hide = True
+    group_input_03.outputs[8].hide = True
+    group_input_03.outputs[9].hide = True
+    group_input_03.outputs[10].hide = True
+    group_input_03.outputs[11].hide = True
+    group_input_03.outputs[12].hide = True
+    group_input_03.outputs[13].hide = True
+    group_input_03.outputs[14].hide = True
+    group_input_03.outputs[15].hide = True
+    group_input_03.outputs[16].hide = True
+    group_input_03.outputs[17].hide = True
 
-    bloom_high____low.color = bloom_high_low_color
-    bloom_high____low.label_size = 32
-    bloom_high____low.shrink = True
+    #node Group Input 05
+    group_input_05 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_05.label = OE_Bloom_Names.Group_Input_05
+    group_input_05.name = OE_Bloom_Names.Group_Input_05
+    group_input_05.use_custom_color = True
+    group_input_05.color = Color.DARK_GRAY
+    group_input_05.outputs[1].hide = True
+    group_input_05.outputs[2].hide = True
+    group_input_05.outputs[3].hide = True
+    group_input_05.outputs[4].hide = True
+    group_input_05.outputs[5].hide = True
+    group_input_05.outputs[7].hide = True
+    group_input_05.outputs[8].hide = True
+    group_input_05.outputs[9].hide = True
+    group_input_05.outputs[10].hide = True
+    group_input_05.outputs[11].hide = True
+    group_input_05.outputs[12].hide = True
+    group_input_05.outputs[13].hide = True
+    group_input_05.outputs[14].hide = True
+    group_input_05.outputs[15].hide = True
+    group_input_05.outputs[16].hide = True
+    group_input_05.outputs[17].hide = True
 
-    #node Knee Bloom Low
-    knee_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_low.label = OE_Bloom_Names.Knee_Bloom_Low
-    knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
-    knee_bloom_low.use_custom_color = True
-    knee_bloom_low.color = Color.DARK_PURPLE
-    knee_bloom_low.glare_type = 'BLOOM'
-    knee_bloom_low.quality = 'LOW'
-    knee_bloom_low.mix = 1.0
-    knee_bloom_low.threshold = 1.0
-    knee_bloom_low.size = 9
-
-    #node KB Switch
-    kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
-    kb_switch.label = OE_Bloom_Names.KB_Switch
-    kb_switch.name = OE_Bloom_Names.KB_Switch
-    kb_switch.use_custom_color = True
-    kb_switch.color = Color.LIGHT_GRAY
-    kb_switch.check = True
-
-    #node OB Switch
-    ob_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
-    ob_switch.label = OE_Bloom_Names.OB_Switch
-    ob_switch.name = OE_Bloom_Names.OB_Switch
-    ob_switch.use_custom_color = True
-    ob_switch.color = Color.LIGHT_GRAY
-    ob_switch.check = True
-
-    #node Original Bloom Low
-    original_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
-    original_bloom_low.label = OE_Bloom_Names.Original_Bloom_Low
-    original_bloom_low.name = OE_Bloom_Names.Original_Bloom_Low
-    original_bloom_low.use_custom_color = True
-    original_bloom_low.color = Color.DARK_PURPLE
-    original_bloom_low.glare_type = 'BLOOM'
-    original_bloom_low.quality = 'LOW'
-    original_bloom_low.mix = 1.0
-    original_bloom_low.threshold = 1.0
-    original_bloom_low.size = 9
+    #node Group Input 04
+    group_input_04 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_04.label = OE_Bloom_Names.Group_Input_04
+    group_input_04.name = OE_Bloom_Names.Group_Input_04
+    group_input_04.use_custom_color = True
+    group_input_04.color = Color.DARK_GRAY
+    group_input_04.outputs[0].hide = True
+    group_input_04.outputs[1].hide = True
+    group_input_04.outputs[2].hide = True
+    group_input_04.outputs[3].hide = True
+    group_input_04.outputs[4].hide = True
+    group_input_04.outputs[5].hide = True
+    group_input_04.outputs[6].hide = True
+    group_input_04.outputs[8].hide = True
+    group_input_04.outputs[9].hide = True
+    group_input_04.outputs[10].hide = True
+    group_input_04.outputs[11].hide = True
+    group_input_04.outputs[15].hide = True
+    group_input_04.outputs[16].hide = True
+    group_input_04.outputs[17].hide = True
 
     #node Group Input 01
     group_input_01 = oe_bloom.nodes.new("NodeGroupInput")
@@ -673,45 +742,9 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_01.outputs[11].hide = True
     group_input_01.outputs[12].hide = True
     group_input_01.outputs[13].hide = True
-    group_input_01.outputs[15].hide = True
+    group_input_01.outputs[14].hide = True
     group_input_01.outputs[16].hide = True
-
-    #node Reroute_00
-    reroute_00 = oe_bloom.nodes.new("NodeReroute")
-    reroute_00.name = OE_Bloom_Names.Reroute_00
-    reroute_00.label = OE_Bloom_Names.KB_Switch
-    reroute_00.socket_idname = "NodeSocketColor"
-    #node Reroute_01
-    reroute_01 = oe_bloom.nodes.new("NodeReroute")
-    reroute_01.name = OE_Bloom_Names.Reroute_01
-    reroute_01.label = OE_Bloom_Names.KB_Switch
-    reroute_01.socket_idname = "NodeSocketColor"
-    #node Clamp
-    clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
-    clamp.label = OE_Bloom_Names.Clamp
-    clamp.name = OE_Bloom_Names.Clamp
-    clamp.use_custom_color = True
-    clamp.color = Color.BROWN
-
-    #node Group Input 04
-    group_input_04 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_04.label = OE_Bloom_Names.Group_Input_04
-    group_input_04.name = OE_Bloom_Names.Group_Input_04
-    group_input_04.use_custom_color = True
-    group_input_04.color = Color.DARK_GRAY
-    group_input_04.outputs[0].hide = True
-    group_input_04.outputs[1].hide = True
-    group_input_04.outputs[2].hide = True
-    group_input_04.outputs[3].hide = True
-    group_input_04.outputs[4].hide = True
-    group_input_04.outputs[5].hide = True
-    group_input_04.outputs[6].hide = True
-    group_input_04.outputs[8].hide = True
-    group_input_04.outputs[9].hide = True
-    group_input_04.outputs[10].hide = True
-    group_input_04.outputs[14].hide = True
-    group_input_04.outputs[15].hide = True
-    group_input_04.outputs[16].hide = True
+    group_input_01.outputs[17].hide = True
 
     #Set parents
     original_bloom_high.parent = bloom_high____low
@@ -723,7 +756,6 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #Set locations
     group_output.location = (800.0, 120.0)
-    group_input_00.location = (-1040.0, -300.0)
     original_bloom_high.location = (53.0, -48.0)
     color.location = (220.0, -40.0)
     blur.location = (-320.0, -40.0)
@@ -731,23 +763,23 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity.location = (620.0, 120.0)
     knee_bloom_high.location = (53.0, -488.0)
     knee_mix.location = (40.0, -40.0)
-    group_input_05.location = (620.0, 220.0)
-    group_input_03.location = (220.0, -200.0)
-    group_input_02.location = (40.0, -220.0)
     bloom_high____low.location = (-833.0, -52.0)
     knee_bloom_low.location = (53.0, -268.0)
     kb_switch.location = (273.0, -328.0)
     ob_switch.location = (273.0, 112.0)
     original_bloom_low.location = (53.0, 172.0)
-    group_input_01.location = (-320.0, -260.0)
     reroute_00.location = (-180.0, -369.0)
     reroute_01.location = (0.0, -220.0)
     clamp.location = (400.0, -40.0)
-    group_input_04.location = (400.0, -220.0)
+    group_input_00.location = (-1077.6015625, -314.0210266113281)
+    group_input_02.location = (40.0, -220.0)
+    group_input_03.location = (220.0, -198.0)
+    group_input_05.location = (620.0, 209.0)
+    group_input_04.location = (400.0, -218.0)
+    group_input_01.location = (-320.0, -263.0)
 
     #Set dimensions
     group_output.width, group_output.height = 140.0, 100.0
-    group_input_00.width, group_input_00.height = 140.0, 100.0
     original_bloom_high.width, original_bloom_high.height = 154.0098876953125, 100.0
     color.width, color.height = 140.0, 100.0
     blur.width, blur.height = 151.06350708007812, 100.0
@@ -755,19 +787,20 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity.width, intensity.height = 140.0, 100.0
     knee_bloom_high.width, knee_bloom_high.height = 152.26959228515625, 100.0
     knee_mix.width, knee_mix.height = 140.0, 100.0
-    group_input_05.width, group_input_05.height = 140.0, 100.0
-    group_input_03.width, group_input_03.height = 140.0, 100.0
-    group_input_02.width, group_input_02.height = 140.0, 100.0
     bloom_high____low.width, bloom_high____low.height = 420.0, 944.0
     knee_bloom_low.width, knee_bloom_low.height = 153.29302978515625, 100.0
     kb_switch.width, kb_switch.height = 140.0, 100.0
     ob_switch.width, ob_switch.height = 140.0, 100.0
     original_bloom_low.width, original_bloom_low.height = 154.0098876953125, 100.0
-    group_input_01.width, group_input_01.height = 150.76458740234375, 100.0
     reroute_00.width, reroute_00.height = 16.0, 100.0
     reroute_01.width, reroute_01.height = 16.0, 100.0
     clamp.width, clamp.height = 152.98968505859375, 100.0
-    group_input_04.width, group_input_04.height = 140.0, 100.0
+    group_input_00.width, group_input_00.height = 149.76272583007812, 100.0
+    group_input_02.width, group_input_02.height = 138.52658081054688, 100.0
+    group_input_03.width, group_input_03.height = 140.50942993164062, 100.0
+    group_input_05.width, group_input_05.height = 139.75918579101562, 100.0
+    group_input_04.width, group_input_04.height = 153.06747436523438, 100.0
+    group_input_01.width, group_input_01.height = 149.76272583007812, 100.0
 
     #initialize oe_bloom links
     #ob_switch.Image -> blur_mix.Image
@@ -785,29 +818,8 @@ def oe_bloom_node_group(context, operator, group_name):
     #ob_switch.Image -> blur.Image
     oe_bloom.links.new(ob_switch.outputs[0], blur.inputs[0])
 
-    #group_input_00.Image -> original_bloom_high.Image
-    oe_bloom.links.new(group_input_00.outputs[0], original_bloom_high.inputs[0])
-
-    #group_input_00.Image -> knee_bloom_high.Image
-    oe_bloom.links.new(group_input_00.outputs[0], knee_bloom_high.inputs[0])
-
     #intensity.Image -> group_output.Image
     oe_bloom.links.new(intensity.outputs[0], group_output.inputs[0])
-
-    #group_input_05.Image -> intensity.Image
-    oe_bloom.links.new(group_input_05.outputs[0], intensity.inputs[1])
-
-    #group_input_05.Intensity -> intensity.Fac
-    oe_bloom.links.new(group_input_05.outputs[6], intensity.inputs[0])
-
-    #group_input_03.Color -> color.Image
-    oe_bloom.links.new(group_input_03.outputs[5], color.inputs[2])
-
-    #group_input_02.Knee -> knee_mix.Fac
-    oe_bloom.links.new(group_input_02.outputs[3], knee_mix.inputs[0])
-
-    #group_input_00.Image -> knee_bloom_low.Image
-    oe_bloom.links.new(group_input_00.outputs[0], knee_bloom_low.inputs[0])
 
     #knee_bloom_high.Image -> kb_switch.On
     oe_bloom.links.new(knee_bloom_high.outputs[0], kb_switch.inputs[1])
@@ -821,14 +833,8 @@ def oe_bloom_node_group(context, operator, group_name):
     #original_bloom_low.Image -> ob_switch.Off
     oe_bloom.links.new(original_bloom_low.outputs[0], ob_switch.inputs[0])
 
-    #group_input_01.Blur Mix -> blur.Size
-    oe_bloom.links.new(group_input_01.outputs[14], blur.inputs[1])
-
     #kb_switch.Image -> reroute_00.Input
     oe_bloom.links.new(kb_switch.outputs[0], reroute_00.inputs[0])
-
-    #group_input_00.Image -> original_bloom_low.Image
-    oe_bloom.links.new(group_input_00.outputs[0], original_bloom_low.inputs[0])
 
     #reroute_00.Output -> reroute_01.Input
     oe_bloom.links.new(reroute_00.outputs[0], reroute_01.inputs[0])
@@ -842,18 +848,45 @@ def oe_bloom_node_group(context, operator, group_name):
     #clamp.Image -> intensity.Image
     oe_bloom.links.new(clamp.outputs[0], intensity.inputs[2])
 
-    #group_input_04.Fac -> clamp.Fac
-    oe_bloom.links.new(group_input_04.outputs[13], clamp.inputs[4])
+    #group_input_05.Image -> intensity.Image
+    oe_bloom.links.new(group_input_05.outputs[0], intensity.inputs[1])
+
+    #group_input_00.Image -> original_bloom_high.Image
+    oe_bloom.links.new(group_input_00.outputs[0], original_bloom_high.inputs[0])
+
+    #group_input_00.Image -> knee_bloom_high.Image
+    oe_bloom.links.new(group_input_00.outputs[0], knee_bloom_high.inputs[0])
+
+    #group_input_00.Image -> knee_bloom_low.Image
+    oe_bloom.links.new(group_input_00.outputs[0], knee_bloom_low.inputs[0])
+
+    #group_input_00.Image -> original_bloom_low.Image
+    oe_bloom.links.new(group_input_00.outputs[0], original_bloom_low.inputs[0])
+
+    #group_input_02.Knee -> knee_mix.Fac
+    oe_bloom.links.new(group_input_02.outputs[3], knee_mix.inputs[0])
+
+    #group_input_03.Color -> color.Image
+    oe_bloom.links.new(group_input_03.outputs[5], color.inputs[2])
+
+    #group_input_05.Intensity -> intensity.Fac
+    oe_bloom.links.new(group_input_05.outputs[6], intensity.inputs[0])
 
     #group_input_04.Clamp -> clamp.Value
     oe_bloom.links.new(group_input_04.outputs[7], clamp.inputs[3])
 
-    #group_input_04.Saturation -> clamp.Saturation
-    oe_bloom.links.new(group_input_04.outputs[12], clamp.inputs[2])
-
     #group_input_04.Hue -> clamp.Hue
-    oe_bloom.links.new(group_input_04.outputs[11], clamp.inputs[1])
+    oe_bloom.links.new(group_input_04.outputs[12], clamp.inputs[1])
 
+    #group_input_04.Saturation -> clamp.Saturation
+    oe_bloom.links.new(group_input_04.outputs[13], clamp.inputs[2])
+
+    #group_input_04.Fac -> clamp.Fac
+    oe_bloom.links.new(group_input_04.outputs[14], clamp.inputs[4])
+
+    #group_input_01.Blur Mix -> blur.Size
+    oe_bloom.links.new(group_input_01.outputs[15], blur.inputs[1])
+    
     return oe_bloom
 
 class NODE_OT_BLOOM(bpy.types.Operator):
