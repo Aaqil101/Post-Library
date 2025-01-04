@@ -1,6 +1,7 @@
 import bpy
 from typing import Tuple
 from bpy.props import BoolProperty, EnumProperty
+from dataclasses import dataclass, field
 
 def is_compositor_enabled(scene):
     """
@@ -92,6 +93,71 @@ def poll_view_3d(self, context):
             return True
     return False
 
+@dataclass
+class GlareSettings:
+    """
+    Settings for the Glare node (Compositor).
+
+    Attributes:
+    ---
+        angle_offset (float): Angle offset for the glare effect.
+        color_modulation (float): Color modulation for the glare effect.
+        fade (float): Fade-out value for the glare effect.
+        glare_type (str): Type of glare effect, e.g. 'BLOOM', 'GHOSTS', 'STREAKS'.
+        iterations (int): Number of iterations for the glare effect.
+        mix (float): Mix value for the glare effect.
+        quality (str): Quality of the glare effect, e.g. 'LOW', 'MEDIUM', 'HIGH'.
+        size (int): Size of the glare effect.
+        streaks (int): Number of streaks for the glare effect.
+        threshold (float): Threshold value for the glare effect.
+        use_rotate_45 (bool): Whether to use a 45-degree rotation for the glare effect.
+    """
+    angle_offset: float = 0.0
+    color_modulation: float = 0.25
+    fade: float = 0.9
+    glare_type: str = 'STREAKS'  # Options: 'BLOOM', 'GHOSTS', 'STREAKS', 'FOG_GLOW', 'SIMPLE_STAR'
+    iterations: int = 3
+    mix: float = 0.0
+    quality: str = 'LOW'  # Options: 'LOW', 'MEDIUM', 'HIGH'
+    size: int = 8
+    streaks: int = 4
+    threshold: float = 1.0
+    use_rotate_45: bool = True
+
+def create_glare_node(node_group, node_color, glare_name="Glare", glare_label="Glare", use_custom_color=False, settings=None):
+    """
+    Create a Glare node in a node group and apply the specified settings.
+
+    Args:
+        node_group (NodeTree): The node group to create the Glare node in.
+        node_color (tuple): RGB color for the Glare node.
+        glare_name (str, optional): Name of the Glare node. Defaults to "Glare".
+        glare_label (str, optional): Label of the Glare node. Defaults to "Glare".
+        use_custom_color (bool, optional): Whether to use a custom color for the Glare node. Defaults to False.
+        settings (GlareSettings, optional): Settings for the Glare node. Defaults to GlareSettings() if not specified.
+
+    Returns:
+        Node: The newly created Glare node.
+    """
+    # Use default settings if none are provided
+    if settings is None:
+        settings = GlareSettings()
+
+    # Create the Glare node
+    glare_node = node_group.nodes.new("CompositorNodeGlare")
+    glare_node.name = glare_name
+    glare_node.label = glare_label
+    glare_node.use_custom_color = use_custom_color
+    glare_node.color = node_color
+
+    # Apply settings from the GlareSettings instance
+    for field_name in settings.__dataclass_fields__:
+        value = getattr(settings, field_name)
+        if hasattr(glare_node, field_name):
+            setattr(glare_node, field_name, value)
+
+    return glare_node
+
 # what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
 # (https://github.com/CGArtPython/bpy-building-blocks)
 
@@ -148,8 +214,16 @@ def hex_color_add(color1, color2):
     # Combine the components back into a hex color
     return f"{r:02X}{g:02X}{b:02X}"
 
-# Class to store color values converted from hex codes to RGB
 class Color:
+    """
+    Class to store color values converted from hex codes to RGB
+
+    Example:
+        Import the Color class
+        
+        Color.LIGHT_RED
+    """
+
     LIGHT_RED = hexcode_to_rgb("#94493E")
     DARK_RED = hexcode_to_rgb("#823A35")
     LIGHT_BLUE = hexcode_to_rgb("#646E66")
@@ -160,8 +234,10 @@ class Color:
     DARK_GRAY = hexcode_to_rgb("#3C3937")
     LIGHT_GRAY = hexcode_to_rgb("#59514B")
 
-# Class to store the names of various nodes and sockets used in the bloom node group
 class OE_Bloom_Names:
+    """
+    Class to store the names of various nodes and sockets used in the bloom node group
+    """
     OE_Bloom = "OE_Bloom"
     Image = "Image"
     Color = "Color"
@@ -210,8 +286,10 @@ class OE_Bloom_Names:
     Real_Time_Compositing = "Real-Time Compositor"
     Enable_Compositor = "Enable Compositor"
 
-# Class to store all the descriptions of the Bloom properties
 class OE_Bloom_Descr:
+    """
+    Class to store all the descriptions of the Bloom properties
+    """
     image = "Standard color output"
     quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
     threshold = "Filters out pixels under this level of brightness"
@@ -421,6 +499,71 @@ def oe_bloom_node_group(context, operator, group_name):
     group_output.is_active_output = True
 
     #node Original Bloom High
+    original_bloom_high = create_glare_node(
+        node_group=oe_bloom,
+        node_color=Color.DARK_PURPLE,
+        glare_name=OE_Bloom_Names.Original_Bloom_High,
+        glare_label=OE_Bloom_Names.Original_Bloom_High,
+        use_custom_color=True,
+        settings=GlareSettings(
+            glare_type='BLOOM',
+            quality='HIGH',
+            mix=1.0,
+            threshold=1.0,
+            size=9
+        )
+    )
+
+    #node Original Bloom Low
+    original_bloom_low = create_glare_node(
+        node_group=oe_bloom,
+        node_color=Color.DARK_PURPLE,
+        glare_name=OE_Bloom_Names.Original_Bloom_Low,
+        glare_label=OE_Bloom_Names.Original_Bloom_Low,
+        use_custom_color=True,
+        settings=GlareSettings(
+            glare_type='BLOOM',
+            quality='LOW',
+            mix=1.0,
+            threshold=1.0,
+            size=9
+        )
+    )
+
+    #node Knee Bloom High
+    knee_bloom_high = create_glare_node(
+        node_group=oe_bloom,
+        node_color=Color.DARK_PURPLE,
+        glare_name=OE_Bloom_Names.Knee_Bloom_High,
+        glare_label=OE_Bloom_Names.Knee_Bloom_High,
+        use_custom_color=True,
+        settings=GlareSettings(
+            glare_type='BLOOM',
+            quality='HIGH',
+            mix=1.0,
+            threshold=0.0,
+            size=9
+        )
+    )
+    
+    #node Knee Bloom Low
+    knee_bloom_low = create_glare_node(
+        node_group=oe_bloom,
+        node_color=Color.DARK_PURPLE,
+        glare_name=OE_Bloom_Names.Knee_Bloom_Low,
+        glare_label=OE_Bloom_Names.Knee_Bloom_Low,
+        use_custom_color=True,
+        settings=GlareSettings(
+            glare_type='BLOOM',
+            quality='LOW',
+            mix=1.0,
+            threshold=0.0,
+            size=9
+        )
+    )
+
+    """
+    ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
     original_bloom_high.label = OE_Bloom_Names.Original_Bloom_High
     original_bloom_high.name = OE_Bloom_Names.Original_Bloom_High
@@ -432,7 +575,7 @@ def oe_bloom_node_group(context, operator, group_name):
     original_bloom_high.threshold = 1.0
     original_bloom_high.size = 9
 
-    #node Original Bloom Low
+    ! Old method to create the Original Bloom Low node
     original_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
     original_bloom_low.label = OE_Bloom_Names.Original_Bloom_Low
     original_bloom_low.name = OE_Bloom_Names.Original_Bloom_Low
@@ -443,6 +586,31 @@ def oe_bloom_node_group(context, operator, group_name):
     original_bloom_low.mix = 1.0
     original_bloom_low.threshold = 1.0
     original_bloom_low.size = 9
+
+    ! Old method to create the Knee Bloom High node
+    knee_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
+    knee_bloom_high.label = OE_Bloom_Names.Knee_Bloom_High
+    knee_bloom_high.name = OE_Bloom_Names.Knee_Bloom_High
+    knee_bloom_high.use_custom_color = True
+    knee_bloom_high.color = Color.DARK_PURPLE
+    knee_bloom_high.glare_type = 'BLOOM'
+    knee_bloom_high.quality = 'HIGH'
+    knee_bloom_high.mix = 1.0
+    knee_bloom_high.threshold = 0.0
+    knee_bloom_high.size = 9
+
+    ! Old method to create the Knee Bloom Low node
+    knee_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
+    knee_bloom_low.label = OE_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.use_custom_color = True
+    knee_bloom_low.color = Color.DARK_PURPLE
+    knee_bloom_low.glare_type = 'BLOOM'
+    knee_bloom_low.quality = 'LOW'
+    knee_bloom_low.mix = 1.0
+    knee_bloom_low.threshold = 0.0
+    knee_bloom_low.size = 9
+    """
 
     #node Color
     color = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -490,29 +658,6 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity.use_alpha = False
     intensity.use_clamp = False
 
-    #node Knee Bloom High
-    knee_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_high.label = OE_Bloom_Names.Knee_Bloom_High
-    knee_bloom_high.name = OE_Bloom_Names.Knee_Bloom_High
-    knee_bloom_high.use_custom_color = True
-    knee_bloom_high.color = Color.DARK_PURPLE
-    knee_bloom_high.glare_type = 'BLOOM'
-    knee_bloom_high.quality = 'HIGH'
-    knee_bloom_high.mix = 1.0
-    knee_bloom_high.threshold = 0.0
-    knee_bloom_high.size = 9
-
-    #node Knee Bloom Low
-    knee_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_low.label = OE_Bloom_Names.Knee_Bloom_Low
-    knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
-    knee_bloom_low.use_custom_color = True
-    knee_bloom_low.color = Color.DARK_PURPLE
-    knee_bloom_low.glare_type = 'BLOOM'
-    knee_bloom_low.quality = 'LOW'
-    knee_bloom_low.mix = 1.0
-    knee_bloom_low.threshold = 0.0
-    knee_bloom_low.size = 9
 
     #node Knee Mix
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
