@@ -67,7 +67,7 @@ class Color:
     Example:
         Import the Color class
         
-        color.LIGHT_RED
+        Color.LIGHT_RED
     """
 
     LIGHT_RED = hexcode_to_rgb("#94493E")
