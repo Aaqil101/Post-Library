@@ -302,13 +302,25 @@ class BlurSettings:
     use_variable_size: bool = False
 
 class FilterNodeManager:
+    """
+    Manages Filter Nodes in a Node Group
+
+    This class provides methods to create and manage filter nodes 
+    within a specified node group in Blender's compositor.
+
+    Attributes:
+    ---
+    node_group (NodeTree): The node group to manage nodes in.
+    node_color (tuple): RGB color for the nodes. Defaults to DARK_PURPLE.
+    use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
+    """
     def __init__(self, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
         """
         Initialize a FilterNodeManager instance.
 
         Args:
             node_group (NodeTree): The node group to manage nodes in.
-            node_color (tuple): RGB color for the nodes managed by this instance.
+            node_color (tuple): RGB color for the nodes managed by this instance. Defaults to DARK_PURPLE.
             use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
         """
         self.node_group = node_group
