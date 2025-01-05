@@ -3,6 +3,150 @@ from typing import Tuple
 from bpy.props import BoolProperty, EnumProperty
 from dataclasses import dataclass, field
 
+# what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
+# (https://github.com/CGArtPython/bpy-building-blocks)
+
+# and then I modified the code to fit my needs based on this tutorial.
+# (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
+
+def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
+    """
+    Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
+    to a Linear RGB
+
+    Supports: "#RRGGBB" or "RRGGBB"
+
+    Note: We are converting into Linear RGB since Blender uses a Linear Color Space internally
+    https://docs.blender.org/manual/en/latest/render/color_management.html
+    """
+    # remove the leading "#" symbol if present
+    if hexcode.startswith("#"):
+        hexcode = hexcode[1:]
+
+    assert len(hexcode) == 6, f"RRGGBB is the supported hex color format: {hexcode}"
+
+    # extracting the Red color component - RRxxxx
+    red = int(hexcode[:2], 16)
+    # dividing by 255 to get a number between 0.0 and 1.0
+    srgb_red = red / 255
+
+    # extracting the Green color component - xxGGxx
+    green = int(hexcode[2:4], 16)
+    # dividing by 255 to get a number between 0.0 and 1.0
+    srgb_green = green / 255
+
+    # extracting the Blue color component - xxxxBB
+    blue = int(hexcode[4:6], 16)
+    # dividing by 255 to get a number between 0.0 and 1.0
+    srgb_blue = blue / 255
+
+    return tuple([srgb_red, srgb_green, srgb_blue])
+
+class Color:
+    """
+    Class to store color values converted from hex codes to RGB
+
+    Example:
+        Import the Color class
+        
+        Color.LIGHT_RED
+    """
+
+    LIGHT_RED = hexcode_to_rgb("#94493E")
+    DARK_RED = hexcode_to_rgb("#823A35")
+    LIGHT_BLUE = hexcode_to_rgb("#646E66")
+    DARK_BLUE = hexcode_to_rgb("#4C6160")
+    LIGHT_PURPLE = hexcode_to_rgb("#846167")
+    DARK_PURPLE = hexcode_to_rgb("#77535F")
+    BROWN = hexcode_to_rgb("#866937")
+    DARK_GRAY = hexcode_to_rgb("#3C3937")
+    LIGHT_GRAY = hexcode_to_rgb("#59514B")
+
+class OE_Bloom_Names:
+    """
+    Class to store the names of various nodes and sockets used in the bloom node group
+    """
+    OE_Bloom = "OE_Bloom"
+    Image = "Image"
+    Color = "Color"
+    Quality = "Quality"
+    Knee = "Knee"
+    Threshold = "Threshold"
+    Radius = "Radius"
+    Blur = "Blur"
+    Intensity = "Intensity"
+    Clamp = "Clamp"
+    Other = "Other"
+    Hue = "Hue"
+    Saturation = "Saturation"
+    Fac = "Fac"
+    Composite = "Composite"
+    Viewer = "Viewer"
+    Disabled = "Disabled"
+    Camera = "Camera"
+    Always = "Always"
+    BM_Clamp = "BM Clamp"
+    KM_Clamp = "KM Clamp"
+    CR_Clamp = "CR Clamp"
+    IY_Clamp = "IY Clamp"
+    Clamp_Mix = "Clamp Mix"
+    Blur_Mix = "Blur Mix"
+    Bloom_Size = "Bloom Size"
+    Group_Output = "Group Output"
+    Group_Input_00 = "Group Input 00"
+    Original_Bloom_High = "Original Bloom High"
+    Knee_Bloom_High = "Knee Bloom High"
+    Knee_Mix = "Knee Mix"
+    Group_Input_01 = "Group Input 01"
+    Group_Input_02 = "Group Input 02"
+    Group_Input_03 = "Group Input 03"
+    Group_Input_04 = "Group Input 04"
+    Group_Input_05 = "Group Input 05"
+    Bloom_High_Low = "Bloom High && Low"
+    Knee_Bloom_Low = "Knee Bloom Low"
+    KB_Switch = "KB Switch"
+    OB_Switch = "OB Switch"
+    Original_Bloom_Low = "Original Bloom Low"
+    Reroute_00 = "Reroute_00"
+    Reroute_01 = "Reroute_01"
+    Render_Layers = "Render Layers"
+    Bloom_Mute_Unmute = "Bloom Mute/Unmute"
+    Real_Time_Compositing = "Real-Time Compositor"
+    Enable_Compositor = "Enable Compositor"
+
+class OE_Bloom_Descr:
+    """
+    Class to store all the descriptions of the Bloom properties
+    """
+    image = "Standard color output"
+    quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    threshold = "Filters out pixels under this level of brightness"
+    knee = "Makes transition between under/over-threshold gradual"
+    radius = "Bloom spread distance"
+    color = "Color applied to the bloom effect"
+    intensity = "Blend factor"
+    clamp = "Maximum intensity a bloom pixel can have"
+    other = "Additional options for customizing the bloom effect"
+    hue = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
+    saturation = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
+    fac = "The amount of influence the node exerts on the image"
+    disabled = "The compositor is disabled"
+    camera = "The compositor is enabled only in camera view"
+    always = "The compositor is always enabled regardless of the view"
+    node_ot_bloom = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
+    prop_pt_bloom = "Old Eevee Bloom In Both Eevee And Cycles"
+    scene_ot_enable_compositor = "Enable the compositing node tree"
+    blur_mix = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
+    bloom_size = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    bloom_mute_unmute_bool = "Toggle the bloom effect on or off"
+    oe_bloom = "Replication of the legacy eevee bloom option"
+    clamp_mix = "Clamps of each mix nodes in the oe_bloom node group"
+    bm_clamp = "Blur Mix Clamp"
+    km_clamp = "Knee Mix Clamp"
+    cr_clamp = "Color Clamp"
+    iy_clamp = "Intensity Clamp"
+    real_time_compositing = "When to preview the compositor output inside the viewport"
+
 def is_compositor_enabled(scene):
     """
     Check if the compositor is enabled for the given scene.
@@ -124,78 +268,114 @@ class GlareSettings:
     threshold: float = 1.0
     use_rotate_45: bool = True
 
-def create_glare_node(node_group, node_color, glare_name="Glare", glare_label="Glare", use_custom_color=False, settings=None):
+@dataclass
+class BlurSettings:
     """
-    Create a Glare node in a node group and apply the specified settings.
+    Settings for the Blur node (Compositor).
 
-    Args:
-        node_group (NodeTree): The node group to create the Glare node in.
-        node_color (tuple): RGB color for the Glare node.
-        glare_name (str, optional): Name of the Glare node. Defaults to "Glare".
-        glare_label (str, optional): Label of the Glare node. Defaults to "Glare".
-        use_custom_color (bool, optional): Whether to use a custom color for the Glare node. Defaults to False.
-        settings (GlareSettings, optional): Settings for the Glare node. Defaults to GlareSettings() if not specified.
-
-    Returns:
-        Node: The newly created Glare node.
+    Attributes:
+    ---
+        aspect_correction (str): Aspect correction mode. Options: 'NONE', 'Y', 'X'.
+        factor (int): Overall blur factor.
+        factor_x (int): Horizontal blur factor.
+        factor_y (int): Vertical blur factor.
+        filter_type (str): Type of filter to use for blurring. Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'.
+        size_x (int): Horizontal size of the blur.
+        size_y (int): Vertical size of the blur.
+        use_bokeh (bool): Whether to use bokeh effect in the blur.
+        use_extended_bounds (bool): Whether to use extended bounds for the blur.
+        use_gamma_correction (bool): Whether to use gamma correction for the blur.
+        use_relative (bool): Whether to use relative sizing for the blur.
+        use_variable_size (bool): Whether to use variable size for the blur.
     """
-    # Use default settings if none are provided
-    if settings is None:
-        settings = GlareSettings()
+    aspect_correction: str = 'NONE' # Options: 'NONE', 'Y', 'X'
+    factor: int = 0.0
+    factor_x: int = 0.0
+    factor_y: int = 0.0
+    filter_type: str = 'GAUSS' # Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'
+    size_x: int = 0
+    size_y: int = 0
+    use_bokeh: bool = False
+    use_extended_bounds: bool = False
+    use_gamma_correction: bool = False
+    use_relative: bool = False
+    use_variable_size: bool = False
 
-    # Create the Glare node
-    glare_node = node_group.nodes.new("CompositorNodeGlare")
-    glare_node.name = glare_name
-    glare_node.label = glare_label
-    glare_node.use_custom_color = use_custom_color
-    glare_node.color = node_color
+class FilterNodeManager:
+    def __init__(self, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
+        """
+        Initialize a FilterNodeManager instance.
 
-    # Apply settings from the GlareSettings instance
-    for field_name in settings.__dataclass_fields__:
-        value = getattr(settings, field_name)
-        if hasattr(glare_node, field_name):
-            setattr(glare_node, field_name, value)
+        Args:
+            node_group (NodeTree): The node group to manage nodes in.
+            node_color (tuple): RGB color for the nodes managed by this instance.
+            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
+        """
+        self.node_group = node_group
+        self.use_custom_color = use_custom_color
+        self.node_color = node_color
 
-    return glare_node
+    def create_glare_node(self, glare_name="Glare", glare_label="Glare", settings=None):
+        # Use default settings if none are provided
+        """
+        Create a Glare node in a node group and apply the specified settings.
 
-# what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
-# (https://github.com/CGArtPython/bpy-building-blocks)
+        Args:
+            glare_name (str, optional): Name of the Glare node. Defaults to "Glare".
+            glare_label (str, optional): Label of the Glare node. Defaults to "Glare".
+            settings (GlareSettings, optional): Settings for the Glare node. Defaults to GlareSettings() if not specified.
 
-# and then I modified the code to fit my needs based on this tutorial.
-# (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
+        Returns:
+            Node: The newly created Glare node.
+        """
+        if settings is None:
+            settings = GlareSettings()
 
-def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
-    """
-    Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
-    to a Linear RGB
+        # Create the Glare node
+        glare_node = self.node_group.nodes.new("CompositorNodeGlare")
+        glare_node.name = glare_name
+        glare_node.label = glare_label
+        glare_node.use_custom_color = self.use_custom_color
+        glare_node.color = self.node_color
 
-    Supports: "#RRGGBB" or "RRGGBB"
+        # Apply settings from the GlareSettings instance
+        for field_name in settings.__dataclass_fields__:
+            value = getattr(settings, field_name)
+            if hasattr(glare_node, field_name):
+                setattr(glare_node, field_name, value)
 
-    Note: We are converting into Linear RGB since Blender uses a Linear Color Space internally
-    https://docs.blender.org/manual/en/latest/render/color_management.html
-    """
-    # remove the leading "#" symbol if present
-    if hexcode.startswith("#"):
-        hexcode = hexcode[1:]
+        return glare_node
 
-    assert len(hexcode) == 6, f"RRGGBB is the supported hex color format: {hexcode}"
+    def create_blur_node(self, blur_name="Blur", blur_label="Blur", settings=None):
+        """
+        Create a Blur node in a node group and apply the specified settings.
 
-    # extracting the Red color component - RRxxxx
-    red = int(hexcode[:2], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_red = red / 255
+        Args:
+            blur_name (str, optional): Name of the Blur node. Defaults to "Blur".
+            blur_label (str, optional): Label of the Blur node. Defaults to "Blur".
+            settings (BlurSettings, optional): Settings for the Blur node. Defaults to BlurSettings() if not specified.
 
-    # extracting the Green color component - xxGGxx
-    green = int(hexcode[2:4], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_green = green / 255
+        Returns:
+            Node: The newly created Blur node.
+        """
+        # Use defualt settings if none are provided
+        if settings is None:
+            settings = BlurSettings()
 
-    # extracting the Blue color component - xxxxBB
-    blue = int(hexcode[4:6], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_blue = blue / 255
+        # Create the Blur node
+        blur_node = self.node_group.nodes.new("CompositorNodeBlur")
+        blur_node.name = blur_name
+        blur_node.label = blur_label
+        blur_node.use_custom_color = self.use_custom_color
+        blur_node.color = self.node_color
 
-    return tuple([srgb_red, srgb_green, srgb_blue])
+        # Apply settings from the BlurSettings instance
+        for field_name in settings.__dataclass_fields__:
+            value = getattr(settings, field_name)
+            if hasattr(blur_node, field_name):
+                setattr(blur_node, field_name, value)
+
+        return blur_node
 
 def hex_color_add(color1, color2):
     """
@@ -213,111 +393,6 @@ def hex_color_add(color1, color2):
     
     # Combine the components back into a hex color
     return f"{r:02X}{g:02X}{b:02X}"
-
-class Color:
-    """
-    Class to store color values converted from hex codes to RGB
-
-    Example:
-        Import the Color class
-        
-        Color.LIGHT_RED
-    """
-
-    LIGHT_RED = hexcode_to_rgb("#94493E")
-    DARK_RED = hexcode_to_rgb("#823A35")
-    LIGHT_BLUE = hexcode_to_rgb("#646E66")
-    DARK_BLUE = hexcode_to_rgb("#4C6160")
-    LIGHT_PURPLE = hexcode_to_rgb("#846167")
-    DARK_PURPLE = hexcode_to_rgb("#77535F")
-    BROWN = hexcode_to_rgb("#866937")
-    DARK_GRAY = hexcode_to_rgb("#3C3937")
-    LIGHT_GRAY = hexcode_to_rgb("#59514B")
-
-class OE_Bloom_Names:
-    """
-    Class to store the names of various nodes and sockets used in the bloom node group
-    """
-    OE_Bloom = "OE_Bloom"
-    Image = "Image"
-    Color = "Color"
-    Quality = "Quality"
-    Knee = "Knee"
-    Threshold = "Threshold"
-    Radius = "Radius"
-    Blur = "Blur"
-    Intensity = "Intensity"
-    Clamp = "Clamp"
-    Other = "Other"
-    Hue = "Hue"
-    Saturation = "Saturation"
-    Fac = "Fac"
-    Composite = "Composite"
-    Viewer = "Viewer"
-    Disabled = "Disabled"
-    Camera = "Camera"
-    Always = "Always"
-    BM_Clamp = "BM Clamp"
-    KM_Clamp = "KM Clamp"
-    CR_Clamp = "CR Clamp"
-    IY_Clamp = "IY Clamp"
-    Clamp_Mix = "Clamp Mix"
-    Blur_Mix = "Blur Mix"
-    Bloom_Size = "Bloom Size"
-    Group_Output = "Group Output"
-    Group_Input_00 = "Group Input 00"
-    Original_Bloom_High = "Original Bloom High"
-    Knee_Bloom_High = "Knee Bloom High"
-    Knee_Mix = "Knee Mix"
-    Group_Input_01 = "Group Input 01"
-    Group_Input_02 = "Group Input 02"
-    Group_Input_03 = "Group Input 03"
-    Group_Input_04 = "Group Input 04"
-    Group_Input_05 = "Group Input 05"
-    Bloom_High_Low = "Bloom High && Low"
-    Knee_Bloom_Low = "Knee Bloom Low"
-    KB_Switch = "KB Switch"
-    OB_Switch = "OB Switch"
-    Original_Bloom_Low = "Original Bloom Low"
-    Reroute_00 = "Reroute_00"
-    Reroute_01 = "Reroute_01"
-    Render_Layers = "Render Layers"
-    Bloom_Mute_Unmute = "Bloom Mute/Unmute"
-    Real_Time_Compositing = "Real-Time Compositor"
-    Enable_Compositor = "Enable Compositor"
-
-class OE_Bloom_Descr:
-    """
-    Class to store all the descriptions of the Bloom properties
-    """
-    image = "Standard color output"
-    quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
-    threshold = "Filters out pixels under this level of brightness"
-    knee = "Makes transition between under/over-threshold gradual"
-    radius = "Bloom spread distance"
-    color = "Color applied to the bloom effect"
-    intensity = "Blend factor"
-    clamp = "Maximum intensity a bloom pixel can have"
-    other = "Additional options for customizing the bloom effect"
-    hue = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
-    saturation = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
-    fac = "The amount of influence the node exerts on the image"
-    disabled = "The compositor is disabled"
-    camera = "The compositor is enabled only in camera view"
-    always = "The compositor is always enabled regardless of the view"
-    node_ot_bloom = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
-    prop_pt_bloom = "Old Eevee Bloom In Both Eevee And Cycles"
-    scene_ot_enable_compositor = "Enable the compositing node tree"
-    blur_mix = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
-    bloom_size = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
-    bloom_mute_unmute_bool = "Toggle the bloom effect on or off"
-    oe_bloom = "Replication of the legacy eevee bloom option"
-    clamp_mix = "Clamps of each mix nodes in the oe_bloom node group"
-    bm_clamp = "Blur Mix Clamp"
-    km_clamp = "Knee Mix Clamp"
-    cr_clamp = "Color Clamp"
-    iy_clamp = "Intensity Clamp"
-    real_time_compositing = "When to preview the compositor output inside the viewport"
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -498,13 +573,16 @@ def oe_bloom_node_group(context, operator, group_name):
     group_output.inputs[1].hide = True
     group_output.is_active_output = True
 
-    #node Original Bloom High
-    original_bloom_high = create_glare_node(
+    #Setting FilterNodeManager
+    FNM = FilterNodeManager(
         node_group=oe_bloom,
-        node_color=Color.DARK_PURPLE,
+        use_custom_color=True
+    )
+
+    #node Original Bloom High
+    original_bloom_high = FNM.create_glare_node(
         glare_name=OE_Bloom_Names.Original_Bloom_High,
         glare_label=OE_Bloom_Names.Original_Bloom_High,
-        use_custom_color=True,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='HIGH',
@@ -515,12 +593,9 @@ def oe_bloom_node_group(context, operator, group_name):
     )
 
     #node Original Bloom Low
-    original_bloom_low = create_glare_node(
-        node_group=oe_bloom,
-        node_color=Color.DARK_PURPLE,
+    original_bloom_low = FNM.create_glare_node(
         glare_name=OE_Bloom_Names.Original_Bloom_Low,
         glare_label=OE_Bloom_Names.Original_Bloom_Low,
-        use_custom_color=True,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='LOW',
@@ -531,12 +606,9 @@ def oe_bloom_node_group(context, operator, group_name):
     )
 
     #node Knee Bloom High
-    knee_bloom_high = create_glare_node(
-        node_group=oe_bloom,
-        node_color=Color.DARK_PURPLE,
+    knee_bloom_high = FNM.create_glare_node(
         glare_name=OE_Bloom_Names.Knee_Bloom_High,
         glare_label=OE_Bloom_Names.Knee_Bloom_High,
-        use_custom_color=True,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='HIGH',
@@ -547,18 +619,28 @@ def oe_bloom_node_group(context, operator, group_name):
     )
     
     #node Knee Bloom Low
-    knee_bloom_low = create_glare_node(
-        node_group=oe_bloom,
-        node_color=Color.DARK_PURPLE,
+    knee_bloom_low = FNM.create_glare_node(
         glare_name=OE_Bloom_Names.Knee_Bloom_Low,
         glare_label=OE_Bloom_Names.Knee_Bloom_Low,
-        use_custom_color=True,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='LOW',
             mix=1.0,
             threshold=0.0,
             size=9
+        )
+    )
+
+    #node Blur
+    blur = FNM.create_blur_node(
+        blur_name=OE_Bloom_Names.Blur,
+        blur_label=OE_Bloom_Names.Blur,
+        settings=BlurSettings(
+            filter_type='FAST_GAUSS',
+            use_relative=False,
+            size_x=0,
+            size_y=0,
+            use_extended_bounds=False
         )
     )
 
@@ -610,6 +692,16 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_bloom_low.mix = 1.0
     knee_bloom_low.threshold = 0.0
     knee_bloom_low.size = 9
+
+    ! Old method to create the Blur node
+    blur = oe_bloom.nodes.new("CompositorNodeBlur")
+    blur.label = OE_Bloom_Names.Blur
+    blur.name = OE_Bloom_Names.Blur
+    blur.use_custom_color = True
+    blur.color = Color.DARK_PURPLE
+    blur.filter_type = 'FAST_GAUSS'
+    blur.use_relative = False
+    blur.use_extended_bounds = False
     """
 
     #node Color
@@ -624,16 +716,6 @@ def oe_bloom_node_group(context, operator, group_name):
     color.inputs[0].hide = True
     #Fac
     color.inputs[0].default_value = 1.0
-
-    #node Blur
-    blur = oe_bloom.nodes.new("CompositorNodeBlur")
-    blur.label = OE_Bloom_Names.Blur
-    blur.name = OE_Bloom_Names.Blur
-    blur.use_custom_color = True
-    blur.color = Color.DARK_PURPLE
-    blur.filter_type = 'FAST_GAUSS'
-    blur.use_relative = False
-    blur.use_extended_bounds = False
 
     #node Blur Mix
     blur_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
@@ -657,7 +739,6 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity.blend_type = 'ADD'
     intensity.use_alpha = False
     intensity.use_clamp = False
-
 
     #node Knee Mix
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
