@@ -85,6 +85,7 @@ class OE_Bloom_Names:
     Disabled = "Disabled"
     Camera = "Camera"
     Always = "Always"
+    Glare = "Glare"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
@@ -113,6 +114,8 @@ class OE_Bloom_Names:
     Bloom_Mute_Unmute = "Bloom Mute/Unmute"
     Real_Time_Compositing = "Real-Time Compositor"
     Enable_Compositor = "Enable Compositor"
+    Hue_Saturation_Value = "Hue/Saturation/Value"
+    Mix_Color = "Mix Color"
 
 class OE_Bloom_Descr:
     """
@@ -327,8 +330,7 @@ class FilterNodeManager:
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_glare_node(self, glare_name="Glare", glare_label="Glare", settings=None):
-        # Use default settings if none are provided
+    def create_glare_node(self, glare_name=OE_Bloom_Names.Glare, glare_label=OE_Bloom_Names.Glare, settings=None):
         """
         Create a Glare node in a node group and apply the specified settings.
 
@@ -359,7 +361,7 @@ class FilterNodeManager:
 
         return glare_node
 
-    def create_blur_node(self, blur_name="Blur", blur_label="Blur", settings=None):
+    def create_blur_node(self, blur_name=OE_Bloom_Names.Blur, blur_label=OE_Bloom_Names.Blur, settings=None):
         """
         Create a Blur node in a node group and apply the specified settings.
 
@@ -391,34 +393,112 @@ class FilterNodeManager:
         return blur_node
 
 @dataclass
-class MixRGBSettings:
-    pass
+class MixColorSettings:
+    """
+    Settings for the MixColor node in a node group.
+
+    Attributes:
+    ---
+        blend_type (str): Blend type for the MixColor node. Options:
+            'DARKEN', 'MULTIPLY', 'BURN', 'LIGHTEN', 'SCREEN', 'DODGE', 'ADD', 'OVERLAY',
+            'SOFT_LIGHT', 'LINEAR_LIGHT', 'DIFFERENCE', 'EXCLUSION', 'SUBTRACT', 'DIVIDE',
+            'HUE', 'SATURATION', 'COLOR', 'VALUE'
+        use_alpha (bool): Whether to use alpha in the MixColor node.
+        use_clamp (bool): Whether to clamp the output of the MixColor node.
+        fac_defualt_value (float): Value for the Factor input of the MixColor node.
+        hide_fac (bool): Hide the Factor input of the MixColor node.
+        hide_col1 (bool): Hide the Color1 input of the MixColor node.
+        hide_col2 (bool): Hide the Color2 input of the MixColor node.
+    """
+    blend_type: str = 'MIX' # Options: 'DARKEN', 'MULTIPLY', 'BURN', 'LIGHTEN', 'SCREEN', 'DODGE', 'ADD', 'OVERLAY', 'SOFT_LIGHT', 'LINEAR_LIGHT', 'DIFFERENCE', 'EXCLUSION', 'SUBTRACT', 'DIVIDE' 'HUE', 'SATURATION', 'COLOR', 'VALUE'
+    use_alpha: bool = False
+    use_clamp: bool = False
+    fac_default_value: float = 0.0
+    hide_fac: bool = False
+    hide_col1: bool = False
+    hide_col2: bool = False
+
+@dataclass
+class HueSatSettings:
+    img_default_value: list = (1.0, 1.0, 1.0, 1.0)
+    hue_default_value: float = 0.5
+    sat_default_value: float = 1.0
+    val_default_value: float = 1.0
+    fac_default_value: float = 1.0
+
+    hide_img: bool = False
+    hide_hue: bool = False
+    hide_sat: bool = False
+    hide_val: bool = False
+    hide_fac: bool = False
 
 class ColorNodeManager:
-    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=False):
+    """
+    Manager for color-related nodes in a node group.
+
+    This class is used to create and configure color-related nodes in a node group.
+
+    Attributes:
+    ---
+    node_group (NodeTree): The node group to manage nodes in.
+    node_color (tuple): RGB color for the nodes. Defaults to BROWN.
+    use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to True.
+    """
+    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=True):
+        """
+        Initialize a ColorNodeManager instance.
+
+        Args:
+            node_group (NodeTree): The node group to manage nodes in.
+            node_color (tuple): RGB color for the nodes managed by this instance. Defaults to BROWN.
+            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to True.
+        """
         self.node_group = node_group
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_mixRGB_node(self, mixRGB_name="MixRGB", mixRGB_label="MixRGB", settings=None):
+    def create_mixcolor_node(self, mixcolor_name=OE_Bloom_Names.Mix_Color, mixcolor_label=OE_Bloom_Names.Mix_Color, settings=None):
+        """
+        Create a MixColor node in a node group and apply the specified settings.
+
+        Args:
+            mixcolor_name (str, optional): Name of the MixColor node. Defaults to "Mix Color".
+            mixcolor_label (str, optional): Label of the MixColor node. Defaults to "Mix Color".
+            settings (MixColorSettings, optional): Settings for the MixColor node. Defaults to MixColorSettings() if not specified.
+
+        Returns:
+            Node: The newly created MixColor node.
+        """
         # Use default settings if none are provided
         if settings is None:
-            settings = MixRGBSettings()
+            settings = MixColorSettings()
 
-        # Create the MixRGB node
-        mixrgb_node = self.node_group.nodes.new("CompositorNodeMixRGB")
-        mixrgb_node.name = mixRGB_name
-        mixrgb_node.label = mixRGB_label
-        mixrgb_node.use_custom_color = self.use_custom_color
-        mixrgb_node.color = self.node_color
+        # Create the MixColor node
+        mixcolor_node = self.node_group.nodes.new("CompositorNodeMixRGB")
+        mixcolor_node.name = mixcolor_name
+        mixcolor_node.label = mixcolor_label
+        mixcolor_node.use_custom_color = self.use_custom_color
+        mixcolor_node.color = self.node_color
+        mixcolor_node.blend_type = settings.blend_type
+        mixcolor_node.use_alpha = settings.use_alpha
+        mixcolor_node.use_clamp = settings.use_clamp
 
-        # Apply settings from MixRGBSettings instance
-        for field_name in settings.__dataclass_fields__:
-            value = getattr(settings, field_name)
-            if hasattr(mixrgb_node, field_name):
-                setattr(mixrgb_node, field_name, value)
+        # Configure the Fac input
+        mixcolor_node.inputs[0].default_value = settings.fac_default_value
+        mixcolor_node.inputs[0].hide = settings.hide_fac
 
-        return mixrgb_node
+        # Configure the Color1 input
+        mixcolor_node.inputs[1].hide = settings.hide_col1
+
+        # Configure the Color2 input
+        mixcolor_node.inputs[2].hide = settings.hide_col2
+
+        return mixcolor_node
+    
+    def create_huesat_node(self, huesat_name=OE_Bloom_Names.Hue_Saturation_Value, huesat_label=OE_Bloom_Names.Hue_Saturation_Value, settings=None):
+        # Use default settings if none are provided
+        if settings is None:
+            settings = HueSatSettings()
     
 def hex_color_add(color1, color2):
     """
@@ -678,13 +758,50 @@ def oe_bloom_node_group(context, operator, group_name):
     blur = FNM.create_blur_node(
         blur_name=OE_Bloom_Names.Blur,
         blur_label=OE_Bloom_Names.Blur,
-        settings=BlurSettings(
-            filter_type='FAST_GAUSS',
-            use_relative=False,
-            size_x=0,
-            size_y=0,
-            use_extended_bounds=False
+        settings=BlurSettings(filter_type='FAST_GAUSS')
+    )
+
+    #Setting ColorNodeManager
+    CNM = ColorNodeManager(
+        node_group=oe_bloom,
+        use_custom_color=True
+    )
+
+    #node Color
+    color = CNM.create_mixcolor_node(
+        mixcolor_name=OE_Bloom_Names.Color,
+        mixcolor_label=OE_Bloom_Names.Color,
+        settings=MixColorSettings(
+            blend_type='COLOR',
+            fac_default_value=1.0,
+            hide_fac=True
         )
+    )
+
+    #node Blur Mix
+    blur_mix = CNM.create_mixcolor_node(
+        mixcolor_name=OE_Bloom_Names.Blur_Mix,
+        mixcolor_label=OE_Bloom_Names.Blur_Mix,
+        settings=MixColorSettings(
+            blend_type='SCREEN',
+            use_clamp=True,
+            fac_default_value=1.0,
+            hide_fac=True
+        )
+    )
+
+    #node Intensity
+    intensity = CNM.create_mixcolor_node(
+        mixcolor_name=OE_Bloom_Names.Intensity,
+        mixcolor_label=OE_Bloom_Names.Intensity,
+        settings=MixColorSettings(blend_type='ADD')
+    )
+
+    #node Knee Mix
+    knee_mix = CNM.create_mixcolor_node(
+        mixcolor_name=OE_Bloom_Names.Knee_Mix,
+        mixcolor_label=OE_Bloom_Names.Knee_Mix,
+        settings=MixColorSettings(blend_type='ADD')
     )
 
     """
@@ -745,9 +862,8 @@ def oe_bloom_node_group(context, operator, group_name):
     blur.filter_type = 'FAST_GAUSS'
     blur.use_relative = False
     blur.use_extended_bounds = False
-    """
 
-    #node Color
+    ! Old method to create the Mix Color node
     color = oe_bloom.nodes.new("CompositorNodeMixRGB")
     color.label = OE_Bloom_Names.Color
     color.name = OE_Bloom_Names.Color
@@ -760,7 +876,7 @@ def oe_bloom_node_group(context, operator, group_name):
     #Fac
     color.inputs[0].default_value = 1.0
 
-    #node Blur Mix
+    ! Old method to create the Blur Mix node
     blur_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
     blur_mix.label = OE_Bloom_Names.Blur_Mix
     blur_mix.name = OE_Bloom_Names.Blur_Mix
@@ -773,7 +889,7 @@ def oe_bloom_node_group(context, operator, group_name):
     #Fac
     blur_mix.inputs[0].default_value = 1.0
 
-    #node Intensity
+    ! Old method to create the Intensity node
     intensity = oe_bloom.nodes.new("CompositorNodeMixRGB")
     intensity.label = OE_Bloom_Names.Intensity
     intensity.name = OE_Bloom_Names.Intensity
@@ -782,8 +898,8 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity.blend_type = 'ADD'
     intensity.use_alpha = False
     intensity.use_clamp = False
-
-    #node Knee Mix
+    
+    ! Old method to create the Knee Mix node
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
     knee_mix.label = OE_Bloom_Names.Knee_Mix
     knee_mix.name = OE_Bloom_Names.Knee_Mix
@@ -792,6 +908,14 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_mix.blend_type = 'ADD'
     knee_mix.use_alpha = False
     knee_mix.use_clamp = False
+    """
+
+    #node Clamp
+    clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
+    clamp.label = OE_Bloom_Names.Clamp
+    clamp.name = OE_Bloom_Names.Clamp
+    clamp.use_custom_color = True
+    clamp.color = Color.BROWN
 
     #node Bloom High && Low
     bloom_high____low = oe_bloom.nodes.new("NodeFrame")
@@ -835,12 +959,6 @@ def oe_bloom_node_group(context, operator, group_name):
     reroute_01.label = OE_Bloom_Names.KB_Switch
     reroute_01.name = OE_Bloom_Names.Reroute_01
     reroute_01.socket_idname = "NodeSocketColor"
-    #node Clamp
-    clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
-    clamp.label = OE_Bloom_Names.Clamp
-    clamp.name = OE_Bloom_Names.Clamp
-    clamp.use_custom_color = True
-    clamp.color = Color.BROWN
 
     #node Group Input 00
     group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
