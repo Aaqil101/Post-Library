@@ -340,6 +340,7 @@ class FilterNodeManager:
         Returns:
             Node: The newly created Glare node.
         """
+        # Use default settings if none are provided
         if settings is None:
             settings = GlareSettings()
 
@@ -370,7 +371,7 @@ class FilterNodeManager:
         Returns:
             Node: The newly created Blur node.
         """
-        # Use defualt settings if none are provided
+        # Use default settings if none are provided
         if settings is None:
             settings = BlurSettings()
 
@@ -389,6 +390,36 @@ class FilterNodeManager:
 
         return blur_node
 
+@dataclass
+class MixRGBSettings:
+    pass
+
+class ColorNodeManager:
+    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=False):
+        self.node_group = node_group
+        self.use_custom_color = use_custom_color
+        self.node_color = node_color
+
+    def create_mixRGB_node(self, mixRGB_name="MixRGB", mixRGB_label="MixRGB", settings=None):
+        # Use default settings if none are provided
+        if settings is None:
+            settings = MixRGBSettings()
+
+        # Create the MixRGB node
+        mixrgb_node = self.node_group.nodes.new("CompositorNodeMixRGB")
+        mixrgb_node.name = mixRGB_name
+        mixrgb_node.label = mixRGB_label
+        mixrgb_node.use_custom_color = self.use_custom_color
+        mixrgb_node.color = self.node_color
+
+        # Apply settings from MixRGBSettings instance
+        for field_name in settings.__dataclass_fields__:
+            value = getattr(settings, field_name)
+            if hasattr(mixrgb_node, field_name):
+                setattr(mixrgb_node, field_name, value)
+
+        return mixrgb_node
+    
 def hex_color_add(color1, color2):
     """
     This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
