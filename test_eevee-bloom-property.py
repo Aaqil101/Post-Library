@@ -420,12 +420,28 @@ class MixColorSettings:
 
 @dataclass
 class HueSatSettings:
+    """
+    Settings for the Hue Saturation node in a node group.
+
+    Attributes:
+    ---
+        img_default_value (list): Default value for the Image input of the Hue Saturation node.
+        hue_default_value (float): Default value for the Hue input of the Hue Saturation node.
+        sat_default_value (float): Default value for the Saturation input of the Hue Saturation node.
+        val_default_value (float): Default value for the Value input of the Hue Saturation node.
+        fac_default_value (float): Default value for the Factor input of the Hue Saturation node.
+
+        hide_img (bool): Hide the Image input of the Hue Saturation node.
+        hide_hue (bool): Hide the Hue input of the Hue Saturation node.
+        hide_sat (bool): Hide the Saturation input of the Hue Saturation node.
+        hide_val (bool): Hide the Value input of the Hue Saturation node.
+        hide_fac (bool): Hide the Factor input of the Hue Saturation node.
+    """
     img_default_value: list = (1.0, 1.0, 1.0, 1.0)
     hue_default_value: float = 0.5
     sat_default_value: float = 1.0
     val_default_value: float = 1.0
     fac_default_value: float = 1.0
-
     hide_img: bool = False
     hide_hue: bool = False
     hide_sat: bool = False
@@ -496,10 +512,50 @@ class ColorNodeManager:
         return mixcolor_node
     
     def create_huesat_node(self, huesat_name=OE_Bloom_Names.Hue_Saturation_Value, huesat_label=OE_Bloom_Names.Hue_Saturation_Value, settings=None):
+        """
+        Create a Hue/Saturation/Value node in a node group and apply the specified settings.
+
+        Args:
+            huesat_name (str, optional): Name of the Hue/Saturation/Value node. Defaults to "Hue Saturation Value".
+            huesat_label (str, optional): Label of the Hue/Saturation/Value node. Defaults to "Hue Saturation Value".
+            settings (HueSatSettings, optional): Settings for the Hue/Saturation/Value node. Defaults to HueSatSettings() if not    specified.
+
+        Returns:
+            Node: The newly created Hue/Saturation/Value node.
+        """
         # Use default settings if none are provided
         if settings is None:
             settings = HueSatSettings()
-    
+
+        # Create the Hue/Saturation/Value Node
+        huesat_node = self.node_group.nodes.new("CompositorNodeHueSat")
+        huesat_node.name = huesat_name
+        huesat_node.label = huesat_label
+        huesat_node.use_custom_color = self.use_custom_color
+        huesat_node.color = self.node_color
+
+        # Configure the Image input
+        huesat_node.inputs[0].default_value = settings.img_default_value
+        huesat_node.inputs[0].hide = settings.hide_img
+
+        # Configure the Hue input
+        huesat_node.inputs[1].default_value = settings.hue_default_value
+        huesat_node.inputs[1].hide = settings.hide_hue
+
+        # Configure the Saturation input
+        huesat_node.inputs[2].default_value = settings.sat_default_value
+        huesat_node.inputs[2].hide = settings.hide_sat
+
+        # Configure the Value input
+        huesat_node.inputs[3].default_value = settings.val_default_value
+        huesat_node.inputs[3].hide = settings.hide_val
+
+        # Configure the Factor input
+        huesat_node.inputs[4].default_value = settings.fac_default_value
+        huesat_node.inputs[4].hide = settings.hide_fac
+
+        return huesat_node
+
 def hex_color_add(color1, color2):
     """
     This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
@@ -804,6 +860,9 @@ def oe_bloom_node_group(context, operator, group_name):
         settings=MixColorSettings(blend_type='ADD')
     )
 
+    #node Clamp
+    clamp = CNM.create_huesat_node(huesat_name=OE_Bloom_Names.Clamp, huesat_label=OE_Bloom_Names.Clamp)
+
     """
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
@@ -908,14 +967,14 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_mix.blend_type = 'ADD'
     knee_mix.use_alpha = False
     knee_mix.use_clamp = False
-    """
-
-    #node Clamp
+    
+    ! Old method to create the Clamp node
     clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
     clamp.label = OE_Bloom_Names.Clamp
     clamp.name = OE_Bloom_Names.Clamp
     clamp.use_custom_color = True
     clamp.color = Color.BROWN
+    """
 
     #node Bloom High && Low
     bloom_high____low = oe_bloom.nodes.new("NodeFrame")
