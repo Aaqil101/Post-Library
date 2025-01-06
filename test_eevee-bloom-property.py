@@ -42,6 +42,23 @@ def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
 
     return tuple([srgb_red, srgb_green, srgb_blue])
 
+def hex_color_add(color1, color2):
+    """
+    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
+    The resulting RGB components are then combined back into a hex color code.
+    """
+    # Split the hex codes into RGB components
+    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
+    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
+    
+    # Add the components and clamp each to a maximum of 255
+    r = min(r1 + r2, 255)
+    g = min(g1 + g2, 255)
+    b = min(b1 + b2, 255)
+    
+    # Combine the components back into a hex color
+    return f"{r:02X}{g:02X}{b:02X}"
+
 class Color:
     """
     Class to store color values converted from hex codes to RGB
@@ -86,6 +103,7 @@ class OE_Bloom_Names:
     Camera = "Camera"
     Always = "Always"
     Glare = "Glare"
+    Frame = "Frame"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
@@ -405,7 +423,7 @@ class MixColorSettings:
             'HUE', 'SATURATION', 'COLOR', 'VALUE'
         use_alpha (bool): Whether to use alpha in the MixColor node.
         use_clamp (bool): Whether to clamp the output of the MixColor node.
-        fac_defualt_value (float): Value for the Factor input of the MixColor node.
+        fac_default_value (float): Value for the Factor input of the MixColor node.
         hide_fac (bool): Hide the Factor input of the MixColor node.
         hide_col1 (bool): Hide the Color1 input of the MixColor node.
         hide_col2 (bool): Hide the Color2 input of the MixColor node.
@@ -460,7 +478,7 @@ class ColorNodeManager:
     node_color (tuple): RGB color for the nodes. Defaults to BROWN.
     use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to True.
     """
-    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=True):
+    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=False):
         """
         Initialize a ColorNodeManager instance.
 
@@ -556,22 +574,22 @@ class ColorNodeManager:
 
         return huesat_node
 
-def hex_color_add(color1, color2):
-    """
-    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
-    The resulting RGB components are then combined back into a hex color code.
-    """
-    # Split the hex codes into RGB components
-    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
-    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
+@dataclass
+class FrameSettings:
+    label_size: int = 20
+    shrink: bool = False
     
-    # Add the components and clamp each to a maximum of 255
-    r = min(r1 + r2, 255)
-    g = min(g1 + g2, 255)
-    b = min(b1 + b2, 255)
-    
-    # Combine the components back into a hex color
-    return f"{r:02X}{g:02X}{b:02X}"
+
+class LayoutNodeManager:
+    def __init__(self, node_group, node_color: list, use_custom_color=False):
+        self.node_group = node_group
+        self.use_custom_color = use_custom_color
+        self.node_color = hexcode_to_rgb(
+            hex_color_add(node_color[0], node_color[1])
+        )
+
+    def create_frame_node(self, frame_name=OE_Bloom_Names.Frame, frame_label=OE_Bloom_Names.Frame, settings=None):
+
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
