@@ -613,8 +613,15 @@ class LayoutNodeManager:
         """
         self.node_group = node_group
         self.use_custom_color = use_custom_color
+
+        # Validate and convert the color inputs
+        if len(node_color) != 2:
+            raise ValueError("node_color must contain exactly two elements.")
         self.node_color = hexcode_to_rgb(
-            hex_color_add(node_color[0], node_color[1])
+            hex_color_add(
+                node_color[0],
+                node_color[1]
+            )
         )
 
     def create_frame_node(self, frame_name=OE_Bloom_Names.Frame, frame_label=OE_Bloom_Names.Frame, settings=None):
@@ -968,6 +975,12 @@ def oe_bloom_node_group(context, operator, group_name):
         )
     )
 
+    #node Reroute_00
+    reroute_00 = LNM.create_reroute_node(reroute_name=OE_Bloom_Names.Reroute_00, reroute_label=OE_Bloom_Names.KB_Switch)
+
+    #node Reroute_01
+    reroute_01 = LNM.create_reroute_node(reroute_name=OE_Bloom_Names.Reroute_01, reroute_label=OE_Bloom_Names.KB_Switch)
+
     """
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
@@ -1095,20 +1108,20 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_high____low.color = bloom_high_low_color
     bloom_high____low.label_size = 32
     bloom_high____low.shrink = True
-    """
 
-    #node Reroute_00
+    ! Old method to create the Reroute_00
     reroute_00 = oe_bloom.nodes.new("NodeReroute")
     reroute_00.label = OE_Bloom_Names.KB_Switch
     reroute_00.name = OE_Bloom_Names.Reroute_00
     reroute_00.socket_idname = "NodeSocketColor"
 
-    #node Reroute_01
+    ! Old method to create the Reroute_01
     reroute_01 = oe_bloom.nodes.new("NodeReroute")
     reroute_01.label = OE_Bloom_Names.KB_Switch
     reroute_01.name = OE_Bloom_Names.Reroute_01
     reroute_01.socket_idname = "NodeSocketColor"
-    
+    """
+
     #node KB Switch
     kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
     kb_switch.label = OE_Bloom_Names.KB_Switch
