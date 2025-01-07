@@ -104,6 +104,7 @@ class OE_Bloom_Names:
     Always = "Always"
     Glare = "Glare"
     Frame = "Frame"
+    Reroute = "Reroute"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
@@ -513,6 +514,8 @@ class ColorNodeManager:
         mixcolor_node.label = mixcolor_label
         mixcolor_node.use_custom_color = self.use_custom_color
         mixcolor_node.color = self.node_color
+
+        # Apply settings from the MixColorSettings instance
         mixcolor_node.blend_type = settings.blend_type
         mixcolor_node.use_alpha = settings.use_alpha
         mixcolor_node.use_clamp = settings.use_clamp
@@ -552,6 +555,7 @@ class ColorNodeManager:
         huesat_node.use_custom_color = self.use_custom_color
         huesat_node.color = self.node_color
 
+        # Apply settings from the HueSatSettings instance
         # Configure the Image input
         huesat_node.inputs[0].default_value = settings.img_default_value
         huesat_node.inputs[0].hide = settings.hide_img
@@ -576,12 +580,37 @@ class ColorNodeManager:
 
 @dataclass
 class FrameSettings:
+    """
+    Settings for the Frame node in the OE Bloom node group.
+
+    Attributes:
+        label_size (int): Size of the label text. Defaults to 20.
+        shrink (bool): Whether to shrink the frame to fit the node. Defaults to False.
+    """
     label_size: int = 20
     shrink: bool = False
-    
+
+@dataclass
+class RerouteSettings:
+    """
+    Settings for the Reroute node in the OE Bloom node group.
+
+    Attributes:
+    ---
+        socket_idname (str): ID name for the socket type of the Reroute node. Options: "NodeSocketColor", "NodeSocketFloat", "NodeSocketVector". Defaults to "NodeSocketColor".
+    """
+    socket_idname: str = "NodeSocketColor" # Options: "NodeSocketColor", "NodeSocketFloat", "NodeSocketVector"
 
 class LayoutNodeManager:
-    def __init__(self, node_group, node_color: list, use_custom_color=False):
+    def __init__(self, node_group, node_color: list, use_custom_color=False):       
+        """
+        Initialize a LayoutNodeManager instance.
+
+        Args:
+            node_group (NodeTree): The node group to manage nodes in.
+            node_color (list): A list containing two elements for color addition, which will be converted to RGB.
+            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
+        """
         self.node_group = node_group
         self.use_custom_color = use_custom_color
         self.node_color = hexcode_to_rgb(
@@ -589,7 +618,48 @@ class LayoutNodeManager:
         )
 
     def create_frame_node(self, frame_name=OE_Bloom_Names.Frame, frame_label=OE_Bloom_Names.Frame, settings=None):
+        """
+        Create a Frame node in a node group and apply the specified settings.
 
+        Args:
+            frame_name (str, optional): Name of the Frame node. Defaults to "Frame".
+            frame_label (str, optional): Label of the Frame node. Defaults to "Frame".
+            settings (FrameSettings, optional): Settings for the Frame node. Defaults to FrameSettings() if not specified.
+
+        Returns:
+            Node: The newly created Frame node.
+        """
+        # Use default settings if none are provided
+        if settings is None:
+            settings = FrameSettings()
+
+        # Create the Frame node
+        frame_node = self.node_group.nodes.new("NodeFrame")
+        frame_node.name = frame_name
+        frame_node.label = frame_label
+        frame_node.use_custom_color = self.use_custom_color
+        frame_node.color = self.node_color
+
+        # Apply settings from the FrameSettings instance
+        frame_node.label_size = settings.label_size
+        frame_node.shrink = settings.shrink
+
+        return frame_node
+
+    def create_reroute_node(self, reroute_name=OE_Bloom_Names.Reroute, reroute_label=OE_Bloom_Names.Reroute, settings=None):
+        # Use default settings if none are provided
+        if settings is None:
+            settings = RerouteSettings()
+
+        # Create the Reroute node
+        reroute_node = self.node_group.nodes.new("NodeReroute")
+        reroute_node.name = reroute_name
+        reroute_node.label = reroute_label
+
+        # Apply settings from the RerouteSettings instance
+        reroute_node.socket_idname = settings.socket_idname
+
+        return reroute_node
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -881,6 +951,23 @@ def oe_bloom_node_group(context, operator, group_name):
     #node Clamp
     clamp = CNM.create_huesat_node(huesat_name=OE_Bloom_Names.Clamp, huesat_label=OE_Bloom_Names.Clamp)
 
+    # Setting LayoutNodeManager
+    LNM = LayoutNodeManager(
+        node_group=oe_bloom,
+        node_color=["77535F", "3C3937"],
+        use_custom_color=True
+    )
+
+    #node Bloom High && Low
+    bloom_high____low = LNM.create_frame_node(
+        frame_name=OE_Bloom_Names.Bloom_High_Low,
+        frame_label=OE_Bloom_Names.Bloom_High_Low,
+        settings=FrameSettings(
+            label_size=32,
+            shrink=True
+        )
+    )
+
     """
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
@@ -992,9 +1079,8 @@ def oe_bloom_node_group(context, operator, group_name):
     clamp.name = OE_Bloom_Names.Clamp
     clamp.use_custom_color = True
     clamp.color = Color.BROWN
-    """
 
-    #node Bloom High && Low
+    ! Old method to create the Bloom High && Low Frame
     bloom_high____low = oe_bloom.nodes.new("NodeFrame")
     bloom_high____low.label = OE_Bloom_Names.Bloom_High_Low
     bloom_high____low.name = OE_Bloom_Names.Bloom_High_Low
@@ -1009,7 +1095,20 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_high____low.color = bloom_high_low_color
     bloom_high____low.label_size = 32
     bloom_high____low.shrink = True
+    """
 
+    #node Reroute_00
+    reroute_00 = oe_bloom.nodes.new("NodeReroute")
+    reroute_00.label = OE_Bloom_Names.KB_Switch
+    reroute_00.name = OE_Bloom_Names.Reroute_00
+    reroute_00.socket_idname = "NodeSocketColor"
+
+    #node Reroute_01
+    reroute_01 = oe_bloom.nodes.new("NodeReroute")
+    reroute_01.label = OE_Bloom_Names.KB_Switch
+    reroute_01.name = OE_Bloom_Names.Reroute_01
+    reroute_01.socket_idname = "NodeSocketColor"
+    
     #node KB Switch
     kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
     kb_switch.label = OE_Bloom_Names.KB_Switch
@@ -1026,16 +1125,6 @@ def oe_bloom_node_group(context, operator, group_name):
     ob_switch.color = Color.LIGHT_GRAY
     ob_switch.check = False
 
-    #node Reroute_00
-    reroute_00 = oe_bloom.nodes.new("NodeReroute")
-    reroute_00.label = OE_Bloom_Names.KB_Switch
-    reroute_00.name = OE_Bloom_Names.Reroute_00
-    reroute_00.socket_idname = "NodeSocketColor"
-    #node Reroute_01
-    reroute_01 = oe_bloom.nodes.new("NodeReroute")
-    reroute_01.label = OE_Bloom_Names.KB_Switch
-    reroute_01.name = OE_Bloom_Names.Reroute_01
-    reroute_01.socket_idname = "NodeSocketColor"
 
     #node Group Input 00
     group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
