@@ -1,5 +1,5 @@
 import bpy
-from typing import Tuple
+from typing import Tuple, List
 from bpy.props import BoolProperty, EnumProperty
 from dataclasses import dataclass, field
 
@@ -104,6 +104,7 @@ class OE_Bloom_Names:
     Always = "Always"
     Glare = "Glare"
     Frame = "Frame"
+    Switch = "Switch"
     Reroute = "Reroute"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
@@ -135,6 +136,7 @@ class OE_Bloom_Names:
     Enable_Compositor = "Enable Compositor"
     Hue_Saturation_Value = "Hue/Saturation/Value"
     Mix_Color = "Mix Color"
+    Group_Input = "Group Input"
 
 class OE_Bloom_Descr:
     """
@@ -602,6 +604,14 @@ class RerouteSettings:
     socket_idname: str = "NodeSocketColor" # Options: "NodeSocketColor", "NodeSocketFloat", "NodeSocketVector"
 
 class LayoutNodeManager:
+    """
+    A class for managing the layout of nodes in a node group, such as setting the size and color of nodes.
+
+    Attributes:
+        node_group (NodeTree): The node group to manage nodes in.
+        node_color (list): A list containing two elements for color addition, which will be converted to RGB.
+        use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
+    """
     def __init__(self, node_group, node_color: list, use_custom_color=False):       
         """
         Initialize a LayoutNodeManager instance.
@@ -667,6 +677,129 @@ class LayoutNodeManager:
         reroute_node.socket_idname = settings.socket_idname
 
         return reroute_node
+
+@dataclass
+class SwitchSettings:
+    """
+    Settings for the Switch node in the OE Bloom node group.
+
+    Attributes:
+        node_color (Tuple[float, float, float]): Color of the node. Defaults to pure white.
+        check (bool): Whether to check the Switch node. Defaults to False.
+        off (list): Color of the "Off" output of the Switch node. Defaults to pure white.
+        on (list): Color of the "On" output of the Switch node. Defaults to pure white.
+    """
+    node_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)  # Pure White Color
+    check: bool = False
+    off: list = (0.8, 0.8, 0.8, 1.0)  # White Color
+    on: list = (0.8, 0.8, 0.8, 1.0)  # White Color
+
+class UtilitiesNodeManager:
+    def __init__(self, node_group, use_custom_color=False):
+        """
+        Initialize a UtilitiesNodeManager instance.
+
+        Args:
+            node_group (NodeTree): The node group to manage nodes in.
+            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
+        """
+        self.node_group = node_group
+        self.use_custom_color = use_custom_color
+    
+    def create_switch_node(self, switch_name=OE_Bloom_Names.Switch, switch_label=OE_Bloom_Names.Switch, settings=None):
+        """
+        Create a Switch node in a node group and apply the specified settings.
+
+        Args:
+            switch_name (str, optional): Name of the Switch node. Defaults to "Switch".
+            switch_label (str, optional): Label of the Switch node. Defaults to "Switch".
+            settings (SwitchSettings, optional): Settings for the Switch node. Defaults to SwitchSettings() if not specified.
+
+        Returns:
+            Node: The newly created Switch node.
+        """
+        # Use default settings if none are provided
+        if settings is None:
+            settings = SwitchSettings()
+
+        # Create the Switch node
+        switch_node = self.node_group.nodes.new("CompositorNodeSwitch")
+        switch_node.label = switch_label
+        switch_node.name = switch_name
+        switch_node.use_custom_color = self.use_custom_color
+
+        # Apply settings from the SwitchSettings instance
+        switch_node.color = settings.node_color
+        switch_node.check = settings.check
+        switch_node.inputs[0].default_value = settings.off
+        switch_node.inputs[1].default_value = settings.on
+
+        return switch_node
+
+@dataclass
+class InputSettings:
+    """
+    Settings for the Group Input node in the OE Bloom node group.
+
+    Attributes:
+        node_color (Tuple[float, float, float]): Color of the node. Defaults to white.
+        outputs_to_hide (List[int]): Indices of outputs to hide from the user in the Group Input node.
+    """
+    node_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)  # Default to pure white
+    outputs_to_hide: List[int] = field(default_factory=list)  # Indices of outputs to hide
+
+class InputNodeManager:
+    """
+    Manager for creating Group Input nodes in a node group.
+
+    Attributes:
+        node_group (NodeTree): The node group to manage nodes in.
+        use_custom_color (bool): Whether to use a custom color for the nodes.
+    """
+    def __init__(self, node_group, use_custom_color: bool = False):
+        """
+        Initialize an InputNodeManager instance.
+
+        Args:
+            node_group (NodeTree): The node group to manage nodes in.
+            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
+        """
+        self.node_group = node_group
+        self.use_custom_color = use_custom_color
+
+    def create_group_input_node(self, group_input_name=OE_Bloom_Names.Group_Input, group_input_label=OE_Bloom_Names.Group_Input, settings: InputSettings = None):
+        """
+        Create a Group Input node in a node group and apply the specified settings.
+
+        Args:
+            group_input_name (str, optional): Name of the Group Input node. Defaults to "Group Input".
+            group_input_label (str, optional): Label of the Group Input node. Defaults to "Group Input".
+            settings (InputSettings, optional): Settings for the Group Input node. Defaults to InputSettings() if not specified.
+
+        Returns:
+            Node: The newly created Group Input node.
+        """
+        # Use default settings if none are provided
+        if settings is None:
+            settings = InputSettings()
+
+        # Create the Group Input node
+        group_input_node = self.node_group.nodes.new("NodeGroupInput")
+        group_input_node.name = group_input_name
+        group_input_node.label = group_input_label
+        group_input_node.use_custom_color = self.use_custom_color
+
+        # Apply settings from the InputSettings instance
+        # Apply color
+        if self.use_custom_color:
+            group_input_node.color = settings.node_color
+
+        # Hide specified outputs
+        for output_index in settings.outputs_to_hide:
+            if output_index < len(group_input_node.outputs):
+                group_input_node.outputs[output_index].hide = True
+
+        return group_input_node
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -847,11 +980,12 @@ def oe_bloom_node_group(context, operator, group_name):
     group_output.inputs[1].hide = True
     group_output.is_active_output = True
 
-    #Setting FilterNodeManager
-    FNM = FilterNodeManager(
-        node_group=oe_bloom,
-        use_custom_color=True
-    )
+    # Initialize node managers with the oe_bloom node group and custom settings
+    FNM = FilterNodeManager(node_group=oe_bloom, use_custom_color=True)
+    CNM = ColorNodeManager(node_group=oe_bloom, use_custom_color=True)
+    LNM = LayoutNodeManager(node_group=oe_bloom, node_color=["77535F", "3C3937"], use_custom_color=True)
+    UNM = UtilitiesNodeManager(node_group=oe_bloom, use_custom_color=True)
+    INM = InputNodeManager(node_group=oe_bloom, use_custom_color=True)
 
     #node Original Bloom High
     original_bloom_high = FNM.create_glare_node(
@@ -912,11 +1046,6 @@ def oe_bloom_node_group(context, operator, group_name):
         settings=BlurSettings(filter_type='FAST_GAUSS')
     )
 
-    #Setting ColorNodeManager
-    CNM = ColorNodeManager(
-        node_group=oe_bloom,
-        use_custom_color=True
-    )
 
     #node Color
     color = CNM.create_mixcolor_node(
@@ -958,12 +1087,6 @@ def oe_bloom_node_group(context, operator, group_name):
     #node Clamp
     clamp = CNM.create_huesat_node(huesat_name=OE_Bloom_Names.Clamp, huesat_label=OE_Bloom_Names.Clamp)
 
-    # Setting LayoutNodeManager
-    LNM = LayoutNodeManager(
-        node_group=oe_bloom,
-        node_color=["77535F", "3C3937"],
-        use_custom_color=True
-    )
 
     #node Bloom High && Low
     bloom_high____low = LNM.create_frame_node(
@@ -980,6 +1103,42 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Reroute_01
     reroute_01 = LNM.create_reroute_node(reroute_name=OE_Bloom_Names.Reroute_01, reroute_label=OE_Bloom_Names.KB_Switch)
+
+
+    #node KB Switch
+    kb_switch = UNM.create_switch_node(
+        switch_name=OE_Bloom_Names.KB_Switch,
+        switch_label=OE_Bloom_Names.KB_Switch,
+        settings=SwitchSettings(node_color=Color.LIGHT_GRAY)
+    )
+
+    #node OB Switch
+    ob_switch = UNM.create_switch_node(
+        switch_name=OE_Bloom_Names.OB_Switch,
+        switch_label=OE_Bloom_Names.OB_Switch,
+        settings=SwitchSettings(node_color=Color.LIGHT_GRAY)
+    )
+
+
+    #node Group Input 00
+    group_input_00 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_00,
+        group_input_label=OE_Bloom_Names.Group_Input_00,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=list(range(1, 18)) # Hide outputs 1 to 17
+        )
+    )
+
+    #node Group Input 01
+    group_input_01 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_01,
+        group_input_label=OE_Bloom_Names.Group_Input_01,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]  # Outputs to hide
+        )
+    )
 
     """
     ! Old method to create the Original Bloom High node
@@ -1109,20 +1268,19 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_high____low.label_size = 32
     bloom_high____low.shrink = True
 
-    ! Old method to create the Reroute_00
+    ! Old method to create the Reroute_00 node
     reroute_00 = oe_bloom.nodes.new("NodeReroute")
     reroute_00.label = OE_Bloom_Names.KB_Switch
     reroute_00.name = OE_Bloom_Names.Reroute_00
     reroute_00.socket_idname = "NodeSocketColor"
 
-    ! Old method to create the Reroute_01
+    ! Old method to create the Reroute_01 node
     reroute_01 = oe_bloom.nodes.new("NodeReroute")
     reroute_01.label = OE_Bloom_Names.KB_Switch
     reroute_01.name = OE_Bloom_Names.Reroute_01
     reroute_01.socket_idname = "NodeSocketColor"
-    """
 
-    #node KB Switch
+    ! Old method to create the kb_switch node
     kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
     kb_switch.label = OE_Bloom_Names.KB_Switch
     kb_switch.name = OE_Bloom_Names.KB_Switch
@@ -1130,7 +1288,7 @@ def oe_bloom_node_group(context, operator, group_name):
     kb_switch.color = Color.LIGHT_GRAY
     kb_switch.check = False
 
-    #node OB Switch
+    ! Old method to create the ob_switch node
     ob_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
     ob_switch.label = OE_Bloom_Names.OB_Switch
     ob_switch.name = OE_Bloom_Names.OB_Switch
@@ -1138,8 +1296,7 @@ def oe_bloom_node_group(context, operator, group_name):
     ob_switch.color = Color.LIGHT_GRAY
     ob_switch.check = False
 
-
-    #node Group Input 00
+    ! Old method to create the group_input_00 node
     group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
     group_input_00.label = OE_Bloom_Names.Group_Input_00
     group_input_00.name = OE_Bloom_Names.Group_Input_00
@@ -1162,6 +1319,31 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_00.outputs[15].hide = True
     group_input_00.outputs[16].hide = True
     group_input_00.outputs[17].hide = True
+
+    ! Old method to create the group_input_01 node
+    group_input_01 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_01.label = OE_Bloom_Names.Group_Input_01
+    group_input_01.name = OE_Bloom_Names.Group_Input_01
+    group_input_01.use_custom_color = True
+    group_input_01.color = Color.DARK_GRAY
+    group_input_01.outputs[0].hide = True
+    group_input_01.outputs[1].hide = True
+    group_input_01.outputs[2].hide = True
+    group_input_01.outputs[3].hide = True
+    group_input_01.outputs[4].hide = True
+    group_input_01.outputs[5].hide = True
+    group_input_01.outputs[6].hide = True
+    group_input_01.outputs[7].hide = True
+    group_input_01.outputs[8].hide = True
+    group_input_01.outputs[9].hide = True
+    group_input_01.outputs[10].hide = True
+    group_input_01.outputs[11].hide = True
+    group_input_01.outputs[12].hide = True
+    group_input_01.outputs[13].hide = True
+    group_input_01.outputs[14].hide = True
+    group_input_01.outputs[16].hide = True
+    group_input_01.outputs[17].hide = True
+    """
 
     #node Group Input 02
     group_input_02 = oe_bloom.nodes.new("NodeGroupInput")
@@ -1255,29 +1437,6 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_04.outputs[16].hide = True
     group_input_04.outputs[17].hide = True
 
-    #node Group Input 01
-    group_input_01 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_01.label = OE_Bloom_Names.Group_Input_01
-    group_input_01.name = OE_Bloom_Names.Group_Input_01
-    group_input_01.use_custom_color = True
-    group_input_01.color = Color.DARK_GRAY
-    group_input_01.outputs[0].hide = True
-    group_input_01.outputs[1].hide = True
-    group_input_01.outputs[2].hide = True
-    group_input_01.outputs[3].hide = True
-    group_input_01.outputs[4].hide = True
-    group_input_01.outputs[5].hide = True
-    group_input_01.outputs[6].hide = True
-    group_input_01.outputs[7].hide = True
-    group_input_01.outputs[8].hide = True
-    group_input_01.outputs[9].hide = True
-    group_input_01.outputs[10].hide = True
-    group_input_01.outputs[11].hide = True
-    group_input_01.outputs[12].hide = True
-    group_input_01.outputs[13].hide = True
-    group_input_01.outputs[14].hide = True
-    group_input_01.outputs[16].hide = True
-    group_input_01.outputs[17].hide = True
 
     #Set parents
     original_bloom_high.parent = bloom_high____low
