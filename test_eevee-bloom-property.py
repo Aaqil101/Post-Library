@@ -1140,6 +1140,46 @@ def oe_bloom_node_group(context, operator, group_name):
         )
     )
 
+    #node Group Input 02
+    group_input_02 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_02,
+        group_input_label=OE_Bloom_Names.Group_Input_02,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=[0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
+        )
+    )
+
+    #node Group Input 03
+    group_input_03 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_03,
+        group_input_label=OE_Bloom_Names.Group_Input_03,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=[0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
+        )
+    )
+
+    #node Group Input 04
+    group_input_04 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_04,
+        group_input_label=OE_Bloom_Names.Group_Input_04,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 15, 16, 17]  # Outputs to hide
+        )
+    )
+
+    #node Group Input 05
+    group_input_05 = INM.create_group_input_node(
+        group_input_name=OE_Bloom_Names.Group_Input_05,
+        group_input_label=OE_Bloom_Names.Group_Input_05,
+        settings=InputSettings(
+            node_color=Color.DARK_GRAY,
+            outputs_to_hide=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
+        )
+    )
+
     """
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
@@ -1343,9 +1383,8 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_01.outputs[14].hide = True
     group_input_01.outputs[16].hide = True
     group_input_01.outputs[17].hide = True
-    """
 
-    #node Group Input 02
+    ! Old method to create the group_input_02 node
     group_input_02 = oe_bloom.nodes.new("NodeGroupInput")
     group_input_02.label = OE_Bloom_Names.Group_Input_02
     group_input_02.name = OE_Bloom_Names.Group_Input_02
@@ -1369,7 +1408,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_02.outputs[16].hide = True
     group_input_02.outputs[17].hide = True
 
-    #node Group Input 03
+    ! Old method to create the group_input_03 node
     group_input_03 = oe_bloom.nodes.new("NodeGroupInput")
     group_input_03.label = OE_Bloom_Names.Group_Input_03
     group_input_03.name = OE_Bloom_Names.Group_Input_03
@@ -1393,7 +1432,28 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_03.outputs[16].hide = True
     group_input_03.outputs[17].hide = True
 
-    #node Group Input 05
+    ! Old method to create the group_input_04 node
+    group_input_04 = oe_bloom.nodes.new("NodeGroupInput")
+    group_input_04.label = OE_Bloom_Names.Group_Input_04
+    group_input_04.name = OE_Bloom_Names.Group_Input_04
+    group_input_04.use_custom_color = True
+    group_input_04.color = Color.DARK_GRAY
+    group_input_04.outputs[0].hide = True
+    group_input_04.outputs[1].hide = True
+    group_input_04.outputs[2].hide = True
+    group_input_04.outputs[3].hide = True
+    group_input_04.outputs[4].hide = True
+    group_input_04.outputs[5].hide = True
+    group_input_04.outputs[6].hide = True
+    group_input_04.outputs[8].hide = True
+    group_input_04.outputs[9].hide = True
+    group_input_04.outputs[10].hide = True
+    group_input_04.outputs[11].hide = True
+    group_input_04.outputs[15].hide = True
+    group_input_04.outputs[16].hide = True
+    group_input_04.outputs[17].hide = True
+
+    ! Old method to create the group_input_05 node
     group_input_05 = oe_bloom.nodes.new("NodeGroupInput")
     group_input_05.label = OE_Bloom_Names.Group_Input_05
     group_input_05.name = OE_Bloom_Names.Group_Input_05
@@ -1415,28 +1475,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_05.outputs[15].hide = True
     group_input_05.outputs[16].hide = True
     group_input_05.outputs[17].hide = True
-
-    #node Group Input 04
-    group_input_04 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_04.label = OE_Bloom_Names.Group_Input_04
-    group_input_04.name = OE_Bloom_Names.Group_Input_04
-    group_input_04.use_custom_color = True
-    group_input_04.color = Color.DARK_GRAY
-    group_input_04.outputs[0].hide = True
-    group_input_04.outputs[1].hide = True
-    group_input_04.outputs[2].hide = True
-    group_input_04.outputs[3].hide = True
-    group_input_04.outputs[4].hide = True
-    group_input_04.outputs[5].hide = True
-    group_input_04.outputs[6].hide = True
-    group_input_04.outputs[8].hide = True
-    group_input_04.outputs[9].hide = True
-    group_input_04.outputs[10].hide = True
-    group_input_04.outputs[11].hide = True
-    group_input_04.outputs[15].hide = True
-    group_input_04.outputs[16].hide = True
-    group_input_04.outputs[17].hide = True
-
+    """
 
     #Set parents
     original_bloom_high.parent = bloom_high____low
