@@ -12,65 +12,46 @@ bl_info = {
 
 import bpy
 import sys
-import pathlib
+from pathlib import Path
 
 """
 * I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
 """
 
-# Check if the script is run from Blender's Text Editor
-if bpy.context.space_data is not None and bpy.context.space_data.type == "TEXT_EDITOR":
-    print("Running from Blender Text Editor")
-    script_path = bpy.context.space_data.text.filepath
-else:
-    try:
-        print("Running from external Python environment")
-        script_path = __file__
-    except NameError:
-        raise RuntimeError("Unable to determine script path. Are you running this in Blender?")
+# Determine script path
+try:
+    script_path = (
+        bpy.context.space_data.text.filepath
+        if bpy.context.space_data and bpy.context.space_data.type == "TEXT_EDITOR"
+        else __file__
+    )
+except NameError:
+    raise RuntimeError("Unable to determine script path. Are you running this in Blender?")
 
 if not script_path:
-    raise RuntimeError("The script needs to be saved to disk before running!")
+    raise RuntimeError("The script must be saved to disk before running!")
 
-print(f"script_path -> {script_path}")
+# Resolve directories
+script_dir = Path(script_path).resolve().parent
+path_to_nodes_folder = script_dir / "nodes"
+path_to_functions_folder = script_dir / "helpers"
 
-# Resolve the directory of the script
-script_dir = pathlib.Path(script_path).resolve().parent
-print(f"[pathlib] script_dir -> {script_dir}")
+# List of paths
+paths = [
+    script_dir, path_to_nodes_folder,
+    path_to_functions_folder
+]
 
-# get the path to the nodes folder
-path_to_nodes_folder = str(script_dir / "nodes")
-print(f"path_to_nodes_folder -> {path_to_nodes_folder}")
+# Add directories to sys.path
+for path in paths:
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.append(path_str)
+        print(f"Added {path_str} to sys.path")
+    else:
+        print(f"{path_str} already in sys.path")
 
-# get the path to the functions folder
-path_to_functions_folder = str(script_dir / "functions")
-print(f"path_to_functions_folder -> {path_to_functions_folder}")
-
-# Add the script's directory to sys.path if not already there
-if str(script_dir) not in sys.path:
-    sys.path.append(str(script_dir))
-    print(f"Added {script_dir} to sys.path")
-else:
-    print(f"{script_dir} already in sys.path")
-
-# Add the path to the nodes folder to sys.path
-if path_to_nodes_folder not in sys.path:
-    sys.path.append(path_to_nodes_folder)
-    print(f"Added {path_to_nodes_folder} to sys.path")
-else:
-    print(f"{path_to_nodes_folder} already in sys.path")
-
-# Add the path to the functions folder to sys.path
-if path_to_functions_folder not in sys.path:
-    sys.path.append(path_to_functions_folder)
-    print(f"Added {path_to_functions_folder} to sys.path")
-else:
-    print(f"{path_to_functions_folder} already in sys.path")
-
-
-from functions import(
-    COLORS_DICT, add_driver_var
-)
+from helpers import (add_driver_var, Color)
 
 from nodes import(
     passmixer_node_group, lensdistortion_node, bloom_node_group, file_film_grain_node_group,
@@ -139,7 +120,7 @@ class NODE_OT_PASSMIXER(bpy.types.Operator):
         passmixer_node.width = 160
         passmixer_node.node_tree = bpy.data.node_groups[passmixer_group.name]
         passmixer_node.use_custom_color = True
-        passmixer_node.color = COLORS_DICT["DARK_BLUE"]
+        passmixer_node.color = Color.DARK_BLUE
         passmixer_node.select = False
 
         return {'FINISHED'}
@@ -181,7 +162,7 @@ class NODE_OT_FFGRAIN(bpy.types.Operator):
         ff_grain_node.width = 140
         ff_grain_node.node_tree = bpy.data.node_groups[ff_grain_group.name]
         ff_grain_node.use_custom_color = True
-        ff_grain_node.color = COLORS_DICT["LIGHT_PURPLE"]
+        ff_grain_node.color = Color.LIGHT_PURPLE
         ff_grain_node.select = False
 
         return {'FINISHED'}
@@ -219,7 +200,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
         vignette_node.width = 140
         vignette_node.node_tree = bpy.data.node_groups[vignette_group.name]
         vignette_node.use_custom_color = True
-        vignette_node.color = COLORS_DICT["DARK_PURPLE"]
+        vignette_node.color = Color.DARK_PURPLE
         vignette_node.select = False
 
         return {'FINISHED'}
@@ -246,7 +227,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
         vignette_basic_node.width = 165
         vignette_basic_node.node_tree = bpy.data.node_groups[vignette_basic_group.name]
         vignette_basic_node.use_custom_color = True
-        vignette_basic_node.color = COLORS_DICT["DARK_PURPLE"]
+        vignette_basic_node.color = Color.DARK_PURPLE
         vignette_basic_node.select = False
 
         return {'FINISHED'}
@@ -266,7 +247,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         bloom_node.width = 168
         bloom_node.node_tree = bpy.data.node_groups[bloom_group.name]
         bloom_node.use_custom_color = True
-        bloom_node.color = COLORS_DICT["DARK_PURPLE"]
+        bloom_node.color = Color.DARK_PURPLE
         bloom_node.select = False
 
         """
@@ -357,7 +338,7 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
         beautymixer_node.width = 162
         beautymixer_node.node_tree = bpy.data.node_groups[beautymixer_group.name]
         beautymixer_node.use_custom_color = True
-        beautymixer_node.color = COLORS_DICT["DARK_BLUE"]
+        beautymixer_node.color = Color.DARK_BLUE
         beautymixer_node.select = False
 
         return {'FINISHED'}
@@ -377,7 +358,7 @@ class NODE_OT_CHROMATICABERRATION(bpy.types.Operator):
         chromatic_aberration_node.width = 197
         chromatic_aberration_node.node_tree = bpy.data.node_groups[chromatic_aberration_group.name]
         chromatic_aberration_node.use_custom_color = True
-        chromatic_aberration_node.color = COLORS_DICT["DARK_PURPLE"]
+        chromatic_aberration_node.color = Color.DARK_PURPLE
         chromatic_aberration_node.select = False
 
         return {'FINISHED'}
@@ -397,7 +378,7 @@ class NODE_OT_CONTRAST(bpy.types.Operator):
         contrast_node.width = 149
         contrast_node.node_tree = bpy.data.node_groups[contrast_group.name]
         contrast_node.use_custom_color = True
-        contrast_node.color = COLORS_DICT["BROWN"]
+        contrast_node.color = Color.BROWN
         contrast_node.select = False
         
         # Blur Size X
@@ -433,7 +414,7 @@ class NODE_OT_EXPONENTIALGLARE(bpy.types.Operator):
         exponential_glare_node.width = 194
         exponential_glare_node.node_tree = bpy.data.node_groups[exponential_glare_group.name]
         exponential_glare_node.use_custom_color = True
-        exponential_glare_node.color = COLORS_DICT["DARK_PURPLE"]
+        exponential_glare_node.color = Color.DARK_PURPLE
         exponential_glare_node.select = False
 
         return {'FINISHED'}
@@ -452,7 +433,7 @@ class NODE_OT_GLOW(bpy.types.Operator):
         glow_node.width = 197
         glow_node.node_tree = bpy.data.node_groups[glow_group.name]
         glow_node.use_custom_color = True
-        glow_node.color = COLORS_DICT["DARK_PURPLE"]
+        glow_node.color = Color.DARK_PURPLE
         glow_node.select = False
         
         # G Switch 01
@@ -615,7 +596,7 @@ class NODE_OT_HALATION(bpy.types.Operator):
         halation_node.width = 151
         halation_node.node_tree = bpy.data.node_groups[halation_group.name]
         halation_node.use_custom_color = True
-        halation_node.color = COLORS_DICT["DARK_PURPLE"]
+        halation_node.color = Color.DARK_PURPLE
         halation_node.select = False
         
         # H Blur Size X
@@ -664,29 +645,6 @@ def register():
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-
-"""
-!Old register and unregister method
-!def register():
-!    bpy.utils.register_class(COMP_PT_MAINPANEL)
-!    bpy.utils.register_class(COMP_PT_RENDER)
-!    bpy.utils.register_class(COMP_PT_FINALTOUCHES)
-!    bpy.utils.register_class(NODE_OT_MULTIDENOISER)
-!    bpy.utils.register_class(NODE_OT_PASSMIXER)
-!    bpy.utils.register_class(NODE_OT_LENSDISTORTION)
-!    bpy.utils.register_class(NODE_OT_FILMGRAIN)
-!    bpy.utils.register_class(NODE_OT_VIGNETTE)
-!
-!def unregister():
-!    bpy.utils.unregister_class(COMP_PT_MAINPANEL)
-!    bpy.utils.unregister_class(COMP_PT_RENDER)
-!    bpy.utils.unregister_class(COMP_PT_FINALTOUCHES)
-!    bpy.utils.unregister_class(NODE_OT_MULTIDENOISER)
-!    bpy.utils.unregister_class(NODE_OT_PASSMIXER)
-!    bpy.utils.unregister_class(NODE_OT_LENSDISTORTION)
-!    bpy.utils.unregister_class(NODE_OT_FILMGRAIN)
-!    bpy.utils.unregister_class(NODE_OT_VIGNETTE)
-"""
 
 if __name__ == "__main__":
     register()
