@@ -1,85 +1,48 @@
 import bpy
+import sys
+from pathlib import Path
 from typing import Tuple, List
 from bpy.props import BoolProperty, EnumProperty
 from dataclasses import dataclass, field
 
-# what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
-# (https://github.com/CGArtPython/bpy-building-blocks)
+# Determine script path
+try:
+    script_path = (
+        bpy.context.space_data.text.filepath
+        if bpy.context.space_data and bpy.context.space_data.type == "TEXT_EDITOR"
+        else __file__
+    )
+except NameError:
+    raise RuntimeError("Unable to determine script path. Are you running this in Blender?")
 
-# and then I modified the code to fit my needs based on this tutorial.
-# (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
+if not script_path:
+    raise RuntimeError("The script must be saved to disk before running!")
 
-def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
-    """
-    Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
-    to a Linear RGB
+# Resolve directories
+script_dir = Path(script_path).resolve().parent
+path_to_nodes_folder = script_dir / "nodes"
+path_to_helpers_folder = script_dir / "helpers"
+path_to_core_folder = script_dir / "core"
 
-    Supports: "#RRGGBB" or "RRGGBB"
+# List of paths
+paths = [
+    script_dir, path_to_nodes_folder,
+    path_to_helpers_folder
+]
 
-    Note: We are converting into Linear RGB since Blender uses a Linear Color Space internally
-    https://docs.blender.org/manual/en/latest/render/color_management.html
-    """
-    # remove the leading "#" symbol if present
-    if hexcode.startswith("#"):
-        hexcode = hexcode[1:]
+# Add directories to sys.path
+for path in paths:
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.append(path_str)
+        print(f"Added {path_str} to sys.path")
+    else:
+        print(f"{path_str} already in sys.path")
 
-    assert len(hexcode) == 6, f"RRGGBB is the supported hex color format: {hexcode}"
+from helpers import (add_driver_var, hexcode_to_rgb, hex_color_add, Color)
+from core import (FilterNodeManager, GlareSettings, BlurSettings)
 
-    # extracting the Red color component - RRxxxx
-    red = int(hexcode[:2], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_red = red / 255
-
-    # extracting the Green color component - xxGGxx
-    green = int(hexcode[2:4], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_green = green / 255
-
-    # extracting the Blue color component - xxxxBB
-    blue = int(hexcode[4:6], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_blue = blue / 255
-
-    return tuple([srgb_red, srgb_green, srgb_blue])
-
-def hex_color_add(color1, color2):
-    """
-    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
-    The resulting RGB components are then combined back into a hex color code.
-    """
-    # Split the hex codes into RGB components
-    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
-    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
-    
-    # Add the components and clamp each to a maximum of 255
-    r = min(r1 + r2, 255)
-    g = min(g1 + g2, 255)
-    b = min(b1 + b2, 255)
-    
-    # Combine the components back into a hex color
-    return f"{r:02X}{g:02X}{b:02X}"
-
-class Color:
-    """
-    Class to store color values converted from hex codes to RGB
-
-    Example:
-        Import the Color class
-        
-        Color.LIGHT_RED
-    """
-
-    LIGHT_RED = hexcode_to_rgb("#94493E")
-    DARK_RED = hexcode_to_rgb("#823A35")
-    LIGHT_BLUE = hexcode_to_rgb("#646E66")
-    DARK_BLUE = hexcode_to_rgb("#4C6160")
-    LIGHT_PURPLE = hexcode_to_rgb("#846167")
-    DARK_PURPLE = hexcode_to_rgb("#77535F")
-    BROWN = hexcode_to_rgb("#866937")
-    DARK_GRAY = hexcode_to_rgb("#3C3937")
-    LIGHT_GRAY = hexcode_to_rgb("#59514B")
-
-class OE_Bloom_Names:
+class OldEevee_Bloom_Names:
     """
     Class to store the names of various nodes and sockets used in the bloom node group
     """
@@ -90,7 +53,6 @@ class OE_Bloom_Names:
     Knee = "Knee"
     Threshold = "Threshold"
     Radius = "Radius"
-    Blur = "Blur"
     Intensity = "Intensity"
     Clamp = "Clamp"
     Other = "Other"
@@ -102,7 +64,6 @@ class OE_Bloom_Names:
     Disabled = "Disabled"
     Camera = "Camera"
     Always = "Always"
-    Glare = "Glare"
     Frame = "Frame"
     Switch = "Switch"
     Reroute = "Reroute"
@@ -138,7 +99,7 @@ class OE_Bloom_Names:
     Mix_Color = "Mix Color"
     Group_Input = "Group Input"
 
-class OE_Bloom_Descr:
+class OldEevee_Bloom_Descr:
     """
     Class to store all the descriptions of the Bloom properties
     """
@@ -200,7 +161,7 @@ def toggle_oe_bloom_mute(self, context):
     if node_tree and node_tree.type == 'COMPOSITING':
         found_node = None
         for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom:
+            if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OE_Bloom:
                 found_node = node
                 break
 
@@ -234,12 +195,12 @@ def update_real_time_compositing(self, context):
             for space in area.spaces:
                 if space.type == 'VIEW_3D':  # Confirm it's a 3D View space
                     if hasattr(space.shading, 'use_compositor'):  # Ensure shading property exists
-                        if self.real_time_compositing_enum == OE_Bloom_Names.Disabled.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Disabled.upper()
-                        elif self.real_time_compositing_enum == OE_Bloom_Names.Camera.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Camera.upper()
-                        elif self.real_time_compositing_enum == OE_Bloom_Names.Always.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Always.upper()
+                        if self.real_time_compositing_enum == OldEevee_Bloom_Names.Disabled.upper():
+                            space.shading.use_compositor = OldEevee_Bloom_Names.Disabled.upper()
+                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Camera.upper():
+                            space.shading.use_compositor = OldEevee_Bloom_Names.Camera.upper()
+                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Always.upper():
+                            space.shading.use_compositor = OldEevee_Bloom_Names.Always.upper()
             break
     else:
         # self.report({'WARNING'}, "No 3D Viewport available to update the shading property.")
@@ -260,158 +221,6 @@ def poll_view_3d(self, context):
         if area.type == 'VIEW_3D':  # Check if VIEW_3D area exists
             return True
     return False
-
-@dataclass
-class GlareSettings:
-    """
-    Settings for the Glare node (Compositor).
-
-    Attributes:
-    ---
-        angle_offset (float): Angle offset for the glare effect.
-        color_modulation (float): Color modulation for the glare effect.
-        fade (float): Fade-out value for the glare effect.
-        glare_type (str): Type of glare effect, e.g. 'BLOOM', 'GHOSTS', 'STREAKS'.
-        iterations (int): Number of iterations for the glare effect.
-        mix (float): Mix value for the glare effect.
-        quality (str): Quality of the glare effect, e.g. 'LOW', 'MEDIUM', 'HIGH'.
-        size (int): Size of the glare effect.
-        streaks (int): Number of streaks for the glare effect.
-        threshold (float): Threshold value for the glare effect.
-        use_rotate_45 (bool): Whether to use a 45-degree rotation for the glare effect.
-    """
-    angle_offset: float = 0.0
-    color_modulation: float = 0.25
-    fade: float = 0.9
-    glare_type: str = 'STREAKS'  # Options: 'BLOOM', 'GHOSTS', 'STREAKS', 'FOG_GLOW', 'SIMPLE_STAR'
-    iterations: int = 3
-    mix: float = 0.0
-    quality: str = 'LOW'  # Options: 'LOW', 'MEDIUM', 'HIGH'
-    size: int = 8
-    streaks: int = 4
-    threshold: float = 1.0
-    use_rotate_45: bool = True
-
-@dataclass
-class BlurSettings:
-    """
-    Settings for the Blur node (Compositor).
-
-    Attributes:
-    ---
-        aspect_correction (str): Aspect correction mode. Options: 'NONE', 'Y', 'X'.
-        factor (int): Overall blur factor.
-        factor_x (int): Horizontal blur factor.
-        factor_y (int): Vertical blur factor.
-        filter_type (str): Type of filter to use for blurring. Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'.
-        size_x (int): Horizontal size of the blur.
-        size_y (int): Vertical size of the blur.
-        use_bokeh (bool): Whether to use bokeh effect in the blur.
-        use_extended_bounds (bool): Whether to use extended bounds for the blur.
-        use_gamma_correction (bool): Whether to use gamma correction for the blur.
-        use_relative (bool): Whether to use relative sizing for the blur.
-        use_variable_size (bool): Whether to use variable size for the blur.
-    """
-    aspect_correction: str = 'NONE' # Options: 'NONE', 'Y', 'X'
-    factor: int = 0.0
-    factor_x: int = 0.0
-    factor_y: int = 0.0
-    filter_type: str = 'GAUSS' # Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'
-    size_x: int = 0
-    size_y: int = 0
-    use_bokeh: bool = False
-    use_extended_bounds: bool = False
-    use_gamma_correction: bool = False
-    use_relative: bool = False
-    use_variable_size: bool = False
-
-class FilterNodeManager:
-    """
-    Manages Filter Nodes in a Node Group
-
-    This class provides methods to create and manage filter nodes 
-    within a specified node group in Blender's compositor.
-
-    Attributes:
-    ---
-    node_group (NodeTree): The node group to manage nodes in.
-    node_color (tuple): RGB color for the nodes. Defaults to DARK_PURPLE.
-    use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
-    """
-    def __init__(self, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
-        """
-        Initialize a FilterNodeManager instance.
-
-        Args:
-            node_group (NodeTree): The node group to manage nodes in.
-            node_color (tuple): RGB color for the nodes managed by this instance. Defaults to DARK_PURPLE.
-            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
-        """
-        self.node_group = node_group
-        self.use_custom_color = use_custom_color
-        self.node_color = node_color
-
-    def create_glare_node(self, glare_name=OE_Bloom_Names.Glare, glare_label=OE_Bloom_Names.Glare, settings=None):
-        """
-        Create a Glare node in a node group and apply the specified settings.
-
-        Args:
-            glare_name (str, optional): Name of the Glare node. Defaults to "Glare".
-            glare_label (str, optional): Label of the Glare node. Defaults to "Glare".
-            settings (GlareSettings, optional): Settings for the Glare node. Defaults to GlareSettings() if not specified.
-
-        Returns:
-            Node: The newly created Glare node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = GlareSettings()
-
-        # Create the Glare node
-        glare_node = self.node_group.nodes.new("CompositorNodeGlare")
-        glare_node.name = glare_name
-        glare_node.label = glare_label
-        glare_node.use_custom_color = self.use_custom_color
-        glare_node.color = self.node_color
-
-        # Apply settings from the GlareSettings instance
-        for field_name in settings.__dataclass_fields__:
-            value = getattr(settings, field_name)
-            if hasattr(glare_node, field_name):
-                setattr(glare_node, field_name, value)
-
-        return glare_node
-
-    def create_blur_node(self, blur_name=OE_Bloom_Names.Blur, blur_label=OE_Bloom_Names.Blur, settings=None):
-        """
-        Create a Blur node in a node group and apply the specified settings.
-
-        Args:
-            blur_name (str, optional): Name of the Blur node. Defaults to "Blur".
-            blur_label (str, optional): Label of the Blur node. Defaults to "Blur".
-            settings (BlurSettings, optional): Settings for the Blur node. Defaults to BlurSettings() if not specified.
-
-        Returns:
-            Node: The newly created Blur node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = BlurSettings()
-
-        # Create the Blur node
-        blur_node = self.node_group.nodes.new("CompositorNodeBlur")
-        blur_node.name = blur_name
-        blur_node.label = blur_label
-        blur_node.use_custom_color = self.use_custom_color
-        blur_node.color = self.node_color
-
-        # Apply settings from the BlurSettings instance
-        for field_name in settings.__dataclass_fields__:
-            value = getattr(settings, field_name)
-            if hasattr(blur_node, field_name):
-                setattr(blur_node, field_name, value)
-
-        return blur_node
 
 @dataclass
 class MixColorSettings:
@@ -494,7 +303,7 @@ class ColorNodeManager:
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_mixcolor_node(self, mixcolor_name=OE_Bloom_Names.Mix_Color, mixcolor_label=OE_Bloom_Names.Mix_Color, settings=None):
+    def create_mixcolor_node(self, mixcolor_name=OldEevee_Bloom_Names.Mix_Color, mixcolor_label=OldEevee_Bloom_Names.Mix_Color, settings=None):
         """
         Create a MixColor node in a node group and apply the specified settings.
 
@@ -534,7 +343,7 @@ class ColorNodeManager:
 
         return mixcolor_node
     
-    def create_huesat_node(self, huesat_name=OE_Bloom_Names.Hue_Saturation_Value, huesat_label=OE_Bloom_Names.Hue_Saturation_Value, settings=None):
+    def create_huesat_node(self, huesat_name=OldEevee_Bloom_Names.Hue_Saturation_Value, huesat_label=OldEevee_Bloom_Names.Hue_Saturation_Value, settings=None):
         """
         Create a Hue/Saturation/Value node in a node group and apply the specified settings.
 
@@ -634,7 +443,7 @@ class LayoutNodeManager:
             )
         )
 
-    def create_frame_node(self, frame_name=OE_Bloom_Names.Frame, frame_label=OE_Bloom_Names.Frame, settings=None):
+    def create_frame_node(self, frame_name=OldEevee_Bloom_Names.Frame, frame_label=OldEevee_Bloom_Names.Frame, settings=None):
         """
         Create a Frame node in a node group and apply the specified settings.
 
@@ -663,7 +472,7 @@ class LayoutNodeManager:
 
         return frame_node
 
-    def create_reroute_node(self, reroute_name=OE_Bloom_Names.Reroute, reroute_label=OE_Bloom_Names.Reroute, settings=None):
+    def create_reroute_node(self, reroute_name=OldEevee_Bloom_Names.Reroute, reroute_label=OldEevee_Bloom_Names.Reroute, settings=None):
         # Use default settings if none are provided
         if settings is None:
             settings = RerouteSettings()
@@ -706,7 +515,7 @@ class UtilitiesNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
     
-    def create_switch_node(self, switch_name=OE_Bloom_Names.Switch, switch_label=OE_Bloom_Names.Switch, settings=None):
+    def create_switch_node(self, switch_name=OldEevee_Bloom_Names.Switch, switch_label=OldEevee_Bloom_Names.Switch, settings=None):
         """
         Create a Switch node in a node group and apply the specified settings.
 
@@ -767,7 +576,7 @@ class InputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_group_input_node(self, group_input_name=OE_Bloom_Names.Group_Input, group_input_label=OE_Bloom_Names.Group_Input, settings: InputSettings = None):
+    def create_group_input_node(self, group_input_name=OldEevee_Bloom_Names.Group_Input, group_input_label=OldEevee_Bloom_Names.Group_Input, settings: InputSettings = None):
         """
         Create a Group Input node in a node group and apply the specified settings.
 
@@ -806,175 +615,175 @@ def oe_bloom_node_group(context, operator, group_name):
     oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     oe_bloom.color_tag = 'FILTER'
-    oe_bloom.description = OE_Bloom_Descr.oe_bloom
+    oe_bloom.description = OldEevee_Bloom_Names.oe_bloom
     oe_bloom.default_group_node_width = 149
 
     #oe_bloom interface
     #Socket Image
-    image_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Image, in_out='OUTPUT', socket_type = 'NodeSocketColor')
+    image_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Image, in_out='OUTPUT', socket_type = 'NodeSocketColor')
     image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket.attribute_domain = 'POINT'
 
     #Socket Image
-    image_socket_1 = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Image, in_out='INPUT', socket_type = 'NodeSocketColor')
+    image_socket_1 = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Image, in_out='INPUT', socket_type = 'NodeSocketColor')
     image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket_1.attribute_domain = 'POINT'
-    image_socket_1.description = OE_Bloom_Descr.image
+    image_socket_1.description = OldEevee_Bloom_Names.image
 
     #Socket Quality
-    quality_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Quality, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    quality_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Quality, in_out='INPUT', socket_type = 'NodeSocketFloat')
     quality_socket.default_value = 0.0
     quality_socket.min_value = 0.0
     quality_socket.max_value = 1.0
     quality_socket.subtype = 'FACTOR'
     quality_socket.attribute_domain = 'POINT'
-    quality_socket.description = OE_Bloom_Descr.quality
+    quality_socket.description = OldEevee_Bloom_Names.quality
 
     #Socket Threshold
-    threshold_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    threshold_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
     threshold_socket.default_value = 1.0
     threshold_socket.min_value = 0.0
     threshold_socket.max_value = 1000.0
     threshold_socket.subtype = 'NONE'
     threshold_socket.attribute_domain = 'POINT'
-    threshold_socket.description = OE_Bloom_Descr.threshold
+    threshold_socket.description = OldEevee_Bloom_Names.threshold
 
     #Socket Knee
-    knee_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    knee_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
     knee_socket.default_value = 0.0
     knee_socket.min_value = 0.0
     knee_socket.max_value = 1.0
     knee_socket.subtype = 'FACTOR'
     knee_socket.attribute_domain = 'POINT'
-    knee_socket.description = OE_Bloom_Descr.knee
+    knee_socket.description = OldEevee_Bloom_Names.knee
 
     #Socket Radius
-    radius_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    radius_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
     radius_socket.default_value = 0.0
     radius_socket.min_value = 0.0
     radius_socket.max_value = 2048.0
     radius_socket.subtype = 'NONE'
     radius_socket.attribute_domain = 'POINT'
-    radius_socket.description = OE_Bloom_Descr.radius
+    radius_socket.description = OldEevee_Bloom_Names.radius
 
     #Socket Color
-    color_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Color, in_out='INPUT', socket_type = 'NodeSocketColor')
+    color_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Color, in_out='INPUT', socket_type = 'NodeSocketColor')
     color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     color_socket.attribute_domain = 'POINT'
-    color_socket.description = OE_Bloom_Descr.color
+    color_socket.description = OldEevee_Bloom_Names.color
 
     #Socket Intensity
-    intensity_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    intensity_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
     intensity_socket.default_value = 1.0
     intensity_socket.min_value = 0.0
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = 'FACTOR'
     intensity_socket.attribute_domain = 'POINT'
-    intensity_socket.description = OE_Bloom_Descr.intensity
+    intensity_socket.description = OldEevee_Bloom_Names.intensity
 
     #Socket Clamp
-    clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat')
     clamp_socket.default_value = 1.0
     clamp_socket.min_value = 0.0
     clamp_socket.max_value = 2.0
     clamp_socket.subtype = 'FACTOR'
     clamp_socket.attribute_domain = 'POINT'
-    clamp_socket.description = OE_Bloom_Descr.clamp
+    clamp_socket.description = OldEevee_Bloom_Names.clamp
 
     #Panel Clamp Mix
-    clamp_mix_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Clamp_Mix, default_closed=True)
-    clamp_mix_panel.description = OE_Bloom_Descr.clamp_mix
+    clamp_mix_panel = oe_bloom.interface.new_panel(OldEevee_Bloom_Names.Clamp_Mix, default_closed=True)
+    clamp_mix_panel.description = OldEevee_Bloom_Names.clamp_mix
 
     #Socket BM Clamp
-    bm_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    bm_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     bm_clamp_socket.default_value = 1.0
     bm_clamp_socket.min_value = 0.0
     bm_clamp_socket.max_value = 1.0
     bm_clamp_socket.subtype = 'FACTOR'
     bm_clamp_socket.attribute_domain = 'POINT'
-    bm_clamp_socket.description = OE_Bloom_Descr.bm_clamp
+    bm_clamp_socket.description = OldEevee_Bloom_Names.bm_clamp
 
     #Socket KM Clamp
-    km_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    km_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     km_clamp_socket.default_value = 0.0
     km_clamp_socket.min_value = 0.0
     km_clamp_socket.max_value = 1.0
     km_clamp_socket.subtype = 'FACTOR'
     km_clamp_socket.attribute_domain = 'POINT'
-    km_clamp_socket.description = OE_Bloom_Descr.km_clamp
+    km_clamp_socket.description = OldEevee_Bloom_Names.km_clamp
 
     #Socket CR Clamp
-    cr_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    cr_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     cr_clamp_socket.default_value = 0.0
     cr_clamp_socket.min_value = 0.0
     cr_clamp_socket.max_value = 1.0
     cr_clamp_socket.subtype = 'FACTOR'
     cr_clamp_socket.attribute_domain = 'POINT'
-    cr_clamp_socket.description = OE_Bloom_Descr.cr_clamp
+    cr_clamp_socket.description = OldEevee_Bloom_Names.cr_clamp
 
     #Socket IY Clamp
-    iy_clamp_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
+    iy_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
     iy_clamp_socket.default_value = 0.0
     iy_clamp_socket.min_value = 0.0
     iy_clamp_socket.max_value = 1.0
     iy_clamp_socket.subtype = 'FACTOR'
     iy_clamp_socket.attribute_domain = 'POINT'
-    iy_clamp_socket.description = OE_Bloom_Descr.iy_clamp
+    iy_clamp_socket.description = OldEevee_Bloom_Names.iy_clamp
 
     #Panel Other
-    other_panel = oe_bloom.interface.new_panel(OE_Bloom_Names.Other, default_closed=True)
-    other_panel.description = OE_Bloom_Descr.other
+    other_panel = oe_bloom.interface.new_panel(OldEevee_Bloom_Names.Other, default_closed=True)
+    other_panel.description = OldEevee_Bloom_Names.other
 
     #Socket Hue
-    hue_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Hue, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
+    hue_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Hue, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
     hue_socket.default_value = 0.5
     hue_socket.min_value = 0.0
     hue_socket.max_value = 1.0
     hue_socket.subtype = 'FACTOR'
     hue_socket.attribute_domain = 'POINT'
-    hue_socket.description = OE_Bloom_Descr.hue
+    hue_socket.description = OldEevee_Bloom_Names.hue
 
     #Socket Saturation
-    saturation_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Saturation, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
+    saturation_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Saturation, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
     saturation_socket.default_value = 1.0
     saturation_socket.min_value = 0.0
     saturation_socket.max_value = 2.0
     saturation_socket.subtype = 'FACTOR'
     saturation_socket.attribute_domain = 'POINT'
-    saturation_socket.description = OE_Bloom_Descr.saturation
+    saturation_socket.description = OldEevee_Bloom_Names.saturation
 
     #Socket Fac
-    fac_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Fac, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
+    fac_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Fac, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
     fac_socket.default_value = 1.0
     fac_socket.min_value = 0.0
     fac_socket.max_value = 1.0
     fac_socket.subtype = 'FACTOR'
     fac_socket.attribute_domain = 'POINT'
-    fac_socket.description = OE_Bloom_Descr.fac
+    fac_socket.description = OldEevee_Bloom_Names.fac
 
     #Socket Blur Mix
-    blur_mix_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Blur_Mix, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
+    blur_mix_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Blur_Mix, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
     blur_mix_socket.default_value = 1.0
     blur_mix_socket.min_value = 0.0
     blur_mix_socket.max_value = 1.0
     blur_mix_socket.subtype = 'NONE'
     blur_mix_socket.attribute_domain = 'POINT'
-    blur_mix_socket.description = OE_Bloom_Descr.blur_mix
+    blur_mix_socket.description = OldEevee_Bloom_Names.blur_mix
 
     #Socket Bloom Size
-    bloom_size_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Bloom_Size, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
+    bloom_size_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Bloom_Size, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
     bloom_size_socket.default_value = 9.0
     bloom_size_socket.min_value = 1.0
     bloom_size_socket.max_value = 9.0
     bloom_size_socket.subtype = 'NONE'
     bloom_size_socket.attribute_domain = 'POINT'
-    bloom_size_socket.description = OE_Bloom_Descr.bloom_size
+    bloom_size_socket.description = OldEevee_Bloom_Names.bloom_size
 
     #initialize oe_bloom nodes
     #node Group Output
     group_output = oe_bloom.nodes.new("NodeGroupOutput")
-    group_output.label = OE_Bloom_Names.Group_Output
-    group_output.name = OE_Bloom_Names.Group_Output
+    group_output.label = OldEevee_Bloom_Names.Group_Output
+    group_output.name = OldEevee_Bloom_Names.Group_Output
     group_output.use_custom_color = True
     group_output.color = Color.DARK_GRAY
     group_output.inputs[1].hide = True
@@ -989,8 +798,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Original Bloom High
     original_bloom_high = FNM.create_glare_node(
-        glare_name=OE_Bloom_Names.Original_Bloom_High,
-        glare_label=OE_Bloom_Names.Original_Bloom_High,
+        glare_name=OldEevee_Bloom_Names.Original_Bloom_High,
+        glare_label=OldEevee_Bloom_Names.Original_Bloom_High,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='HIGH',
@@ -1002,8 +811,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Original Bloom Low
     original_bloom_low = FNM.create_glare_node(
-        glare_name=OE_Bloom_Names.Original_Bloom_Low,
-        glare_label=OE_Bloom_Names.Original_Bloom_Low,
+        glare_name=OldEevee_Bloom_Names.Original_Bloom_Low,
+        glare_label=OldEevee_Bloom_Names.Original_Bloom_Low,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='LOW',
@@ -1015,8 +824,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Knee Bloom High
     knee_bloom_high = FNM.create_glare_node(
-        glare_name=OE_Bloom_Names.Knee_Bloom_High,
-        glare_label=OE_Bloom_Names.Knee_Bloom_High,
+        glare_name=OldEevee_Bloom_Names.Knee_Bloom_High,
+        glare_label=OldEevee_Bloom_Names.Knee_Bloom_High,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='HIGH',
@@ -1028,8 +837,8 @@ def oe_bloom_node_group(context, operator, group_name):
     
     #node Knee Bloom Low
     knee_bloom_low = FNM.create_glare_node(
-        glare_name=OE_Bloom_Names.Knee_Bloom_Low,
-        glare_label=OE_Bloom_Names.Knee_Bloom_Low,
+        glare_name=OldEevee_Bloom_Names.Knee_Bloom_Low,
+        glare_label=OldEevee_Bloom_Names.Knee_Bloom_Low,
         settings=GlareSettings(
             glare_type='BLOOM',
             quality='LOW',
@@ -1041,16 +850,16 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Blur
     blur = FNM.create_blur_node(
-        blur_name=OE_Bloom_Names.Blur,
-        blur_label=OE_Bloom_Names.Blur,
+        blur_name=OldEevee_Bloom_Names.Blur,
+        blur_label=OldEevee_Bloom_Names.Blur,
         settings=BlurSettings(filter_type='FAST_GAUSS')
     )
 
 
     #node Color
     color = CNM.create_mixcolor_node(
-        mixcolor_name=OE_Bloom_Names.Color,
-        mixcolor_label=OE_Bloom_Names.Color,
+        mixcolor_name=OldEevee_Bloom_Names.Color,
+        mixcolor_label=OldEevee_Bloom_Names.Color,
         settings=MixColorSettings(
             blend_type='COLOR',
             fac_default_value=1.0,
@@ -1060,8 +869,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Blur Mix
     blur_mix = CNM.create_mixcolor_node(
-        mixcolor_name=OE_Bloom_Names.Blur_Mix,
-        mixcolor_label=OE_Bloom_Names.Blur_Mix,
+        mixcolor_name=OldEevee_Bloom_Names.Blur_Mix,
+        mixcolor_label=OldEevee_Bloom_Names.Blur_Mix,
         settings=MixColorSettings(
             blend_type='SCREEN',
             use_clamp=True,
@@ -1072,26 +881,26 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Intensity
     intensity = CNM.create_mixcolor_node(
-        mixcolor_name=OE_Bloom_Names.Intensity,
-        mixcolor_label=OE_Bloom_Names.Intensity,
+        mixcolor_name=OldEevee_Bloom_Names.Intensity,
+        mixcolor_label=OldEevee_Bloom_Names.Intensity,
         settings=MixColorSettings(blend_type='ADD')
     )
 
     #node Knee Mix
     knee_mix = CNM.create_mixcolor_node(
-        mixcolor_name=OE_Bloom_Names.Knee_Mix,
-        mixcolor_label=OE_Bloom_Names.Knee_Mix,
+        mixcolor_name=OldEevee_Bloom_Names.Knee_Mix,
+        mixcolor_label=OldEevee_Bloom_Names.Knee_Mix,
         settings=MixColorSettings(blend_type='ADD')
     )
 
     #node Clamp
-    clamp = CNM.create_huesat_node(huesat_name=OE_Bloom_Names.Clamp, huesat_label=OE_Bloom_Names.Clamp)
+    clamp = CNM.create_huesat_node(huesat_name=OldEevee_Bloom_Names.Clamp, huesat_label=OldEevee_Bloom_Names.Clamp)
 
 
     #node Bloom High && Low
     bloom_high____low = LNM.create_frame_node(
-        frame_name=OE_Bloom_Names.Bloom_High_Low,
-        frame_label=OE_Bloom_Names.Bloom_High_Low,
+        frame_name=OldEevee_Bloom_Names.Bloom_High_Low,
+        frame_label=OldEevee_Bloom_Names.Bloom_High_Low,
         settings=FrameSettings(
             label_size=32,
             shrink=True
@@ -1099,31 +908,31 @@ def oe_bloom_node_group(context, operator, group_name):
     )
 
     #node Reroute_00
-    reroute_00 = LNM.create_reroute_node(reroute_name=OE_Bloom_Names.Reroute_00, reroute_label=OE_Bloom_Names.KB_Switch)
+    reroute_00 = LNM.create_reroute_node(reroute_name=OldEevee_Bloom_Names.Reroute_00, reroute_label=OldEevee_Bloom_Names.KB_Switch)
 
     #node Reroute_01
-    reroute_01 = LNM.create_reroute_node(reroute_name=OE_Bloom_Names.Reroute_01, reroute_label=OE_Bloom_Names.KB_Switch)
+    reroute_01 = LNM.create_reroute_node(reroute_name=OldEevee_Bloom_Names.Reroute_01, reroute_label=OldEevee_Bloom_Names.KB_Switch)
 
 
     #node KB Switch
     kb_switch = UNM.create_switch_node(
-        switch_name=OE_Bloom_Names.KB_Switch,
-        switch_label=OE_Bloom_Names.KB_Switch,
+        switch_name=OldEevee_Bloom_Names.KB_Switch,
+        switch_label=OldEevee_Bloom_Names.KB_Switch,
         settings=SwitchSettings(node_color=Color.LIGHT_GRAY)
     )
 
     #node OB Switch
     ob_switch = UNM.create_switch_node(
-        switch_name=OE_Bloom_Names.OB_Switch,
-        switch_label=OE_Bloom_Names.OB_Switch,
+        switch_name=OldEevee_Bloom_Names.OB_Switch,
+        switch_label=OldEevee_Bloom_Names.OB_Switch,
         settings=SwitchSettings(node_color=Color.LIGHT_GRAY)
     )
 
 
     #node Group Input 00
     group_input_00 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_00,
-        group_input_label=OE_Bloom_Names.Group_Input_00,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_00,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_00,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=list(range(1, 18)) # Hide outputs 1 to 17
@@ -1132,8 +941,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Group Input 01
     group_input_01 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_01,
-        group_input_label=OE_Bloom_Names.Group_Input_01,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_01,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_01,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]  # Outputs to hide
@@ -1142,8 +951,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Group Input 02
     group_input_02 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_02,
-        group_input_label=OE_Bloom_Names.Group_Input_02,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_02,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_02,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=[0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
@@ -1152,8 +961,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Group Input 03
     group_input_03 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_03,
-        group_input_label=OE_Bloom_Names.Group_Input_03,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_03,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_03,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=[0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
@@ -1162,8 +971,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Group Input 04
     group_input_04 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_04,
-        group_input_label=OE_Bloom_Names.Group_Input_04,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_04,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_04,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 15, 16, 17]  # Outputs to hide
@@ -1172,8 +981,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #node Group Input 05
     group_input_05 = INM.create_group_input_node(
-        group_input_name=OE_Bloom_Names.Group_Input_05,
-        group_input_label=OE_Bloom_Names.Group_Input_05,
+        group_input_name=OldEevee_Bloom_Names.Group_Input_05,
+        group_input_label=OldEevee_Bloom_Names.Group_Input_05,
         settings=InputSettings(
             node_color=Color.DARK_GRAY,
             outputs_to_hide=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
@@ -1183,8 +992,8 @@ def oe_bloom_node_group(context, operator, group_name):
     """
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
-    original_bloom_high.label = OE_Bloom_Names.Original_Bloom_High
-    original_bloom_high.name = OE_Bloom_Names.Original_Bloom_High
+    original_bloom_high.label = OldEevee_Bloom_Names.Original_Bloom_High
+    original_bloom_high.name = OldEevee_Bloom_Names.Original_Bloom_High
     original_bloom_high.use_custom_color = True
     original_bloom_high.color = Color.DARK_PURPLE
     original_bloom_high.glare_type = 'BLOOM'
@@ -1195,8 +1004,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Original Bloom Low node
     original_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
-    original_bloom_low.label = OE_Bloom_Names.Original_Bloom_Low
-    original_bloom_low.name = OE_Bloom_Names.Original_Bloom_Low
+    original_bloom_low.label = OldEevee_Bloom_Names.Original_Bloom_Low
+    original_bloom_low.name = OldEevee_Bloom_Names.Original_Bloom_Low
     original_bloom_low.use_custom_color = True
     original_bloom_low.color = Color.DARK_PURPLE
     original_bloom_low.glare_type = 'BLOOM'
@@ -1207,8 +1016,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Knee Bloom High node
     knee_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_high.label = OE_Bloom_Names.Knee_Bloom_High
-    knee_bloom_high.name = OE_Bloom_Names.Knee_Bloom_High
+    knee_bloom_high.label = OldEevee_Bloom_Names.Knee_Bloom_High
+    knee_bloom_high.name = OldEevee_Bloom_Names.Knee_Bloom_High
     knee_bloom_high.use_custom_color = True
     knee_bloom_high.color = Color.DARK_PURPLE
     knee_bloom_high.glare_type = 'BLOOM'
@@ -1219,8 +1028,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Knee Bloom Low node
     knee_bloom_low = oe_bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_low.label = OE_Bloom_Names.Knee_Bloom_Low
-    knee_bloom_low.name = OE_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.label = OldEevee_Bloom_Names.Knee_Bloom_Low
+    knee_bloom_low.name = OldEevee_Bloom_Names.Knee_Bloom_Low
     knee_bloom_low.use_custom_color = True
     knee_bloom_low.color = Color.DARK_PURPLE
     knee_bloom_low.glare_type = 'BLOOM'
@@ -1231,8 +1040,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Blur node
     blur = oe_bloom.nodes.new("CompositorNodeBlur")
-    blur.label = OE_Bloom_Names.Blur
-    blur.name = OE_Bloom_Names.Blur
+    blur.label = OldEevee_Bloom_Names.Blur
+    blur.name = OldEevee_Bloom_Names.Blur
     blur.use_custom_color = True
     blur.color = Color.DARK_PURPLE
     blur.filter_type = 'FAST_GAUSS'
@@ -1241,8 +1050,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Mix Color node
     color = oe_bloom.nodes.new("CompositorNodeMixRGB")
-    color.label = OE_Bloom_Names.Color
-    color.name = OE_Bloom_Names.Color
+    color.label = OldEevee_Bloom_Names.Color
+    color.name = OldEevee_Bloom_Names.Color
     color.use_custom_color = True
     color.color = Color.BROWN
     color.blend_type = 'COLOR'
@@ -1254,8 +1063,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Blur Mix node
     blur_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
-    blur_mix.label = OE_Bloom_Names.Blur_Mix
-    blur_mix.name = OE_Bloom_Names.Blur_Mix
+    blur_mix.label = OldEevee_Bloom_Names.Blur_Mix
+    blur_mix.name = OldEevee_Bloom_Names.Blur_Mix
     blur_mix.use_custom_color = True
     blur_mix.color = Color.BROWN
     blur_mix.blend_type = 'SCREEN'
@@ -1267,8 +1076,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Intensity node
     intensity = oe_bloom.nodes.new("CompositorNodeMixRGB")
-    intensity.label = OE_Bloom_Names.Intensity
-    intensity.name = OE_Bloom_Names.Intensity
+    intensity.label = OldEevee_Bloom_Names.Intensity
+    intensity.name = OldEevee_Bloom_Names.Intensity
     intensity.use_custom_color = True
     intensity.color = Color.BROWN
     intensity.blend_type = 'ADD'
@@ -1277,8 +1086,8 @@ def oe_bloom_node_group(context, operator, group_name):
     
     ! Old method to create the Knee Mix node
     knee_mix = oe_bloom.nodes.new("CompositorNodeMixRGB")
-    knee_mix.label = OE_Bloom_Names.Knee_Mix
-    knee_mix.name = OE_Bloom_Names.Knee_Mix
+    knee_mix.label = OldEevee_Bloom_Names.Knee_Mix
+    knee_mix.name = OldEevee_Bloom_Names.Knee_Mix
     knee_mix.use_custom_color = True
     knee_mix.color = Color.BROWN
     knee_mix.blend_type = 'ADD'
@@ -1287,15 +1096,15 @@ def oe_bloom_node_group(context, operator, group_name):
     
     ! Old method to create the Clamp node
     clamp = oe_bloom.nodes.new("CompositorNodeHueSat")
-    clamp.label = OE_Bloom_Names.Clamp
-    clamp.name = OE_Bloom_Names.Clamp
+    clamp.label = OldEevee_Bloom_Names.Clamp
+    clamp.name = OldEevee_Bloom_Names.Clamp
     clamp.use_custom_color = True
     clamp.color = Color.BROWN
 
     ! Old method to create the Bloom High && Low Frame
     bloom_high____low = oe_bloom.nodes.new("NodeFrame")
-    bloom_high____low.label = OE_Bloom_Names.Bloom_High_Low
-    bloom_high____low.name = OE_Bloom_Names.Bloom_High_Low
+    bloom_high____low.label = OldEevee_Bloom_Names.Bloom_High_Low
+    bloom_high____low.name = OldEevee_Bloom_Names.Bloom_High_Low
     bloom_high____low.use_custom_color = True
 
     # Combine two hex colors into a single hex color code
@@ -1310,36 +1119,36 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the Reroute_00 node
     reroute_00 = oe_bloom.nodes.new("NodeReroute")
-    reroute_00.label = OE_Bloom_Names.KB_Switch
-    reroute_00.name = OE_Bloom_Names.Reroute_00
+    reroute_00.label = OldEevee_Bloom_Names.KB_Switch
+    reroute_00.name = OldEevee_Bloom_Names.Reroute_00
     reroute_00.socket_idname = "NodeSocketColor"
 
     ! Old method to create the Reroute_01 node
     reroute_01 = oe_bloom.nodes.new("NodeReroute")
-    reroute_01.label = OE_Bloom_Names.KB_Switch
-    reroute_01.name = OE_Bloom_Names.Reroute_01
+    reroute_01.label = OldEevee_Bloom_Names.KB_Switch
+    reroute_01.name = OldEevee_Bloom_Names.Reroute_01
     reroute_01.socket_idname = "NodeSocketColor"
 
     ! Old method to create the kb_switch node
     kb_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
-    kb_switch.label = OE_Bloom_Names.KB_Switch
-    kb_switch.name = OE_Bloom_Names.KB_Switch
+    kb_switch.label = OldEevee_Bloom_Names.KB_Switch
+    kb_switch.name = OldEevee_Bloom_Names.KB_Switch
     kb_switch.use_custom_color = True
     kb_switch.color = Color.LIGHT_GRAY
     kb_switch.check = False
 
     ! Old method to create the ob_switch node
     ob_switch = oe_bloom.nodes.new("CompositorNodeSwitch")
-    ob_switch.label = OE_Bloom_Names.OB_Switch
-    ob_switch.name = OE_Bloom_Names.OB_Switch
+    ob_switch.label = OldEevee_Bloom_Names.OB_Switch
+    ob_switch.name = OldEevee_Bloom_Names.OB_Switch
     ob_switch.use_custom_color = True
     ob_switch.color = Color.LIGHT_GRAY
     ob_switch.check = False
 
     ! Old method to create the group_input_00 node
     group_input_00 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_00.label = OE_Bloom_Names.Group_Input_00
-    group_input_00.name = OE_Bloom_Names.Group_Input_00
+    group_input_00.label = OldEevee_Bloom_Names.Group_Input_00
+    group_input_00.name = OldEevee_Bloom_Names.Group_Input_00
     group_input_00.use_custom_color = True
     group_input_00.color = Color.DARK_GRAY
     group_input_00.outputs[1].hide = True
@@ -1362,8 +1171,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the group_input_01 node
     group_input_01 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_01.label = OE_Bloom_Names.Group_Input_01
-    group_input_01.name = OE_Bloom_Names.Group_Input_01
+    group_input_01.label = OldEevee_Bloom_Names.Group_Input_01
+    group_input_01.name = OldEevee_Bloom_Names.Group_Input_01
     group_input_01.use_custom_color = True
     group_input_01.color = Color.DARK_GRAY
     group_input_01.outputs[0].hide = True
@@ -1386,8 +1195,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the group_input_02 node
     group_input_02 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_02.label = OE_Bloom_Names.Group_Input_02
-    group_input_02.name = OE_Bloom_Names.Group_Input_02
+    group_input_02.label = OldEevee_Bloom_Names.Group_Input_02
+    group_input_02.name = OldEevee_Bloom_Names.Group_Input_02
     group_input_02.use_custom_color = True
     group_input_02.color = Color.DARK_GRAY
     group_input_02.outputs[0].hide = True
@@ -1410,8 +1219,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the group_input_03 node
     group_input_03 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_03.label = OE_Bloom_Names.Group_Input_03
-    group_input_03.name = OE_Bloom_Names.Group_Input_03
+    group_input_03.label = OldEevee_Bloom_Names.Group_Input_03
+    group_input_03.name = OldEevee_Bloom_Names.Group_Input_03
     group_input_03.use_custom_color = True
     group_input_03.color = Color.DARK_GRAY
     group_input_03.outputs[0].hide = True
@@ -1434,8 +1243,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the group_input_04 node
     group_input_04 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_04.label = OE_Bloom_Names.Group_Input_04
-    group_input_04.name = OE_Bloom_Names.Group_Input_04
+    group_input_04.label = OldEevee_Bloom_Names.Group_Input_04
+    group_input_04.name = OldEevee_Bloom_Names.Group_Input_04
     group_input_04.use_custom_color = True
     group_input_04.color = Color.DARK_GRAY
     group_input_04.outputs[0].hide = True
@@ -1455,8 +1264,8 @@ def oe_bloom_node_group(context, operator, group_name):
 
     ! Old method to create the group_input_05 node
     group_input_05 = oe_bloom.nodes.new("NodeGroupInput")
-    group_input_05.label = OE_Bloom_Names.Group_Input_05
-    group_input_05.name = OE_Bloom_Names.Group_Input_05
+    group_input_05.label = OldEevee_Bloom_Names.Group_Input_05
+    group_input_05.name = OldEevee_Bloom_Names.Group_Input_05
     group_input_05.use_custom_color = True
     group_input_05.color = Color.DARK_GRAY
     group_input_05.outputs[1].hide = True
@@ -1621,9 +1430,9 @@ def oe_bloom_node_group(context, operator, group_name):
     return oe_bloom
 
 class NODE_OT_BLOOM(bpy.types.Operator):
-    bl_label = OE_Bloom_Names.OE_Bloom
+    bl_label = OldEevee_Bloom_Names.OE_Bloom
     bl_idname = "node.oe_bloom_operator"
-    bl_description = OE_Bloom_Descr.node_ot_bloom
+    bl_description = OldEevee_Bloom_Names.node_ot_bloom
 
     def execute(shelf, context):
         # Get the compositor node tree
@@ -1632,65 +1441,28 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         links = node_tree.links
 
         # Check if nodes exist, otherwise create them
-        render_layer_node = nodes.get(OE_Bloom_Names.Render_Layers) or nodes.new(type="CompositorNodeRLayers")
+        render_layer_node = nodes.get(OldEevee_Bloom_Names.Render_Layers) or nodes.new(type="CompositorNodeRLayers")
         render_layer_node.location = (-300, 0)
 
-        composite_node = nodes.get(OE_Bloom_Names.Composite) or nodes.new(type="CompositorNodeComposite")
+        composite_node = nodes.get(OldEevee_Bloom_Names.Composite) or nodes.new(type="CompositorNodeComposite")
         composite_node.location = (300, 86)
 
-        viewer_node = nodes.get(OE_Bloom_Names.Viewer) or nodes.new(type="CompositorNodeViewer")
+        viewer_node = nodes.get(OldEevee_Bloom_Names.Viewer) or nodes.new(type="CompositorNodeViewer")
         viewer_node.location = (300, -24)
 
-        custom_oe_bloom_node_name = OE_Bloom_Names.OE_Bloom
+        custom_oe_bloom_node_name = OldEevee_Bloom_Names.OE_Bloom
         oe_bloom_group = oe_bloom_node_group(shelf, context, custom_oe_bloom_node_name)
         oe_bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
-        oe_bloom_node.name = OE_Bloom_Names.OE_Bloom
-        oe_bloom_node.label = OE_Bloom_Names.OE_Bloom
+        oe_bloom_node.name = OldEevee_Bloom_Names.OE_Bloom
+        oe_bloom_node.label = OldEevee_Bloom_Names.OE_Bloom
         oe_bloom_node.width = 149
         oe_bloom_node.node_tree = bpy.data.node_groups[oe_bloom_group.name]
         oe_bloom_node.use_custom_color = True
         oe_bloom_node.color = Color.DARK_PURPLE
         oe_bloom_node.select = True
 
-        def add_driver_var(socket, data_path, name="default_value", id_type="SCENE", id=bpy.context.scene):
-            """
-            Adds a variable to a given socket.
-
-            Parameters
-            ----------
-            socket : bpy.types.NodeSocket
-                The socket to add the variable to.
-            data_path : str
-                The data path for the variable.
-            name : str, optional
-                The name of the variable. Defaults to "default_value".
-            id_type : str, optional
-                The type of ID for the variable. Defaults to "SCENE".
-            id : bpy.types.ID, optional
-                The ID for the variable. Defaults to bpy.context.scene.
-
-            Returns
-            -------
-            driver_var : bpy.types.DriverVariable
-                The added variable.
-            """
-
-            driver_var = socket.variables.new()
-            driver_var.name = name
-            driver_var.targets[0].id_type = id_type
-            driver_var.targets[0].id = id
-            driver_var.targets[0].data_path = data_path
-            return driver_var
-
-        """
-        * The ability to add drivers to nodes is made possible by Victor Stepanov
-        * (https://www.skool.com/cgpython/how-to-add-drivers-to-node-group-sockets-using-python?p=0be0f439)
-        * (https://www.skool.com/cgpython/how-do-i-add-the-drivers-to-a-node-group-every-time?p=4220eddf)
-        * His youtube channel (https://www.youtube.com/@CGPython)
-        """
-
         # Original Bloom Switch
-        oe_bloom_obs_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.OB_Switch].driver_add('check').driver
+        oe_bloom_obs_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.OB_Switch].driver_add('check').driver
         oe_bloom_obs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obs_driver,
@@ -1698,7 +1470,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Knee Bloom Switch
-        oe_bloom_kbs_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.KB_Switch].driver_add('check').driver
+        oe_bloom_kbs_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.KB_Switch].driver_add('check').driver
         oe_bloom_kbs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_kbs_driver,
@@ -1706,7 +1478,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Original Bloom High
-        oe_bloom_obh_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Original_Bloom_High].driver_add('threshold').driver
+        oe_bloom_obh_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Original_Bloom_High].driver_add('threshold').driver
         oe_bloom_obh_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obh_driver,
@@ -1714,7 +1486,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Original Bloom Low
-        oe_bloom_obl_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Original_Bloom_Low].driver_add('threshold').driver
+        oe_bloom_obl_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Original_Bloom_Low].driver_add('threshold').driver
         oe_bloom_obl_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obl_driver,
@@ -1722,7 +1494,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Original Bloom High Size
-        oe_bloom_obhs_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Original_Bloom_High].driver_add('size').driver
+        oe_bloom_obhs_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Original_Bloom_High].driver_add('size').driver
         oe_bloom_obhs_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obhs_driver,
@@ -1730,7 +1502,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Original Bloom Low Size
-        oe_bloom_obls_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Original_Bloom_Low].driver_add('size').driver
+        oe_bloom_obls_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Original_Bloom_Low].driver_add('size').driver
         oe_bloom_obls_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_obls_driver,
@@ -1738,7 +1510,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Radius X
-        oe_bloom_rx_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_x').driver
+        oe_bloom_rx_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Blur].driver_add('size_x').driver
         oe_bloom_rx_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_rx_driver,
@@ -1746,7 +1518,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Radius Y
-        oe_bloom_ry_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur].driver_add('size_y').driver
+        oe_bloom_ry_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Blur].driver_add('size_y').driver
         oe_bloom_ry_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_ry_driver,
@@ -1754,7 +1526,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Blur Mix Clamp
-        oe_bloom_bxc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Blur_Mix].driver_add('use_clamp').driver
+        oe_bloom_bxc_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Blur_Mix].driver_add('use_clamp').driver
         oe_bloom_bxc_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_bxc_driver,
@@ -1762,7 +1534,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Knee Mix Clamp
-        oe_bloom_kxc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Knee_Mix].driver_add('use_clamp').driver
+        oe_bloom_kxc_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Knee_Mix].driver_add('use_clamp').driver
         oe_bloom_kxc_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_kxc_driver,
@@ -1770,7 +1542,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Color Clamp
-        oe_bloom_cc_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Color].driver_add('use_clamp').driver
+        oe_bloom_cc_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Color].driver_add('use_clamp').driver
         oe_bloom_cc_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_cc_driver,
@@ -1778,7 +1550,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         )
 
         # Intensity Clamp
-        oe_bloom_ic_driver = oe_bloom_node.node_tree.nodes[OE_Bloom_Names.Intensity].driver_add('use_clamp').driver
+        oe_bloom_ic_driver = oe_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.Intensity].driver_add('use_clamp').driver
         oe_bloom_ic_driver.type = "AVERAGE"
         add_driver_var(
             oe_bloom_ic_driver,
@@ -1813,15 +1585,15 @@ class NODE_OT_BLOOM(bpy.types.Operator):
             links.new(output_node.outputs[output_socket_name], input_node.inputs[input_socket_name])
 
         # Connect the nodes
-        ensure_connection(render_layer_node, OE_Bloom_Names.Image, oe_bloom_node, OE_Bloom_Names.Image)
-        ensure_connection(oe_bloom_node, OE_Bloom_Names.Image, composite_node, OE_Bloom_Names.Image)
-        ensure_connection(oe_bloom_node, OE_Bloom_Names.Image, viewer_node, OE_Bloom_Names.Image)
+        ensure_connection(render_layer_node, OldEevee_Bloom_Names.Image, oe_bloom_node, OldEevee_Bloom_Names.Image)
+        ensure_connection(oe_bloom_node, OldEevee_Bloom_Names.Image, composite_node, OldEevee_Bloom_Names.Image)
+        ensure_connection(oe_bloom_node, OldEevee_Bloom_Names.Image, viewer_node, OldEevee_Bloom_Names.Image)
 
         return {"FINISHED"}
 
 class SCENE_OT_ENABLE_COMPOSITOR(bpy.types.Operator):
-    bl_label = OE_Bloom_Names.Enable_Compositor
-    bl_description = OE_Bloom_Descr.scene_ot_enable_compositor
+    bl_label = OldEevee_Bloom_Names.Enable_Compositor
+    bl_description = OldEevee_Bloom_Names.scene_ot_enable_compositor
     bl_idname = "scene.enable_compositor_operator"
 
     def execute(self, context):
@@ -1835,7 +1607,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'render'
-    bl_description = OE_Bloom_Descr.prop_pt_bloom
+    bl_description = OldEevee_Bloom_Names.prop_pt_bloom
     bl_order = 3
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -1857,7 +1629,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                 oe_bloom_node = next(
                     (
                         node for node in node_tree.nodes
-                        if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom
+                        if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OE_Bloom
                     ),
                     None
                 )
@@ -1887,16 +1659,16 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                     other_inputs = []
 
                     for input in oe_bloom_node.inputs:
-                        if input.name == OE_Bloom_Names.Image:
+                        if input.name == OldEevee_Bloom_Names.Image:
                             continue
                         elif input.name in [
-                            OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
-                            OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
-                            OE_Bloom_Names.Color, OE_Bloom_Names.Intensity,
-                            OE_Bloom_Names.Clamp
+                            OldEevee_Bloom_Names.Quality, OldEevee_Bloom_Names.Threshold,
+                            OldEevee_Bloom_Names.Knee, OldEevee_Bloom_Names.Radius,
+                            OldEevee_Bloom_Names.Color, OldEevee_Bloom_Names.Intensity,
+                            OldEevee_Bloom_Names.Clamp
                         ]:
                             image_inputs.append(input)
-                        elif OE_Bloom_Names.Clamp in input.name:
+                        elif OldEevee_Bloom_Names.Clamp in input.name:
                             clamp_mix_inputs.append(input)
                         else:
                             other_inputs.append(input)
@@ -1935,36 +1707,36 @@ classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 def register():
     # Register properties
     prop_scene.bloom_mute_unmute_bool = BoolProperty(
-        name=OE_Bloom_Names.Bloom_Mute_Unmute,
-        description=OE_Bloom_Descr.bloom_mute_unmute_bool,
+        name=OldEevee_Bloom_Names.Bloom_Mute_Unmute,
+        description=OldEevee_Bloom_Names.bloom_mute_unmute_bool,
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
     )
     prop_scene.real_time_compositing_enum = EnumProperty(
-        name=OE_Bloom_Names.Real_Time_Compositing,
-        description=OE_Bloom_Descr.real_time_compositing,
+        name=OldEevee_Bloom_Names.Real_Time_Compositing,
+        description=OldEevee_Bloom_Names.real_time_compositing,
         items=[
             (
-                OE_Bloom_Names.Disabled.upper(), OE_Bloom_Names.Disabled, OE_Bloom_Descr.disabled, "CANCEL", 0
+                OldEevee_Bloom_Names.Disabled.upper(), OldEevee_Bloom_Names.Disabled, OldEevee_Bloom_Names.disabled, "CANCEL", 0
             ),
             (
-                OE_Bloom_Names.Camera.upper(), OE_Bloom_Names.Camera, OE_Bloom_Descr.camera, "CAMERA_DATA", 1
+                OldEevee_Bloom_Names.Camera.upper(), OldEevee_Bloom_Names.Camera, OldEevee_Bloom_Names.camera, "CAMERA_DATA", 1
             ),
             (
-                OE_Bloom_Names.Always.upper(), OE_Bloom_Names.Always, OE_Bloom_Descr.always, "CHECKMARK", 2
+                OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Names.always, "CHECKMARK", 2
             )
         ],
-        default=OE_Bloom_Names.Disabled.upper(),
+        default=OldEevee_Bloom_Names.Disabled.upper(),
         update=update_real_time_compositing  # Attach the callback function here
     )
     prop_scene.bloom_clamp_mix_bool = BoolProperty(
-        name=OE_Bloom_Names.Clamp_Mix,
-        description=OE_Bloom_Descr.clamp_mix,
+        name=OldEevee_Bloom_Names.Clamp_Mix,
+        description=OldEevee_Bloom_Names.clamp_mix,
         default=False
     )
     prop_scene.bloom_other_bool = BoolProperty(
-        name=OE_Bloom_Names.Other,
-        description=OE_Bloom_Descr.other,
+        name=OldEevee_Bloom_Names.Other,
+        description=OldEevee_Bloom_Names.other,
         default=False
     )
 
