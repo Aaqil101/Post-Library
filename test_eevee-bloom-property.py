@@ -67,6 +67,7 @@ class OldEevee_Bloom_Names:
     Frame = "Frame"
     Switch = "Switch"
     Reroute = "Reroute"
+    Blur = "Blur"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
     CR_Clamp = "CR Clamp"
@@ -615,7 +616,7 @@ def oe_bloom_node_group(context, operator, group_name):
     oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
 
     oe_bloom.color_tag = 'FILTER'
-    oe_bloom.description = OldEevee_Bloom_Names.oe_bloom
+    oe_bloom.description = OldEevee_Bloom_Descr.oe_bloom
     oe_bloom.default_group_node_width = 149
 
     #oe_bloom interface
@@ -628,7 +629,7 @@ def oe_bloom_node_group(context, operator, group_name):
     image_socket_1 = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Image, in_out='INPUT', socket_type = 'NodeSocketColor')
     image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket_1.attribute_domain = 'POINT'
-    image_socket_1.description = OldEevee_Bloom_Names.image
+    image_socket_1.description = OldEevee_Bloom_Descr.image
 
     #Socket Quality
     quality_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Quality, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -637,7 +638,7 @@ def oe_bloom_node_group(context, operator, group_name):
     quality_socket.max_value = 1.0
     quality_socket.subtype = 'FACTOR'
     quality_socket.attribute_domain = 'POINT'
-    quality_socket.description = OldEevee_Bloom_Names.quality
+    quality_socket.description = OldEevee_Bloom_Descr.quality
 
     #Socket Threshold
     threshold_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -646,7 +647,7 @@ def oe_bloom_node_group(context, operator, group_name):
     threshold_socket.max_value = 1000.0
     threshold_socket.subtype = 'NONE'
     threshold_socket.attribute_domain = 'POINT'
-    threshold_socket.description = OldEevee_Bloom_Names.threshold
+    threshold_socket.description = OldEevee_Bloom_Descr.threshold
 
     #Socket Knee
     knee_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -655,7 +656,7 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_socket.max_value = 1.0
     knee_socket.subtype = 'FACTOR'
     knee_socket.attribute_domain = 'POINT'
-    knee_socket.description = OldEevee_Bloom_Names.knee
+    knee_socket.description = OldEevee_Bloom_Descr.knee
 
     #Socket Radius
     radius_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -664,13 +665,13 @@ def oe_bloom_node_group(context, operator, group_name):
     radius_socket.max_value = 2048.0
     radius_socket.subtype = 'NONE'
     radius_socket.attribute_domain = 'POINT'
-    radius_socket.description = OldEevee_Bloom_Names.radius
+    radius_socket.description = OldEevee_Bloom_Descr.radius
 
     #Socket Color
     color_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Color, in_out='INPUT', socket_type = 'NodeSocketColor')
     color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     color_socket.attribute_domain = 'POINT'
-    color_socket.description = OldEevee_Bloom_Names.color
+    color_socket.description = OldEevee_Bloom_Descr.color
 
     #Socket Intensity
     intensity_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -679,7 +680,7 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = 'FACTOR'
     intensity_socket.attribute_domain = 'POINT'
-    intensity_socket.description = OldEevee_Bloom_Names.intensity
+    intensity_socket.description = OldEevee_Bloom_Descr.intensity
 
     #Socket Clamp
     clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat')
@@ -688,11 +689,11 @@ def oe_bloom_node_group(context, operator, group_name):
     clamp_socket.max_value = 2.0
     clamp_socket.subtype = 'FACTOR'
     clamp_socket.attribute_domain = 'POINT'
-    clamp_socket.description = OldEevee_Bloom_Names.clamp
+    clamp_socket.description = OldEevee_Bloom_Descr.clamp
 
     #Panel Clamp Mix
     clamp_mix_panel = oe_bloom.interface.new_panel(OldEevee_Bloom_Names.Clamp_Mix, default_closed=True)
-    clamp_mix_panel.description = OldEevee_Bloom_Names.clamp_mix
+    clamp_mix_panel.description = OldEevee_Bloom_Descr.clamp_mix
 
     #Socket BM Clamp
     bm_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.BM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -701,7 +702,7 @@ def oe_bloom_node_group(context, operator, group_name):
     bm_clamp_socket.max_value = 1.0
     bm_clamp_socket.subtype = 'FACTOR'
     bm_clamp_socket.attribute_domain = 'POINT'
-    bm_clamp_socket.description = OldEevee_Bloom_Names.bm_clamp
+    bm_clamp_socket.description = OldEevee_Bloom_Descr.bm_clamp
 
     #Socket KM Clamp
     km_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.KM_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -710,7 +711,7 @@ def oe_bloom_node_group(context, operator, group_name):
     km_clamp_socket.max_value = 1.0
     km_clamp_socket.subtype = 'FACTOR'
     km_clamp_socket.attribute_domain = 'POINT'
-    km_clamp_socket.description = OldEevee_Bloom_Names.km_clamp
+    km_clamp_socket.description = OldEevee_Bloom_Descr.km_clamp
 
     #Socket CR Clamp
     cr_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.CR_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -719,7 +720,7 @@ def oe_bloom_node_group(context, operator, group_name):
     cr_clamp_socket.max_value = 1.0
     cr_clamp_socket.subtype = 'FACTOR'
     cr_clamp_socket.attribute_domain = 'POINT'
-    cr_clamp_socket.description = OldEevee_Bloom_Names.cr_clamp
+    cr_clamp_socket.description = OldEevee_Bloom_Descr.cr_clamp
 
     #Socket IY Clamp
     iy_clamp_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.IY_Clamp, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = clamp_mix_panel)
@@ -728,11 +729,11 @@ def oe_bloom_node_group(context, operator, group_name):
     iy_clamp_socket.max_value = 1.0
     iy_clamp_socket.subtype = 'FACTOR'
     iy_clamp_socket.attribute_domain = 'POINT'
-    iy_clamp_socket.description = OldEevee_Bloom_Names.iy_clamp
+    iy_clamp_socket.description = OldEevee_Bloom_Descr.iy_clamp
 
     #Panel Other
     other_panel = oe_bloom.interface.new_panel(OldEevee_Bloom_Names.Other, default_closed=True)
-    other_panel.description = OldEevee_Bloom_Names.other
+    other_panel.description = OldEevee_Bloom_Descr.other
 
     #Socket Hue
     hue_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Hue, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -741,7 +742,7 @@ def oe_bloom_node_group(context, operator, group_name):
     hue_socket.max_value = 1.0
     hue_socket.subtype = 'FACTOR'
     hue_socket.attribute_domain = 'POINT'
-    hue_socket.description = OldEevee_Bloom_Names.hue
+    hue_socket.description = OldEevee_Bloom_Descr.hue
 
     #Socket Saturation
     saturation_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Saturation, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -750,7 +751,7 @@ def oe_bloom_node_group(context, operator, group_name):
     saturation_socket.max_value = 2.0
     saturation_socket.subtype = 'FACTOR'
     saturation_socket.attribute_domain = 'POINT'
-    saturation_socket.description = OldEevee_Bloom_Names.saturation
+    saturation_socket.description = OldEevee_Bloom_Descr.saturation
 
     #Socket Fac
     fac_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Fac, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -759,7 +760,7 @@ def oe_bloom_node_group(context, operator, group_name):
     fac_socket.max_value = 1.0
     fac_socket.subtype = 'FACTOR'
     fac_socket.attribute_domain = 'POINT'
-    fac_socket.description = OldEevee_Bloom_Names.fac
+    fac_socket.description = OldEevee_Bloom_Descr.fac
 
     #Socket Blur Mix
     blur_mix_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Blur_Mix, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -768,7 +769,7 @@ def oe_bloom_node_group(context, operator, group_name):
     blur_mix_socket.max_value = 1.0
     blur_mix_socket.subtype = 'NONE'
     blur_mix_socket.attribute_domain = 'POINT'
-    blur_mix_socket.description = OldEevee_Bloom_Names.blur_mix
+    blur_mix_socket.description = OldEevee_Bloom_Descr.blur_mix
 
     #Socket Bloom Size
     bloom_size_socket = oe_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Bloom_Size, in_out='INPUT', socket_type = 'NodeSocketFloat', parent = other_panel)
@@ -777,7 +778,7 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_size_socket.max_value = 9.0
     bloom_size_socket.subtype = 'NONE'
     bloom_size_socket.attribute_domain = 'POINT'
-    bloom_size_socket.description = OldEevee_Bloom_Names.bloom_size
+    bloom_size_socket.description = OldEevee_Bloom_Descr.bloom_size
 
     #initialize oe_bloom nodes
     #node Group Output
@@ -1432,7 +1433,7 @@ def oe_bloom_node_group(context, operator, group_name):
 class NODE_OT_BLOOM(bpy.types.Operator):
     bl_label = OldEevee_Bloom_Names.OE_Bloom
     bl_idname = "node.oe_bloom_operator"
-    bl_description = OldEevee_Bloom_Names.node_ot_bloom
+    bl_description = OldEevee_Bloom_Descr.node_ot_bloom
 
     def execute(shelf, context):
         # Get the compositor node tree
@@ -1593,7 +1594,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
 
 class SCENE_OT_ENABLE_COMPOSITOR(bpy.types.Operator):
     bl_label = OldEevee_Bloom_Names.Enable_Compositor
-    bl_description = OldEevee_Bloom_Names.scene_ot_enable_compositor
+    bl_description = OldEevee_Bloom_Descr.scene_ot_enable_compositor
     bl_idname = "scene.enable_compositor_operator"
 
     def execute(self, context):
@@ -1607,7 +1608,7 @@ class PROP_PT_BLOOM(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'render'
-    bl_description = OldEevee_Bloom_Names.prop_pt_bloom
+    bl_description = OldEevee_Bloom_Descr.prop_pt_bloom
     bl_order = 3
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -1708,22 +1709,22 @@ def register():
     # Register properties
     prop_scene.bloom_mute_unmute_bool = BoolProperty(
         name=OldEevee_Bloom_Names.Bloom_Mute_Unmute,
-        description=OldEevee_Bloom_Names.bloom_mute_unmute_bool,
+        description=OldEevee_Bloom_Descr.bloom_mute_unmute_bool,
         default=False,
         update=toggle_oe_bloom_mute  # Attach the callback function
     )
     prop_scene.real_time_compositing_enum = EnumProperty(
         name=OldEevee_Bloom_Names.Real_Time_Compositing,
-        description=OldEevee_Bloom_Names.real_time_compositing,
+        description=OldEevee_Bloom_Descr.real_time_compositing,
         items=[
             (
-                OldEevee_Bloom_Names.Disabled.upper(), OldEevee_Bloom_Names.Disabled, OldEevee_Bloom_Names.disabled, "CANCEL", 0
+                OldEevee_Bloom_Names.Disabled.upper(), OldEevee_Bloom_Names.Disabled, OldEevee_Bloom_Descr.disabled, "CANCEL", 0
             ),
             (
-                OldEevee_Bloom_Names.Camera.upper(), OldEevee_Bloom_Names.Camera, OldEevee_Bloom_Names.camera, "CAMERA_DATA", 1
+                OldEevee_Bloom_Names.Camera.upper(), OldEevee_Bloom_Names.Camera, OldEevee_Bloom_Descr.camera, "CAMERA_DATA", 1
             ),
             (
-                OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Names.always, "CHECKMARK", 2
+                OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Descr.always, "CHECKMARK", 2
             )
         ],
         default=OldEevee_Bloom_Names.Disabled.upper(),
@@ -1731,12 +1732,12 @@ def register():
     )
     prop_scene.bloom_clamp_mix_bool = BoolProperty(
         name=OldEevee_Bloom_Names.Clamp_Mix,
-        description=OldEevee_Bloom_Names.clamp_mix,
+        description=OldEevee_Bloom_Descr.clamp_mix,
         default=False
     )
     prop_scene.bloom_other_bool = BoolProperty(
         name=OldEevee_Bloom_Names.Other,
-        description=OldEevee_Bloom_Names.other,
+        description=OldEevee_Bloom_Descr.other,
         default=False
     )
 
