@@ -40,7 +40,28 @@ for path in paths:
         print(f"{path_str} already in sys.path")
 
 from helpers import (add_driver_var, hexcode_to_rgb, hex_color_add, Color)
-from core import (FilterNodeManager, GlareSettings, BlurSettings)
+from core import (
+    # Import all classes used by the Filter Node Manager
+    FilterNodeManager,
+    GlareSettings,
+    GlareType,
+    GlareQuality,
+    BlurSettings,
+    BlurFilterType,
+
+    # Import all classes used by the Color Node Manager
+    ColorNodeManager,
+    MixColorSettings,
+    BlendType,
+
+    # Import all classes used by the Layout Node Manager
+    LayoutNodeManager,
+    FrameSettings,
+
+    # Import all classes used by the Utilities Node Manager
+    UtilitiesNodeManager,
+    SwitchSettings,
+)
 
 class OldEevee_Bloom_Names:
     """
@@ -64,9 +85,6 @@ class OldEevee_Bloom_Names:
     Disabled = "Disabled"
     Camera = "Camera"
     Always = "Always"
-    Frame = "Frame"
-    Switch = "Switch"
-    Reroute = "Reroute"
     Blur = "Blur"
     BM_Clamp = "BM Clamp"
     KM_Clamp = "KM Clamp"
@@ -96,8 +114,6 @@ class OldEevee_Bloom_Names:
     Bloom_Mute_Unmute = "Bloom Mute/Unmute"
     Real_Time_Compositing = "Real-Time Compositor"
     Enable_Compositor = "Enable Compositor"
-    Hue_Saturation_Value = "Hue/Saturation/Value"
-    Mix_Color = "Mix Color"
     Group_Input = "Group Input"
 
 class OldEevee_Bloom_Descr:
@@ -224,338 +240,15 @@ def poll_view_3d(self, context):
     return False
 
 @dataclass
-class MixColorSettings:
-    """
-    Settings for the MixColor node in a node group.
-
-    Attributes:
-    ---
-        blend_type (str): Blend type for the MixColor node. Options:
-            'DARKEN', 'MULTIPLY', 'BURN', 'LIGHTEN', 'SCREEN', 'DODGE', 'ADD', 'OVERLAY',
-            'SOFT_LIGHT', 'LINEAR_LIGHT', 'DIFFERENCE', 'EXCLUSION', 'SUBTRACT', 'DIVIDE',
-            'HUE', 'SATURATION', 'COLOR', 'VALUE'
-        use_alpha (bool): Whether to use alpha in the MixColor node.
-        use_clamp (bool): Whether to clamp the output of the MixColor node.
-        fac_default_value (float): Value for the Factor input of the MixColor node.
-        hide_fac (bool): Hide the Factor input of the MixColor node.
-        hide_col1 (bool): Hide the Color1 input of the MixColor node.
-        hide_col2 (bool): Hide the Color2 input of the MixColor node.
-    """
-    blend_type: str = 'MIX' # Options: 'DARKEN', 'MULTIPLY', 'BURN', 'LIGHTEN', 'SCREEN', 'DODGE', 'ADD', 'OVERLAY', 'SOFT_LIGHT', 'LINEAR_LIGHT', 'DIFFERENCE', 'EXCLUSION', 'SUBTRACT', 'DIVIDE' 'HUE', 'SATURATION', 'COLOR', 'VALUE'
-    use_alpha: bool = False
-    use_clamp: bool = False
-    fac_default_value: float = 0.0
-    hide_fac: bool = False
-    hide_col1: bool = False
-    hide_col2: bool = False
-
-@dataclass
-class HueSatSettings:
-    """
-    Settings for the Hue Saturation node in a node group.
-
-    Attributes:
-    ---
-        img_default_value (list): Default value for the Image input of the Hue Saturation node.
-        hue_default_value (float): Default value for the Hue input of the Hue Saturation node.
-        sat_default_value (float): Default value for the Saturation input of the Hue Saturation node.
-        val_default_value (float): Default value for the Value input of the Hue Saturation node.
-        fac_default_value (float): Default value for the Factor input of the Hue Saturation node.
-
-        hide_img (bool): Hide the Image input of the Hue Saturation node.
-        hide_hue (bool): Hide the Hue input of the Hue Saturation node.
-        hide_sat (bool): Hide the Saturation input of the Hue Saturation node.
-        hide_val (bool): Hide the Value input of the Hue Saturation node.
-        hide_fac (bool): Hide the Factor input of the Hue Saturation node.
-    """
-    img_default_value: list = (1.0, 1.0, 1.0, 1.0)
-    hue_default_value: float = 0.5
-    sat_default_value: float = 1.0
-    val_default_value: float = 1.0
-    fac_default_value: float = 1.0
-    hide_img: bool = False
-    hide_hue: bool = False
-    hide_sat: bool = False
-    hide_val: bool = False
-    hide_fac: bool = False
-
-class ColorNodeManager:
-    """
-    Manager for color-related nodes in a node group.
-
-    This class is used to create and configure color-related nodes in a node group.
-
-    Attributes:
-    ---
-    node_group (NodeTree): The node group to manage nodes in.
-    node_color (tuple): RGB color for the nodes. Defaults to BROWN.
-    use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to True.
-    """
-    def __init__(self, node_group, node_color=Color.BROWN, use_custom_color=False):
-        """
-        Initialize a ColorNodeManager instance.
-
-        Args:
-            node_group (NodeTree): The node group to manage nodes in.
-            node_color (tuple): RGB color for the nodes managed by this instance. Defaults to BROWN.
-            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to True.
-        """
-        self.node_group = node_group
-        self.use_custom_color = use_custom_color
-        self.node_color = node_color
-
-    def create_mixcolor_node(self, mixcolor_name=OldEevee_Bloom_Names.Mix_Color, mixcolor_label=OldEevee_Bloom_Names.Mix_Color, settings=None):
-        """
-        Create a MixColor node in a node group and apply the specified settings.
-
-        Args:
-            mixcolor_name (str, optional): Name of the MixColor node. Defaults to "Mix Color".
-            mixcolor_label (str, optional): Label of the MixColor node. Defaults to "Mix Color".
-            settings (MixColorSettings, optional): Settings for the MixColor node. Defaults to MixColorSettings() if not specified.
-
-        Returns:
-            Node: The newly created MixColor node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = MixColorSettings()
-
-        # Create the MixColor node
-        mixcolor_node = self.node_group.nodes.new("CompositorNodeMixRGB")
-        mixcolor_node.name = mixcolor_name
-        mixcolor_node.label = mixcolor_label
-        mixcolor_node.use_custom_color = self.use_custom_color
-        mixcolor_node.color = self.node_color
-
-        # Apply settings from the MixColorSettings instance
-        mixcolor_node.blend_type = settings.blend_type
-        mixcolor_node.use_alpha = settings.use_alpha
-        mixcolor_node.use_clamp = settings.use_clamp
-
-        # Configure the Fac input
-        mixcolor_node.inputs[0].default_value = settings.fac_default_value
-        mixcolor_node.inputs[0].hide = settings.hide_fac
-
-        # Configure the Color1 input
-        mixcolor_node.inputs[1].hide = settings.hide_col1
-
-        # Configure the Color2 input
-        mixcolor_node.inputs[2].hide = settings.hide_col2
-
-        return mixcolor_node
-    
-    def create_huesat_node(self, huesat_name=OldEevee_Bloom_Names.Hue_Saturation_Value, huesat_label=OldEevee_Bloom_Names.Hue_Saturation_Value, settings=None):
-        """
-        Create a Hue/Saturation/Value node in a node group and apply the specified settings.
-
-        Args:
-            huesat_name (str, optional): Name of the Hue/Saturation/Value node. Defaults to "Hue Saturation Value".
-            huesat_label (str, optional): Label of the Hue/Saturation/Value node. Defaults to "Hue Saturation Value".
-            settings (HueSatSettings, optional): Settings for the Hue/Saturation/Value node. Defaults to HueSatSettings() if not    specified.
-
-        Returns:
-            Node: The newly created Hue/Saturation/Value node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = HueSatSettings()
-
-        # Create the Hue/Saturation/Value Node
-        huesat_node = self.node_group.nodes.new("CompositorNodeHueSat")
-        huesat_node.name = huesat_name
-        huesat_node.label = huesat_label
-        huesat_node.use_custom_color = self.use_custom_color
-        huesat_node.color = self.node_color
-
-        # Apply settings from the HueSatSettings instance
-        # Configure the Image input
-        huesat_node.inputs[0].default_value = settings.img_default_value
-        huesat_node.inputs[0].hide = settings.hide_img
-
-        # Configure the Hue input
-        huesat_node.inputs[1].default_value = settings.hue_default_value
-        huesat_node.inputs[1].hide = settings.hide_hue
-
-        # Configure the Saturation input
-        huesat_node.inputs[2].default_value = settings.sat_default_value
-        huesat_node.inputs[2].hide = settings.hide_sat
-
-        # Configure the Value input
-        huesat_node.inputs[3].default_value = settings.val_default_value
-        huesat_node.inputs[3].hide = settings.hide_val
-
-        # Configure the Factor input
-        huesat_node.inputs[4].default_value = settings.fac_default_value
-        huesat_node.inputs[4].hide = settings.hide_fac
-
-        return huesat_node
-
-@dataclass
-class FrameSettings:
-    """
-    Settings for the Frame node in the OE Bloom node group.
-
-    Attributes:
-        label_size (int): Size of the label text. Defaults to 20.
-        shrink (bool): Whether to shrink the frame to fit the node. Defaults to False.
-    """
-    label_size: int = 20
-    shrink: bool = False
-
-@dataclass
-class RerouteSettings:
-    """
-    Settings for the Reroute node in the OE Bloom node group.
-
-    Attributes:
-    ---
-        socket_idname (str): ID name for the socket type of the Reroute node. Options: "NodeSocketColor", "NodeSocketFloat", "NodeSocketVector". Defaults to "NodeSocketColor".
-    """
-    socket_idname: str = "NodeSocketColor" # Options: "NodeSocketColor", "NodeSocketFloat", "NodeSocketVector"
-
-class LayoutNodeManager:
-    """
-    A class for managing the layout of nodes in a node group, such as setting the size and color of nodes.
-
-    Attributes:
-        node_group (NodeTree): The node group to manage nodes in.
-        node_color (list): A list containing two elements for color addition, which will be converted to RGB.
-        use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
-    """
-    def __init__(self, node_group, node_color: list, use_custom_color=False):       
-        """
-        Initialize a LayoutNodeManager instance.
-
-        Args:
-            node_group (NodeTree): The node group to manage nodes in.
-            node_color (list): A list containing two elements for color addition, which will be converted to RGB.
-            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
-        """
-        self.node_group = node_group
-        self.use_custom_color = use_custom_color
-
-        # Validate and convert the color inputs
-        if len(node_color) != 2:
-            raise ValueError("node_color must contain exactly two elements.")
-        self.node_color = hexcode_to_rgb(
-            hex_color_add(
-                node_color[0],
-                node_color[1]
-            )
-        )
-
-    def create_frame_node(self, frame_name=OldEevee_Bloom_Names.Frame, frame_label=OldEevee_Bloom_Names.Frame, settings=None):
-        """
-        Create a Frame node in a node group and apply the specified settings.
-
-        Args:
-            frame_name (str, optional): Name of the Frame node. Defaults to "Frame".
-            frame_label (str, optional): Label of the Frame node. Defaults to "Frame".
-            settings (FrameSettings, optional): Settings for the Frame node. Defaults to FrameSettings() if not specified.
-
-        Returns:
-            Node: The newly created Frame node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = FrameSettings()
-
-        # Create the Frame node
-        frame_node = self.node_group.nodes.new("NodeFrame")
-        frame_node.name = frame_name
-        frame_node.label = frame_label
-        frame_node.use_custom_color = self.use_custom_color
-        frame_node.color = self.node_color
-
-        # Apply settings from the FrameSettings instance
-        frame_node.label_size = settings.label_size
-        frame_node.shrink = settings.shrink
-
-        return frame_node
-
-    def create_reroute_node(self, reroute_name=OldEevee_Bloom_Names.Reroute, reroute_label=OldEevee_Bloom_Names.Reroute, settings=None):
-        # Use default settings if none are provided
-        if settings is None:
-            settings = RerouteSettings()
-
-        # Create the Reroute node
-        reroute_node = self.node_group.nodes.new("NodeReroute")
-        reroute_node.name = reroute_name
-        reroute_node.label = reroute_label
-
-        # Apply settings from the RerouteSettings instance
-        reroute_node.socket_idname = settings.socket_idname
-
-        return reroute_node
-
-@dataclass
-class SwitchSettings:
-    """
-    Settings for the Switch node in the OE Bloom node group.
-
-    Attributes:
-        node_color (Tuple[float, float, float]): Color of the node. Defaults to pure white.
-        check (bool): Whether to check the Switch node. Defaults to False.
-        off (list): Color of the "Off" output of the Switch node. Defaults to pure white.
-        on (list): Color of the "On" output of the Switch node. Defaults to pure white.
-    """
-    node_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)  # Pure White Color
-    check: bool = False
-    off: list = (0.8, 0.8, 0.8, 1.0)  # White Color
-    on: list = (0.8, 0.8, 0.8, 1.0)  # White Color
-
-class UtilitiesNodeManager:
-    def __init__(self, node_group, use_custom_color=False):
-        """
-        Initialize a UtilitiesNodeManager instance.
-
-        Args:
-            node_group (NodeTree): The node group to manage nodes in.
-            use_custom_color (bool, optional): Whether to use a custom color for the nodes. Defaults to False.
-        """
-        self.node_group = node_group
-        self.use_custom_color = use_custom_color
-    
-    def create_switch_node(self, switch_name=OldEevee_Bloom_Names.Switch, switch_label=OldEevee_Bloom_Names.Switch, settings=None):
-        """
-        Create a Switch node in a node group and apply the specified settings.
-
-        Args:
-            switch_name (str, optional): Name of the Switch node. Defaults to "Switch".
-            switch_label (str, optional): Label of the Switch node. Defaults to "Switch".
-            settings (SwitchSettings, optional): Settings for the Switch node. Defaults to SwitchSettings() if not specified.
-
-        Returns:
-            Node: The newly created Switch node.
-        """
-        # Use default settings if none are provided
-        if settings is None:
-            settings = SwitchSettings()
-
-        # Create the Switch node
-        switch_node = self.node_group.nodes.new("CompositorNodeSwitch")
-        switch_node.label = switch_label
-        switch_node.name = switch_name
-        switch_node.use_custom_color = self.use_custom_color
-
-        # Apply settings from the SwitchSettings instance
-        switch_node.color = settings.node_color
-        switch_node.check = settings.check
-        switch_node.inputs[0].default_value = settings.off
-        switch_node.inputs[1].default_value = settings.on
-
-        return switch_node
-
-@dataclass
-class InputSettings:
+class GroupInputSettings:
     """
     Settings for the Group Input node in the OE Bloom node group.
 
     Attributes:
-        node_color (Tuple[float, float, float]): Color of the node. Defaults to white.
+        node_color (Tuple[float, float, float]): Color of the node. Defaults to DARK_GRAY.
         outputs_to_hide (List[int]): Indices of outputs to hide from the user in the Group Input node.
     """
-    node_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)  # Default to pure white
+    node_color: Tuple[float, float, float] = Color.DARK_GRAY  # Default to pure DARK_GRAY
     outputs_to_hide: List[int] = field(default_factory=list)  # Indices of outputs to hide
 
 class InputNodeManager:
@@ -577,21 +270,21 @@ class InputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_group_input_node(self, group_input_name=OldEevee_Bloom_Names.Group_Input, group_input_label=OldEevee_Bloom_Names.Group_Input, settings: InputSettings = None):
+    def create_group_input_node(self, group_input_name=OldEevee_Bloom_Names.Group_Input, group_input_label=OldEevee_Bloom_Names.Group_Input, settings: GroupInputSettings = None):
         """
         Create a Group Input node in a node group and apply the specified settings.
 
         Args:
             group_input_name (str, optional): Name of the Group Input node. Defaults to "Group Input".
             group_input_label (str, optional): Label of the Group Input node. Defaults to "Group Input".
-            settings (InputSettings, optional): Settings for the Group Input node. Defaults to InputSettings() if not specified.
+            settings (GroupInputSettings, optional): Settings for the Group Input node. Defaults to GroupInputSettings() if not specified.
 
         Returns:
             Node: The newly created Group Input node.
         """
         # Use default settings if none are provided
         if settings is None:
-            settings = InputSettings()
+            settings = GroupInputSettings()
 
         # Create the Group Input node
         group_input_node = self.node_group.nodes.new("NodeGroupInput")
@@ -599,7 +292,7 @@ class InputNodeManager:
         group_input_node.label = group_input_label
         group_input_node.use_custom_color = self.use_custom_color
 
-        # Apply settings from the InputSettings instance
+        # Apply settings from the GroupInputSettings instance
         # Apply color
         if self.use_custom_color:
             group_input_node.color = settings.node_color
@@ -802,8 +495,8 @@ def oe_bloom_node_group(context, operator, group_name):
         glare_name=OldEevee_Bloom_Names.Original_Bloom_High,
         glare_label=OldEevee_Bloom_Names.Original_Bloom_High,
         settings=GlareSettings(
-            glare_type='BLOOM',
-            quality='HIGH',
+            glare_type=GlareType.BLOOM,
+            quality=GlareQuality.HIGH,
             mix=1.0,
             threshold=1.0,
             size=9
@@ -815,8 +508,8 @@ def oe_bloom_node_group(context, operator, group_name):
         glare_name=OldEevee_Bloom_Names.Original_Bloom_Low,
         glare_label=OldEevee_Bloom_Names.Original_Bloom_Low,
         settings=GlareSettings(
-            glare_type='BLOOM',
-            quality='LOW',
+            glare_type=GlareType.BLOOM,
+            quality=GlareQuality.LOW,
             mix=1.0,
             threshold=1.0,
             size=9
@@ -828,8 +521,8 @@ def oe_bloom_node_group(context, operator, group_name):
         glare_name=OldEevee_Bloom_Names.Knee_Bloom_High,
         glare_label=OldEevee_Bloom_Names.Knee_Bloom_High,
         settings=GlareSettings(
-            glare_type='BLOOM',
-            quality='HIGH',
+            glare_type=GlareType.BLOOM,
+            quality=GlareQuality.HIGH,
             mix=1.0,
             threshold=0.0,
             size=9
@@ -841,8 +534,8 @@ def oe_bloom_node_group(context, operator, group_name):
         glare_name=OldEevee_Bloom_Names.Knee_Bloom_Low,
         glare_label=OldEevee_Bloom_Names.Knee_Bloom_Low,
         settings=GlareSettings(
-            glare_type='BLOOM',
-            quality='LOW',
+            glare_type=GlareType.BLOOM,
+            quality=GlareQuality.LOW,
             mix=1.0,
             threshold=0.0,
             size=9
@@ -853,7 +546,7 @@ def oe_bloom_node_group(context, operator, group_name):
     blur = FNM.create_blur_node(
         blur_name=OldEevee_Bloom_Names.Blur,
         blur_label=OldEevee_Bloom_Names.Blur,
-        settings=BlurSettings(filter_type='FAST_GAUSS')
+        settings=BlurSettings(filter_type=BlurFilterType.FAST_GAUSS)
     )
 
 
@@ -862,7 +555,7 @@ def oe_bloom_node_group(context, operator, group_name):
         mixcolor_name=OldEevee_Bloom_Names.Color,
         mixcolor_label=OldEevee_Bloom_Names.Color,
         settings=MixColorSettings(
-            blend_type='COLOR',
+            blend_type=BlendType.COLOR,
             fac_default_value=1.0,
             hide_fac=True
         )
@@ -873,7 +566,7 @@ def oe_bloom_node_group(context, operator, group_name):
         mixcolor_name=OldEevee_Bloom_Names.Blur_Mix,
         mixcolor_label=OldEevee_Bloom_Names.Blur_Mix,
         settings=MixColorSettings(
-            blend_type='SCREEN',
+            blend_type=BlendType.SCREEN,
             use_clamp=True,
             fac_default_value=1.0,
             hide_fac=True
@@ -884,14 +577,14 @@ def oe_bloom_node_group(context, operator, group_name):
     intensity = CNM.create_mixcolor_node(
         mixcolor_name=OldEevee_Bloom_Names.Intensity,
         mixcolor_label=OldEevee_Bloom_Names.Intensity,
-        settings=MixColorSettings(blend_type='ADD')
+        settings=MixColorSettings(blend_type=BlendType.ADD)
     )
 
     #node Knee Mix
     knee_mix = CNM.create_mixcolor_node(
         mixcolor_name=OldEevee_Bloom_Names.Knee_Mix,
         mixcolor_label=OldEevee_Bloom_Names.Knee_Mix,
-        settings=MixColorSettings(blend_type='ADD')
+        settings=MixColorSettings(blend_type=BlendType.ADD)
     )
 
     #node Clamp
@@ -934,8 +627,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_00 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_00,
         group_input_label=OldEevee_Bloom_Names.Group_Input_00,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=list(range(1, 18)) # Hide outputs 1 to 17
         )
     )
@@ -944,8 +636,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_01 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_01,
         group_input_label=OldEevee_Bloom_Names.Group_Input_01,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]  # Outputs to hide
         )
     )
@@ -954,8 +645,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_02 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_02,
         group_input_label=OldEevee_Bloom_Names.Group_Input_02,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=[0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
         )
     )
@@ -964,8 +654,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_03 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_03,
         group_input_label=OldEevee_Bloom_Names.Group_Input_03,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=[0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
         )
     )
@@ -974,8 +663,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_04 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_04,
         group_input_label=OldEevee_Bloom_Names.Group_Input_04,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=[0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 15, 16, 17]  # Outputs to hide
         )
     )
@@ -984,8 +672,7 @@ def oe_bloom_node_group(context, operator, group_name):
     group_input_05 = INM.create_group_input_node(
         group_input_name=OldEevee_Bloom_Names.Group_Input_05,
         group_input_label=OldEevee_Bloom_Names.Group_Input_05,
-        settings=InputSettings(
-            node_color=Color.DARK_GRAY,
+        settings=GroupInputSettings(
             outputs_to_hide=[1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # Outputs to hide
         )
     )

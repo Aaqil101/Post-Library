@@ -1,12 +1,46 @@
 from helpers import Color
 from dataclasses import dataclass, field
 
-class FilterNodeManager_Names:
+class FilterNodeNames:
     """
     Class to store the names of various nodes and sockets used in the Filter Node Manager.
     """
     Glare: str = "Glare"
     Blur: str = "Blur"
+
+@dataclass
+class GlareType:
+    """
+    Enumeration of different types of glare effects.
+
+    Attributes:
+    ---
+        BLOOM (str): Represents the Bloom glare effect.
+        GHOSTS (str): Represents the Ghosts glare effect.
+        STREAKS (str): Represents the Streaks glare effect.
+        FOG_GLOW (str): Represents the Fog Glow glare effect.
+        SIMPLE_STAR (str): Represents the Simple Star glare effect.
+    """
+    BLOOM: str = 'BLOOM'  # Bloom glare effect
+    GHOSTS: str = 'GHOSTS'  # Ghosts glare effect
+    STREAKS: str = 'STREAKS'  # Streaks glare effect
+    FOG_GLOW: str = 'FOG_GLOW'  # Fog Glow glare effect
+    SIMPLE_STAR: str = 'SIMPLE_STAR'  # Simple Star glare effect
+
+@dataclass
+class GlareQuality:
+    """
+    Enumeration of different quality levels for the glare effect.
+
+    Attributes:
+    ---
+        LOW (str): Represents low quality for the glare effect.
+        MEDIUM (str): Represents medium quality for the glare effect.
+        HIGH (str): Represents high quality for the glare effect.
+    """
+    LOW: str = 'LOW'  # Low quality
+    MEDIUM: str = 'MEDIUM'  # Medium quality
+    HIGH: str = 'HIGH'  # High quality
 
 @dataclass
 class GlareSettings:
@@ -18,10 +52,10 @@ class GlareSettings:
         angle_offset (float): Angle offset for the glare effect.
         color_modulation (float): Color modulation for the glare effect.
         fade (float): Fade-out value for the glare effect.
-        glare_type (str): Type of glare effect, e.g. 'BLOOM', 'GHOSTS', 'STREAKS'.
+        glare_type (str): Type of glare effect, e.g. GlareType.BLOOM, GlareType.GHOSTS, etc...
         iterations (int): Number of iterations for the glare effect.
         mix (float): Mix value for the glare effect.
-        quality (str): Quality of the glare effect, e.g. 'LOW', 'MEDIUM', 'HIGH'.
+        quality (str): Quality of the glare effect, e.g. GlareQuality.LOW, etc...
         size (int): Size of the glare effect.
         streaks (int): Number of streaks for the glare effect.
         threshold (float): Threshold value for the glare effect.
@@ -30,14 +64,54 @@ class GlareSettings:
     angle_offset: float = 0.0
     color_modulation: float = 0.25
     fade: float = 0.9
-    glare_type: str = 'STREAKS'  # Options: 'BLOOM', 'GHOSTS', 'STREAKS', 'FOG_GLOW', 'SIMPLE_STAR'
+    glare_type: str = GlareType.STREAKS  # Options: GlareType.BLOOM, GlareType.GHOSTS, GlareType.STREAKS, GlareType.FOG_GLOW, GlareType.SIMPLE_STAR
     iterations: int = 3
     mix: float = 0.0
-    quality: str = 'LOW'  # Options: 'LOW', 'MEDIUM', 'HIGH'
+    quality: str = GlareQuality.LOW  # Options: GlareQuality.LOW, GlareQuality.MEDIUM, GlareQuality.HIGH
     size: int = 8
     streaks: int = 4
     threshold: float = 1.0
     use_rotate_45: bool = True
+
+@dataclass
+class BlurAspectCorrection:
+    """
+    Class to store the aspect correction modes for the Blur node (Compositor).
+
+    Attributes:
+    ---
+        NONE (str): No aspect correction.
+        Y (str): Aspect correction along the Y-axis.
+        X (str): Aspect correction along the X-axis.
+    """
+    NONE: str = 'NONE'
+    Y: str = 'Y'
+    X: str = 'X'
+
+@dataclass
+class BlurFilterType:
+    """
+    Enumerations of different filter types for the Blur node (Compositor).
+
+    Attributes:
+    ---
+        FLAT (str): Flat filter type.
+        TENT (str): Tent filter type.
+        QUAD (str): Quad filter type.
+        CUBIC (str): Cubic filter type.
+        GAUSS (str): Gauss filter type.
+        FAST_GAUSS (str): Fast Gauss filter type.
+        CATROM (str): Catrom filter type.
+        MITCH (str): Mitch filter type.
+    """
+    FLAT: str = 'FLAT'
+    TENT: str = 'TENT'
+    QUAD: str = 'QUAD'
+    CUBIC: str = 'CUBIC'
+    GAUSS: str = 'GAUSS'
+    FAST_GAUSS: str = 'FAST_GAUSS'
+    CATROM: str = 'CATROM'
+    MITCH: str = 'MITCH'
 
 @dataclass
 class BlurSettings:
@@ -46,11 +120,11 @@ class BlurSettings:
 
     Attributes:
     ---
-        aspect_correction (str): Aspect correction mode. Options: 'NONE', 'Y', 'X'.
+        aspect_correction (str): Aspect correction mode. Options: BlurAspectCorrection.NONE, etc...
         factor (int): Overall blur factor.
         factor_x (int): Horizontal blur factor.
         factor_y (int): Vertical blur factor.
-        filter_type (str): Type of filter to use for blurring. Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'.
+        filter_type (str): Type of filter to use for blurring. Options: BlurFilterType.FLAT, etc...
         size_x (int): Horizontal size of the blur.
         size_y (int): Vertical size of the blur.
         use_bokeh (bool): Whether to use bokeh effect in the blur.
@@ -59,11 +133,11 @@ class BlurSettings:
         use_relative (bool): Whether to use relative sizing for the blur.
         use_variable_size (bool): Whether to use variable size for the blur.
     """
-    aspect_correction: str = 'NONE' # Options: 'NONE', 'Y', 'X'
+    aspect_correction: str = BlurAspectCorrection.NONE # Options: BlurAspectCorrection.NONE, BlurAspectCorrection.Y, BlurAspectCorrection.X
     factor: int = 0.0
     factor_x: int = 0.0
     factor_y: int = 0.0
-    filter_type: str = 'GAUSS' # Options: 'FLAT', 'TENT', 'QUAD', 'CUBIC', 'GAUSS', 'FAST_GAUSS', 'CATROM', 'MITCH'
+    filter_type: str = BlurFilterType.GAUSS # Options: BlurFilterType.FLAT, BlurFilterType.TENT, BlurFilterType.QUAD, BlurFilterType.CUBIC, BlurFilterType.GAUSS, BlurFilterType.FAST_GAUSS, BlurFilterType.CATROM, BlurFilterType.MITCH
     size_x: int = 0
     size_y: int = 0
     use_bokeh: bool = False
@@ -98,7 +172,7 @@ class FilterNodeManager:
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_glare_node(self, glare_name=FilterNodeManager_Names.Glare, glare_label=FilterNodeManager_Names.Glare, settings=None):
+    def create_glare_node(self, glare_name=FilterNodeNames.Glare, glare_label=FilterNodeNames.Glare, settings=None):
         """
         Create a Glare node in a node group and apply the specified settings.
 
@@ -129,7 +203,7 @@ class FilterNodeManager:
 
         return glare_node
 
-    def create_blur_node(self, blur_name=FilterNodeManager_Names.Blur, blur_label=FilterNodeManager_Names.Blur, settings=None):
+    def create_blur_node(self, blur_name=FilterNodeNames.Blur, blur_label=FilterNodeNames.Blur, settings=None):
         """
         Create a Blur node in a node group and apply the specified settings.
 
