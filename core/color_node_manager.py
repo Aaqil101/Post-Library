@@ -171,7 +171,11 @@ class ColorNodeManager:
         mixcolor_node.name = mixcolor_name
         mixcolor_node.label = mixcolor_label
         mixcolor_node.use_custom_color = self.use_custom_color
-        mixcolor_node.color = settings.node_color
+        
+        if self.use_custom_color:
+            mixcolor_node.color = settings.node_color
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
         # Apply settings from the MixColorSettings instance
         mixcolor_node.blend_type = settings.blend_type
@@ -211,7 +215,11 @@ class ColorNodeManager:
         huesat_node.name = huesat_name
         huesat_node.label = huesat_label
         huesat_node.use_custom_color = self.use_custom_color
-        huesat_node.color = settings.node_color
+
+        if self.use_custom_color:
+            huesat_node.color = settings.node_color
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
         # Apply settings from the HueSatSettings instance
         # Configure the Image input

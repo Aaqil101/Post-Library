@@ -14,12 +14,12 @@ class SwitchSettings:
     Settings for the Switch node in the OE Bloom node group.
 
     Attributes:
-        node_color (Tuple[float, float, float]): Color of the node. Defaults to pure white.
+        node_color (Tuple[float, float, float]): Color of the node. Defaults to LIGHT_GRAY.
         check (bool): Whether to check the Switch node. Defaults to False.
         off (list): Color of the "Off" output of the Switch node. Defaults to pure white.
         on (list): Color of the "On" output of the Switch node. Defaults to pure white.
     """
-    node_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)  # Pure White Color
+    node_color: Tuple[float, float, float] = Color.LIGHT_GRAY  # LIGHT_GRAY Color
     check: bool = False
     off: list = (0.8, 0.8, 0.8, 1.0)  # White Color
     on: list = (0.8, 0.8, 0.8, 1.0)  # White Color
@@ -59,7 +59,11 @@ class UtilitiesNodeManager:
         switch_node.use_custom_color = self.use_custom_color
 
         # Apply settings from the SwitchSettings instance
-        switch_node.color = settings.node_color
+        if self.use_custom_color:
+            switch_node.color = settings.node_color
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+
         switch_node.check = settings.check
         switch_node.inputs[0].default_value = settings.off
         switch_node.inputs[1].default_value = settings.on

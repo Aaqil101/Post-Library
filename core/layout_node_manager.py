@@ -15,9 +15,9 @@ class SocketColor:
         NodeSocketFloat (str): The float socket type for numerical values.
         NodeSocketVector (str): The vector socket type for vector data.
     """
-    NodeSocketColor: str = "NodeSocketColor"  # Color socket type
-    NodeSocketFloat: str = "NodeSocketFloat"  # Float socket type
-    NodeSocketVector: str = "NodeSocketVector"  # Vector socket type
+    NodeSocketColor: str = 'NodeSocketColor'  # Color socket type
+    NodeSocketFloat: str = 'NodeSocketFloat'  # Float socket type
+    NodeSocketVector: str = 'NodeSocketVector'  # Vector socket type
 
 @dataclass
 class FrameSettings:
@@ -63,15 +63,18 @@ class LayoutNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-        # Validate and convert the color inputs
-        if len(node_color) != 2:
-            raise ValueError("node_color must contain exactly two elements.")
-        self.node_color = hexcode_to_rgb(
-            hex_color_add(
-                node_color[0],
-                node_color[1]
+        if self.use_custom_color:
+            # Validate and convert the color inputs
+            if len(node_color) != 2:
+                raise ValueError("node_color must contain exactly two elements.")
+            self.node_color = hexcode_to_rgb(
+                hex_color_add(
+                    node_color[0],
+                    node_color[1]
+                )
             )
-        )
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
     def create_frame_node(self, frame_name=LayoutNodeNames.Frame, frame_label=LayoutNodeNames.Frame, settings=None):
         """

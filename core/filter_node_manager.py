@@ -193,7 +193,11 @@ class FilterNodeManager:
         glare_node.name = glare_name
         glare_node.label = glare_label
         glare_node.use_custom_color = self.use_custom_color
-        glare_node.color = self.node_color
+
+        if self.use_custom_color:
+            glare_node.color = self.node_color
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
         # Apply settings from the GlareSettings instance
         for field_name in settings.__dataclass_fields__:
@@ -224,7 +228,11 @@ class FilterNodeManager:
         blur_node.name = blur_name
         blur_node.label = blur_label
         blur_node.use_custom_color = self.use_custom_color
-        blur_node.color = self.node_color
+
+        if self.use_custom_color:
+            blur_node.color = self.node_color
+        else:
+            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
         # Apply settings from the BlurSettings instance
         for field_name in settings.__dataclass_fields__:
