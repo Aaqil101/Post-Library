@@ -47,14 +47,13 @@ from helpers import (
     # Names and descriptions
     CompositorNodeNames,
     OldEevee_Bloom_Names,
-    UpdateRTCompositingNames,
     OldEevee_Bloom_Descr,
 
     # Functions
     ensure_connection,
     poll_view_3d,
     update_real_time_compositing,
-    toggle_oe_bloom,
+    toggle_oldeevee_bloom,
     is_compositor_enabled
 )
 from core import (
@@ -87,12 +86,12 @@ from core import (
     GroupOutputSettings,
 )
 
-#initialize OE_Bloom node group
+#initialize OldEevee_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
     oe_bloom = bpy.data.node_groups.new(group_name, CompositorNodeNames.TREE)
 
     oe_bloom.color_tag = 'FILTER'
-    oe_bloom.description = OldEevee_Bloom_Descr.oe_bloom
+    oe_bloom.description = OldEevee_Bloom_Descr.oldeevee_bloom
     oe_bloom.default_group_node_width = 149
 
     #oe_bloom interface
@@ -903,7 +902,7 @@ def oe_bloom_node_group(context, operator, group_name):
     return oe_bloom
 
 class NODE_OT_BLOOM(bpy.types.Operator):
-    bl_label = OldEevee_Bloom_Names.OE_Bloom
+    bl_label = OldEevee_Bloom_Names.OldEevee_Bloom
     bl_idname = "node.oe_bloom_operator"
     bl_description = OldEevee_Bloom_Descr.node_ot_bloom
 
@@ -922,11 +921,11 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         viewer_node = nodes.get(OldEevee_Bloom_Names.Viewer) or nodes.new(type=CompositorNodeNames.VIEWER)
         viewer_node.location = (300, -24)
 
-        custom_oe_bloom_node_name = OldEevee_Bloom_Names.OE_Bloom
+        custom_oe_bloom_node_name = OldEevee_Bloom_Names.OldEevee_Bloom
         oe_bloom_group = oe_bloom_node_group(shelf, context, custom_oe_bloom_node_name)
         oe_bloom_node = context.scene.node_tree.nodes.new(CompositorNodeNames.GROUP)
-        oe_bloom_node.name = OldEevee_Bloom_Names.OE_Bloom
-        oe_bloom_node.label = OldEevee_Bloom_Names.OE_Bloom
+        oe_bloom_node.name = OldEevee_Bloom_Names.OldEevee_Bloom
+        oe_bloom_node.label = OldEevee_Bloom_Names.OldEevee_Bloom
         oe_bloom_node.width = 149
         oe_bloom_node.node_tree = bpy.data.node_groups[oe_bloom_group.name]
         oe_bloom_node.use_custom_color = True
@@ -1155,23 +1154,23 @@ def register():
         name=OldEevee_Bloom_Names.Bloom_Mute_Unmute,
         description=OldEevee_Bloom_Descr.bloom_mute_unmute_bool,
         default=False,
-        update=toggle_oe_bloom  # Attach the callback function
+        update=toggle_oldeevee_bloom  # Attach the callback function
     )
     prop_scene.real_time_compositing_enum = EnumProperty(
         name=OldEevee_Bloom_Names.Real_Time_Compositing,
         description=OldEevee_Bloom_Descr.real_time_compositing,
         items=[
             (
-                UpdateRTCompositingNames.DISABLED, UpdateRTCompositingNames.DISABLED.title(), OldEevee_Bloom_Descr.disabled, "CANCEL", 0
+                OldEevee_Bloom_Names.Disabled.upper(), OldEevee_Bloom_Names.Disabled, OldEevee_Bloom_Descr.disabled, "CANCEL", 0
             ),
             (
-                UpdateRTCompositingNames.CAMERA, UpdateRTCompositingNames.CAMERA.title(), OldEevee_Bloom_Descr.camera, "CAMERA_DATA", 1
+                OldEevee_Bloom_Names.Camera.upper(), OldEevee_Bloom_Names.Camera, OldEevee_Bloom_Descr.camera, "CAMERA_DATA", 1
             ),
             (
-                UpdateRTCompositingNames.ALWAYS, UpdateRTCompositingNames.ALWAYS.title(), OldEevee_Bloom_Descr.always, "CHECKMARK", 2
+                OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Descr.always, "CHECKMARK", 2
             )
         ],
-        default=UpdateRTCompositingNames.DISABLED,
+        default=OldEevee_Bloom_Names.Disabled,
         update=update_real_time_compositing  # Attach the callback function here
     )
     prop_scene.bloom_clamp_mix_bool = BoolProperty(
