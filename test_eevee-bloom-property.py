@@ -37,7 +37,7 @@ for path in paths:
     else:
         print(f"{path_str} already in sys.path")
 
-from helpers import (add_driver_var, Color)
+from helpers import (add_driver_var, Color, CompositorNodeNames)
 from core import (
     # Import all classes used by the Filter Node Manager
     FilterNodeManager,
@@ -63,8 +63,9 @@ from core import (
     InputNodeManager,
     GroupInputSettings,
 
-    # Import compositor node names
-    CompositorNodeNames,
+    # Import all classes used by the Output Node Manager
+    OutputNodeManager,
+    GroupOutputSettings,
 )
 
 class OldEevee_Bloom_Names:
@@ -244,7 +245,7 @@ def poll_view_3d(self, context):
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
-    oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
+    oe_bloom = bpy.data.node_groups.new(group_name, CompositorNodeNames.TREE)
 
     oe_bloom.color_tag = 'FILTER'
     oe_bloom.description = OldEevee_Bloom_Descr.oe_bloom
@@ -411,22 +412,24 @@ def oe_bloom_node_group(context, operator, group_name):
     bloom_size_socket.attribute_domain = 'POINT'
     bloom_size_socket.description = OldEevee_Bloom_Descr.bloom_size
 
-    #initialize oe_bloom nodes
-    #node Group Output
-    group_output = oe_bloom.nodes.new("NodeGroupOutput")
-    group_output.label = OldEevee_Bloom_Names.Group_Output
-    group_output.name = OldEevee_Bloom_Names.Group_Output
-    group_output.use_custom_color = True
-    group_output.color = Color.DARK_GRAY
-    group_output.inputs[1].hide = True
-    group_output.is_active_output = True
-
+    # Initialize oe_bloom nodes
     # Initialize node managers with the oe_bloom node group and custom settings
     FNM = FilterNodeManager(node_group=oe_bloom, use_custom_color=True)
     CNM = ColorNodeManager(node_group=oe_bloom, use_custom_color=True)
     LNM = LayoutNodeManager(node_group=oe_bloom, node_color=["77535F", "3C3937"], use_custom_color=True)
     UNM = UtilitiesNodeManager(node_group=oe_bloom, use_custom_color=True)
     INM = InputNodeManager(node_group=oe_bloom, use_custom_color=True)
+    ONM = OutputNodeManager(node_group=oe_bloom, use_custom_color=True)
+
+    #node Group Output
+    group_output = ONM.create_group_output_node(
+        group_output_name=OldEevee_Bloom_Names.Group_Output,
+        group_output_label=OldEevee_Bloom_Names.Group_Output,
+        settings=GroupOutputSettings(
+            outputs_to_hide=[1],
+            is_active_output=True
+        )
+    )
 
     #node Original Bloom High
     original_bloom_high = FNM.create_glare_node(
@@ -607,6 +610,15 @@ def oe_bloom_node_group(context, operator, group_name):
     )
 
     """
+    ! Old method to create the Group Output Node
+    group_output = oe_bloom.nodes.new("NodeGroupOutput")
+    group_output.label = OldEevee_Bloom_Names.Group_Output
+    group_output.name = OldEevee_Bloom_Names.Group_Output
+    group_output.use_custom_color = True
+    group_output.color = Color.DARK_GRAY
+    group_output.inputs[1].hide = True
+    group_output.is_active_output = True
+
     ! Old method to create the Original Bloom High node
     original_bloom_high = oe_bloom.nodes.new("CompositorNodeGlare")
     original_bloom_high.label = OldEevee_Bloom_Names.Original_Bloom_High

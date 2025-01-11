@@ -1,9 +1,8 @@
-from helpers import Color
-from core import CompositorNodeNames
+from helpers import (Color, CompositorNodeNames)
 from typing import Tuple, List
 from dataclasses import dataclass, field
 
-class GroupOutputNames:
+class OutputNodeNames:
     """
     Class to store the names of various nodes and sockets used in the Output Node Manager
     """
@@ -44,7 +43,7 @@ class OutputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
     
-    def create_group_output_node(self, group_output_name=GroupOutputNames.Group_Output, group_output_label=GroupOutputNames.Group_Output, settings=None):
+    def create_group_output_node(self, group_output_name=OutputNodeNames.Group_Output, group_output_label=OutputNodeNames.Group_Output, settings=None):
         """
         Create a Group Output node in a node group and apply the specified settings.
 

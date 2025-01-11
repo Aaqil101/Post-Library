@@ -1,5 +1,4 @@
-from helpers import Color
-from core import CompositorNodeNames
+from helpers import (Color, CompositorNodeNames)
 from dataclasses import dataclass, field
 
 class FilterNodeNames:
