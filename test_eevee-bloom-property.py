@@ -62,6 +62,9 @@ from core import (
     # Import all classes used by the Input Node Manager
     InputNodeManager,
     GroupInputSettings,
+
+    # Import compositor node names
+    CompositorNodeNames,
 )
 
 class OldEevee_Bloom_Names:

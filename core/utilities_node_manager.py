@@ -1,4 +1,5 @@
 from helpers import Color
+from core import CompositorNodeNames
 from typing import Tuple
 from dataclasses import dataclass, field
 
@@ -53,7 +54,7 @@ class UtilitiesNodeManager:
             settings = SwitchSettings()
 
         # Create the Switch node
-        switch_node = self.node_group.nodes.new("CompositorNodeSwitch")
+        switch_node = self.node_group.nodes.new(CompositorNodeNames.SWITCH)
         switch_node.label = switch_label
         switch_node.name = switch_name
         switch_node.use_custom_color = self.use_custom_color

@@ -1,4 +1,5 @@
 from helpers import Color
+from core import CompositorNodeNames
 from typing import Tuple, List
 from dataclasses import dataclass, field
 
@@ -56,7 +57,7 @@ class InputNodeManager:
             settings = GroupInputSettings()
 
         # Create the Group Input node
-        group_input_node = self.node_group.nodes.new("NodeGroupInput")
+        group_input_node = self.node_group.nodes.new(CompositorNodeNames.GROUP_INPUT)
         group_input_node.name = group_input_name
         group_input_node.label = group_input_label
         group_input_node.use_custom_color = self.use_custom_color

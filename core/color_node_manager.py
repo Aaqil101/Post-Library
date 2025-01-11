@@ -1,4 +1,5 @@
 from helpers import Color
+from core import CompositorNodeNames
 from typing import Tuple
 from dataclasses import dataclass, field
 
@@ -167,7 +168,7 @@ class ColorNodeManager:
             settings = MixColorSettings()
 
         # Create the MixColor node
-        mixcolor_node = self.node_group.nodes.new("CompositorNodeMixRGB")
+        mixcolor_node = self.node_group.nodes.new(CompositorNodeNames.MIX_RGB)
         mixcolor_node.name = mixcolor_name
         mixcolor_node.label = mixcolor_label
         mixcolor_node.use_custom_color = self.use_custom_color
@@ -211,7 +212,7 @@ class ColorNodeManager:
             settings = HueSatSettings()
 
         # Create the Hue/Saturation/Value Node
-        huesat_node = self.node_group.nodes.new("CompositorNodeHueSat")
+        huesat_node = self.node_group.nodes.new(CompositorNodeNames.HUE_SATURATION_VALUE)
         huesat_node.name = huesat_name
         huesat_node.label = huesat_label
         huesat_node.use_custom_color = self.use_custom_color

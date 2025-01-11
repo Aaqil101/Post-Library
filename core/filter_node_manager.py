@@ -1,4 +1,5 @@
 from helpers import Color
+from core import CompositorNodeNames
 from dataclasses import dataclass, field
 
 class FilterNodeNames:
@@ -189,7 +190,7 @@ class FilterNodeManager:
             settings = GlareSettings()
 
         # Create the Glare node
-        glare_node = self.node_group.nodes.new("CompositorNodeGlare")
+        glare_node = self.node_group.nodes.new(CompositorNodeNames.GLARE)
         glare_node.name = glare_name
         glare_node.label = glare_label
         glare_node.use_custom_color = self.use_custom_color
@@ -224,7 +225,7 @@ class FilterNodeManager:
             settings = BlurSettings()
 
         # Create the Blur node
-        blur_node = self.node_group.nodes.new("CompositorNodeBlur")
+        blur_node = self.node_group.nodes.new(CompositorNodeNames.BLUR)
         blur_node.name = blur_name
         blur_node.label = blur_label
         blur_node.use_custom_color = self.use_custom_color

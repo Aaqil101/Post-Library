@@ -1,83 +1,136 @@
+from dataclasses import dataclass, field
+
+@dataclass
 class CompositorNodeNames:
     """
     Class to store the names of every nodes and other items used in the Blender Compositor.
     """
-    # Input Nodes
-    RENDER_LAYERS = "CompositorNodeRLayers"
-    IMAGE = "CompositorNodeImage"
-    MASK = "CompositorNodeMask"
-    MOVIE_CLIP = "CompositorNodeMovieClip"
-    TEXTURE = "CompositorNodeTexture"
-    BOKEH_IMAGE = "CompositorNodeBokehImage"
-    TRACK_POSITION = "CompositorNodeTrackPos"
-    TIME = "CompositorNodeTime"
+    # Input
+    BOKEH_IMAGE: str = "CompositorNodeBokehImage"
+    IMAGE: str = "CompositorNodeImage"
+    MASK: str = "CompositorNodeMask"
+    MOVIE_CLIP: str = "CompositorNodeMovieClip"
+    TEXTURE: str = "CompositorNodeTexture"
+    GROUP_INPUT: str = "NodeGroupInput"
 
-    # Output Nodes
-    COMPOSITE = "CompositorNodeComposite"
-    VIEWER = "CompositorNodeViewer"
-    FILE_OUTPUT = "CompositorNodeOutputFile"
-    LEVELS = "CompositorNodeLevels"
+    # Input.Constant
+    RGB: str = "CompositorNodeRGB"
+    VALUE: str = "CompositorNodeValue"
 
-    # Color Nodes
-    BRIGHT_CONTRAST = "CompositorNodeBrightContrast"
-    HUE_SATURATION = "CompositorNodeHueSat"
-    GAMMA = "CompositorNodeGamma"
-    INVERT = "CompositorNodeInvert"
-    MIX_RGB = "CompositorNodeMixRGB"
-    Z_COMBINE = "CompositorNodeZcombine"
-    COLOR_BALANCE = "CompositorNodeColorBalance"
-    TONE_MAP = "CompositorNodeTonemap"
-    COLOR_CORRECTION = "CompositorNodeColorCorrection"
-    ALPHA_OVER = "CompositorNodeAlphaOver"
+    # Input.Scene
+    RENDER_LAYERS: str = "CompositorNodeRLayers"
+    SCENE_TIME: str = "CompositorNodeSceneTime"
+    TIME: str = "CompositorNodeTime"
 
-    # Filter Nodes
-    BLUR = "CompositorNodeBlur"
-    FILTER = "CompositorNodeFilter"
-    DILATE_ERODE = "CompositorNodeDilateErode"
-    BILATERAL_BLUR = "CompositorNodeBilateralblur"
-    DESPECKLE = "CompositorNodeDespeckle"
-    DEFOCUS = "CompositorNodeDefocus"
-    GLARE = "CompositorNodeGlare"
-    LENS_DISTORTION = "CompositorNodeLensdist"
-    DENOISE = "CompositorNodeDenoise"
+    # Output
+    COMPOSITE: str = "CompositorNodeComposite"
+    VIEWER: str = "CompositorNodeViewer"
+    FILE_OUTPUT: str = "CompositorNodeOutputFile"
+    GROUP_OUTPUT: str = "NodeGroupOutput"
 
-    # Converter Nodes
-    MATH = "CompositorNodeMath"
-    MIX_RGB = "CompositorNodeMixRGB"
-    SEPARATE_RGB = "CompositorNodeSeparateRGB"
-    COMBINE_RGB = "CompositorNodeCombineRGB"
-    SEPARATE_HSVA = "CompositorNodeSeparateHSVA"
-    COMBINE_HSVA = "CompositorNodeCombineHSVA"
-    SEPARATE_XYZ = "CompositorNodeSeparateXYZ"
-    COMBINE_XYZ = "CompositorNodeCombineXYZ"
-    MAP_VALUE = "CompositorNodeMapValue"
-    MAP_RANGE = "CompositorNodeMapRange"
-    NORMALIZE = "CompositorNodeNormalize"
+    # Color
+    ALPHA_CONVERT: str = "CompositorNodePremulKey"
+    COLOR_RAMP: str = "CompositorNodeValToRGB"
+    CONVERT_COLOR_SPACE: str = "CompositorNodeConvertColorSpace"
+    SET_ALPHA: str = "CompositorNodeSetAlpha"
+    INVERT_COLOR: str = "CompositorNodeInvert"
+    RGB_TO_BW: str = "CompositorNodeRGBToBW"
 
-    # Vector Nodes
-    MAP_UV = "CompositorNodeMapUV"
-    DISPLACE = "CompositorNodeDisplace"
-    VECTOR_BLUR = "CompositorNodeVectorBlur"
+    # Color.Adjust
+    BRIGHT_CONTRAST: str = "CompositorNodeBrightContrast"
+    COLOR_BALANCE: str = "CompositorNodeColorBalance"
+    COLOR_CORRECTION: str = "CompositorNodeColorCorrection"
+    EXPOSURE: str = "CompositorNodeExposure"
+    GAMMA: str = "CompositorNodeGamma"
+    HUE_CORRECT: str = "CompositorNodeHueCorrect"
+    HUE_SATURATION_VALUE: str = "CompositorNodeHueSat"
+    RGB_CURVE: str = "CompositorNodeCurveRGB"
+    TONE_MAP: str = "CompositorNodeTonemap"
 
-    # Matte Nodes
-    KEYING = "CompositorNodeKeying"
-    KEYING_SCREEN = "CompositorNodeKeyingScreen"
-    LUMINANCE_KEY = "CompositorNodeLumaMatte"
-    CHROMA_KEY = "CompositorNodeChromaMatte"
-    COLOR_SPILL = "CompositorNodeColorSpill"
+    # Color.Mix
+    ALPHA_OVER: str = "CompositorNodeAlphaOver"
+    COMBINE_COLOR: str = "CompositorNodeCombineColor"
+    SEPARATE_COLOR: str = "CompositorNodeSeparateColor"
+    MIX_RGB: str = "CompositorNodeMixRGB"
+    Z_COMBINE: str = "CompositorNodeZcombine"
 
-    # Distort Nodes
-    SCALE = "CompositorNodeScale"
-    ROTATE = "CompositorNodeRotate"
-    TRANSLATE = "CompositorNodeTranslate"
-    TRANSFORM = "CompositorNodeTransform"
-    CROP = "CompositorNodeCrop"
-    LENS_DISTORTION = "CompositorNodeLensdist"
+    # Filter
+    ANTI_ALIASING: str = "CompositorNodeAntiAliasing"
+    DENOISE: str = "CompositorNodeDenoise"
+    DESPECKLE: str = "CompositorNodeDespeckle"
+    DILATE_ERODE: str = "CompositorNodeDilateErode"
+    INPAINT: str = "CompositorNodeInpaint"
+    FILTER: str = "CompositorNodeFilter"
+    GLARE: str = "CompositorNodeGlare"
+    KUWAHARA: str = "CompositorNodeKuwahara"
+    PIXELATE: str = "CompositorNodePixelate"
+    POSTERIZE: str = "CompositorNodePosterize"
+    SUN_BEAMS: str = "CompositorNodeSunBeams"
+    
+    # Filter.Blur
+    BILATERAL_BLUR: str = "CompositorNodeBilateralblur"
+    BLUR: str = "CompositorNodeBlur"
+    BOKEH_BLUR: str = "CompositorNodeBokehBlur"
+    DEFOCUS: str = "CompositorNodeDefocus"
+    DIRECTIONAL_BLUR: str = "CompositorNodeDBlur"
+    VECTOR_BLUR: str = "CompositorNodeVecBlur"
 
-    # Layout Nodes
+    # Keying
+    CHANNEL_KEY: str = "CompositorNodeChannelMatte"
+    CHROMA_KEY: str = "CompositorNodeChromaMatte"
+    COLOR_KEY: str = "CompositorNodeColorMatte"
+    COLOR_SPILL: str = "CompositorNodeColorSpill"
+    DIFFERENCE_KEY: str = "CompositorNodeDiffMatte"
+    DISTANCE_KEY: str = "CompositorNodeDistanceMatte"
+    KEYING: str = "CompositorNodeKeying"
+    KEYING_SCREEN: str = "CompositorNodeKeyingScreen"
+    LUMINANCE_KEY: str = "CompositorNodeLumaMatte"
+
+    # Mask
+    CRYPTO_MATTE_V2: str = "CompositorNodeCryptomatteV2"
+    CRYPTO_MATTE: str = "CompositorNodeCryptomatte"
+    BOX_MASK: str = "CompositorNodeBoxMask"
+    ELLIPSE_MASK: str = "CompositorNodeEllipseMask"
+    DOUBLE_EDGE_MASK: str = "CompositorNodeDoubleEdgeMask"
+    ID_MASK: str = "CompositorNodeIDMask"
+
+    # Tracking
+    PLANE_TRACK_DEFORM: str = "CompositorNodePlaneTrackDeform"
+    STABILIZE: str = "CompositorNodeStabilize"
+    TRACK_POSITION: str = "CompositorNodeTrackPos"
+
+    # Transform
+    ROTATE: str = "CompositorNodeRotate"
+    SCALE: str = "CompositorNodeScale"
+    TRANSFORM: str = "CompositorNodeTransform"
+    TRANSLATE: str = "CompositorNodeTranslate"
+    CORNER_PIN: str = "CompositorNodeCornerPin"
+    CROP: str = "CompositorNodeCrop"
+    DISPLACE: str = "CompositorNodeDisplace"
+    FLIP: str = "CompositorNodeFlip"
+    MAP_UV: str = "CompositorNodeMapUV"
+    LENS_DISTORTION: str = "CompositorNodeLensdist"
+    MOVIE_DISTORTION: str = "CompositorNodeMovieDistortion"
+
+    # Utilities
+    MAP_RANGE: str = "CompositorNodeMapRange"
+    MAP_VALUE: str = "CompositorNodeMapValue"
+    MATH: str = "CompositorNodeMath"
+    LEVELS: str = "CompositorNodeLevels"
+    NORMALIZE: str = "CompositorNodeNormalize"
+    SPLIT: str = "CompositorNodeSplit"
+    SWITCH: str = "CompositorNodeSwitch"
+    SWITCH_STEREO_VIEW: str = "CompositorNodeSwitchView"
+
+    # Vector
+    COMBINE_XYZ: str = "CompositorNodeCombineXYZ"
+    SEPARATE_XYZ: str = "CompositorNodeSeparateXYZ"
+    NORMAL: str = "CompositorNodeNormal"
+    VECTOR_CURVE: str = "CompositorNodeCurveVec"
+
+    # Other
+    CUSTOM_GROUP: str = "CompositorNodeCustomGroup"
     FRAME = "NodeFrame"
+    GROUP: str = "CompositorNodeGroup"
     REROUTE = "NodeReroute"
-
-    # Group Nodes
-    GROUP_INPUT = "NodeGroupInput"
-    GROUP_OUTPUT = "NodeGroupOutput"
+    TREE: str = "CompositorNodeTree"

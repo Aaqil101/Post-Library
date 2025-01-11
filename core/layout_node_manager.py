@@ -1,4 +1,5 @@
 from helpers import (hexcode_to_rgb, hex_color_add)
+from core import CompositorNodeNames
 from dataclasses import dataclass, field
 
 class LayoutNodeNames:
@@ -93,7 +94,7 @@ class LayoutNodeManager:
             settings = FrameSettings()
 
         # Create the Frame node
-        frame_node = self.node_group.nodes.new("NodeFrame")
+        frame_node = self.node_group.nodes.new(CompositorNodeNames.FRAME)
         frame_node.name = frame_name
         frame_node.label = frame_label
         frame_node.use_custom_color = self.use_custom_color
@@ -111,7 +112,7 @@ class LayoutNodeManager:
             settings = RerouteSettings()
 
         # Create the Reroute node
-        reroute_node = self.node_group.nodes.new("NodeReroute")
+        reroute_node = self.node_group.nodes.new(CompositorNodeNames.REROUTE)
         reroute_node.name = reroute_name
         reroute_node.label = reroute_label
 
