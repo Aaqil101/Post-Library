@@ -18,13 +18,3 @@ __all__ = [
     "InputNodeNames", "InputNodeManager", "GroupInputSettings",
     "OutputNodeNames", "OutputNodeManager", "GroupOutputSettings"
 ]
-
-# Reload modules if needed (this is optional and mainly useful for development)
-from . import (filter_node_manager, color_node_manager, layout_node_manager, utilities_node_manager, input_node_manager, output_node_manager)
-from importlib import reload
-reload(filter_node_manager)
-reload(color_node_manager)
-reload(layout_node_manager)
-reload(utilities_node_manager)
-reload(input_node_manager)
-reload(output_node_manager)
