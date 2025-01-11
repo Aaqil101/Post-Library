@@ -159,7 +159,6 @@ def update_real_time_compositing(self, context):
                             space.shading.use_compositor = OldEevee_Bloom_Names.Always.upper()
             break
     else:
-        # self.report({'WARNING'}, "No 3D Viewport available to update the shading property.")
         print("No 3D Viewport available to update the shading property.")
 
 def poll_view_3d(self, context):

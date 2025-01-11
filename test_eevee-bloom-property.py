@@ -51,10 +51,10 @@ from helpers import (
 
     # Functions
     ensure_connection,
+    is_compositor_enabled,
     poll_view_3d,
     update_real_time_compositing,
-    toggle_oldeevee_bloom,
-    is_compositor_enabled
+    toggle_oldeevee_bloom
 )
 from core import (
     # Import all classes used by the Filter Node Manager
@@ -92,7 +92,7 @@ def oldeevee_bloom_node_group(context, operator, group_name):
 
     oldeevee_bloom.color_tag = 'FILTER'
     oldeevee_bloom.description = OldEevee_Bloom_Descr.oldeevee_bloom
-    oldeevee_bloom.default_group_node_width = 149
+    oldeevee_bloom.default_group_node_width = 174
 
     #oldeevee_bloom interface
     #Socket Image
@@ -926,7 +926,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         oldeevee_bloom_node = context.scene.node_tree.nodes.new(CompositorNodeNames.GROUP)
         oldeevee_bloom_node.name = OldEevee_Bloom_Names.OldEevee_Bloom
         oldeevee_bloom_node.label = OldEevee_Bloom_Names.OldEevee_Bloom
-        oldeevee_bloom_node.width = 149
+        oldeevee_bloom_node.width = 174
         oldeevee_bloom_node.node_tree = bpy.data.node_groups[oldeevee_bloom_group.name]
         oldeevee_bloom_node.use_custom_color = True
         oldeevee_bloom_node.color = Color.DARK_PURPLE
@@ -1170,7 +1170,7 @@ def register():
                 OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Descr.always, "CHECKMARK", 2
             )
         ],
-        default=OldEevee_Bloom_Names.Disabled,
+        default=OldEevee_Bloom_Names.Disabled.upper(),
         update=update_real_time_compositing  # Attach the callback function here
     )
     prop_scene.bloom_clamp_mix_bool = BoolProperty(
