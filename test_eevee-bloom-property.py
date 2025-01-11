@@ -37,7 +37,26 @@ for path in paths:
     else:
         print(f"{path_str} already in sys.path")
 
-from helpers import (add_driver_var, Color, CompositorNodeNames)
+from helpers import (
+    # For adding drivers to sockets
+    add_driver_var, 
+
+    # Color references
+    Color,
+
+    # Names and descriptions
+    CompositorNodeNames,
+    OldEevee_Bloom_Names,
+    UpdateRTCompositingNames,
+    OldEevee_Bloom_Descr,
+
+    # Functions
+    ensure_connection,
+    poll_view_3d,
+    update_real_time_compositing,
+    toggle_oe_bloom,
+    is_compositor_enabled
+)
 from core import (
     # Import all classes used by the Filter Node Manager
     FilterNodeManager,
@@ -67,181 +86,6 @@ from core import (
     OutputNodeManager,
     GroupOutputSettings,
 )
-
-class OldEevee_Bloom_Names:
-    """
-    Class to store the names of various nodes and sockets used in the bloom node group
-    """
-    OE_Bloom = "OE_Bloom"
-    Image = "Image"
-    Color = "Color"
-    Quality = "Quality"
-    Knee = "Knee"
-    Threshold = "Threshold"
-    Radius = "Radius"
-    Intensity = "Intensity"
-    Clamp = "Clamp"
-    Other = "Other"
-    Hue = "Hue"
-    Saturation = "Saturation"
-    Fac = "Fac"
-    Composite = "Composite"
-    Viewer = "Viewer"
-    Disabled = "Disabled"
-    Camera = "Camera"
-    Always = "Always"
-    Blur = "Blur"
-    BM_Clamp = "BM Clamp"
-    KM_Clamp = "KM Clamp"
-    CR_Clamp = "CR Clamp"
-    IY_Clamp = "IY Clamp"
-    Clamp_Mix = "Clamp Mix"
-    Blur_Mix = "Blur Mix"
-    Bloom_Size = "Bloom Size"
-    Group_Output = "Group Output"
-    Group_Input_00 = "Group Input 00"
-    Original_Bloom_High = "Original Bloom High"
-    Knee_Bloom_High = "Knee Bloom High"
-    Knee_Mix = "Knee Mix"
-    Group_Input_01 = "Group Input 01"
-    Group_Input_02 = "Group Input 02"
-    Group_Input_03 = "Group Input 03"
-    Group_Input_04 = "Group Input 04"
-    Group_Input_05 = "Group Input 05"
-    Bloom_High_Low = "Bloom High && Low"
-    Knee_Bloom_Low = "Knee Bloom Low"
-    KB_Switch = "KB Switch"
-    OB_Switch = "OB Switch"
-    Original_Bloom_Low = "Original Bloom Low"
-    Reroute_00 = "Reroute_00"
-    Reroute_01 = "Reroute_01"
-    Render_Layers = "Render Layers"
-    Bloom_Mute_Unmute = "Bloom Mute/Unmute"
-    Real_Time_Compositing = "Real-Time Compositor"
-    Enable_Compositor = "Enable Compositor"
-
-class OldEevee_Bloom_Descr:
-    """
-    Class to store all the descriptions of the Bloom properties
-    """
-    image = "Standard color output"
-    quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
-    threshold = "Filters out pixels under this level of brightness"
-    knee = "Makes transition between under/over-threshold gradual"
-    radius = "Bloom spread distance"
-    color = "Color applied to the bloom effect"
-    intensity = "Blend factor"
-    clamp = "Maximum intensity a bloom pixel can have"
-    other = "Additional options for customizing the bloom effect"
-    hue = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
-    saturation = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
-    fac = "The amount of influence the node exerts on the image"
-    disabled = "The compositor is disabled"
-    camera = "The compositor is enabled only in camera view"
-    always = "The compositor is always enabled regardless of the view"
-    node_ot_bloom = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
-    prop_pt_bloom = "Old Eevee Bloom In Both Eevee And Cycles"
-    scene_ot_enable_compositor = "Enable the compositing node tree"
-    blur_mix = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
-    bloom_size = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
-    bloom_mute_unmute_bool = "Toggle the bloom effect on or off"
-    oe_bloom = "Replication of the legacy eevee bloom option"
-    clamp_mix = "Clamps of each mix nodes in the oe_bloom node group"
-    bm_clamp = "Blur Mix Clamp"
-    km_clamp = "Knee Mix Clamp"
-    cr_clamp = "Color Clamp"
-    iy_clamp = "Intensity Clamp"
-    real_time_compositing = "When to preview the compositor output inside the viewport"
-
-def is_compositor_enabled(scene):
-    """
-    Check if the compositor is enabled for the given scene.
-
-    Args:
-        scene: The Blender scene to check.
-
-    Returns:
-        bool: True if the compositor is enabled, otherwise False.
-    """
-    return scene.use_nodes  # 'use_nodes' tells if the compositor is enabled
-
-def toggle_oe_bloom_mute(self, context):
-    """
-    Toggle the mute property of the 'OE_Bloom' node group in the Compositor.
-
-    Args:
-        self: The instance of the class.
-        context: The Blender context.
-
-    Returns:
-        None
-    """
-    scene = context.scene
-    node_tree = context.scene.node_tree  # Access the active node tree
-
-    if node_tree and node_tree.type == 'COMPOSITING':
-        found_node = None
-        for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OE_Bloom:
-                found_node = node
-                break
-
-        if found_node:
-            found_node.mute = scene.bloom_mute_unmute_bool
-            print(f"Node group 'OE_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
-        else:
-            print("Node group 'OE_Bloom' not found in the Compositor node tree.")
-    else:
-        print("Compositor node tree is not active.")
-
-def update_real_time_compositing(self, context):
-    """
-    Update the real-time compositing settings for 3D Viewport areas based on the 
-    'real_time_compositing_enum' attribute.
-
-    This function iterates through all screen areas in the current context and checks 
-    for 3D Viewport areas. If found, it updates the 'use_compositor' attribute of the 
-    shading settings for the 3D View space based on the value of 'real_time_compositing_enum', 
-    which can be 'DISABLED', 'CAMERA', or 'ALWAYS'.
-
-    Args:
-        self: The instance of the class containing the 'real_time_compositing_enum' attribute.
-        context: The Blender context, providing access to the current screen and its areas.
-
-    Returns:
-        None
-    """
-    for area in context.screen.areas:  # Iterate through all areas
-        if area.type == 'VIEW_3D':  # Find the 3D Viewport
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':  # Confirm it's a 3D View space
-                    if hasattr(space.shading, 'use_compositor'):  # Ensure shading property exists
-                        if self.real_time_compositing_enum == OldEevee_Bloom_Names.Disabled.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Disabled.upper()
-                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Camera.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Camera.upper()
-                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Always.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Always.upper()
-            break
-    else:
-        # self.report({'WARNING'}, "No 3D Viewport available to update the shading property.")
-        print("No 3D Viewport available to update the shading property.")
-
-def poll_view_3d(self, context):
-    """
-    Check if a 3D Viewport area exists in the current screen layout.
-
-    Args:
-        self: The current context owner (typically a UI panel or operator).
-        context: The Blender context containing information about the current state.
-
-    Returns:
-        bool: True if a 3D Viewport area is found, otherwise False.
-    """
-    for area in context.screen.areas:
-        if area.type == 'VIEW_3D':  # Check if VIEW_3D area exists
-            return True
-    return False
 
 #initialize OE_Bloom node group
 def oe_bloom_node_group(context, operator, group_name):
@@ -1067,21 +911,20 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         # Get the compositor node tree
         node_tree = context.scene.node_tree
         nodes = node_tree.nodes
-        links = node_tree.links
 
         # Check if nodes exist, otherwise create them
-        render_layer_node = nodes.get(OldEevee_Bloom_Names.Render_Layers) or nodes.new(type="CompositorNodeRLayers")
+        render_layer_node = nodes.get(OldEevee_Bloom_Names.Render_Layers) or nodes.new(type=CompositorNodeNames.RENDER_LAYERS)
         render_layer_node.location = (-300, 0)
 
-        composite_node = nodes.get(OldEevee_Bloom_Names.Composite) or nodes.new(type="CompositorNodeComposite")
+        composite_node = nodes.get(OldEevee_Bloom_Names.Composite) or nodes.new(type=CompositorNodeNames.COMPOSITE)
         composite_node.location = (300, 86)
 
-        viewer_node = nodes.get(OldEevee_Bloom_Names.Viewer) or nodes.new(type="CompositorNodeViewer")
+        viewer_node = nodes.get(OldEevee_Bloom_Names.Viewer) or nodes.new(type=CompositorNodeNames.VIEWER)
         viewer_node.location = (300, -24)
 
         custom_oe_bloom_node_name = OldEevee_Bloom_Names.OE_Bloom
         oe_bloom_group = oe_bloom_node_group(shelf, context, custom_oe_bloom_node_name)
-        oe_bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
+        oe_bloom_node = context.scene.node_tree.nodes.new(CompositorNodeNames.GROUP)
         oe_bloom_node.name = OldEevee_Bloom_Names.OE_Bloom
         oe_bloom_node.label = OldEevee_Bloom_Names.OE_Bloom
         oe_bloom_node.width = 149
@@ -1185,33 +1028,6 @@ class NODE_OT_BLOOM(bpy.types.Operator):
             oe_bloom_ic_driver,
             f'node_tree.nodes["{oe_bloom_node.name}"].inputs[11].default_value'
         )
-
-        # Ensure all connections exist
-        def ensure_connection(output_node, output_socket_name, input_node, input_socket_name):
-            """
-            Ensures that a connection exists between two nodes
-
-            Args:
-                output_node (bpy.types.Node): The node that the connection comes from
-                output_socket_name (str): The name of the output socket
-                input_node (bpy.types.Node): The node that the connection goes to
-                input_socket_name (str): The name of the input socket
-
-            Returns:
-                None
-            """
-            # Check if a link already exists
-            for link in links:
-                if (
-                    link.from_node == output_node
-                    and link.to_node == input_node
-                    and link.from_socket.name == output_socket_name
-                    and link.to_socket.name == input_socket_name
-                ):
-                    return  # Connection already exists
-
-            # Create the link if not found
-            links.new(output_node.outputs[output_socket_name], input_node.inputs[input_socket_name])
 
         # Connect the nodes
         ensure_connection(render_layer_node, OldEevee_Bloom_Names.Image, oe_bloom_node, OldEevee_Bloom_Names.Image)
@@ -1339,23 +1155,23 @@ def register():
         name=OldEevee_Bloom_Names.Bloom_Mute_Unmute,
         description=OldEevee_Bloom_Descr.bloom_mute_unmute_bool,
         default=False,
-        update=toggle_oe_bloom_mute  # Attach the callback function
+        update=toggle_oe_bloom  # Attach the callback function
     )
     prop_scene.real_time_compositing_enum = EnumProperty(
         name=OldEevee_Bloom_Names.Real_Time_Compositing,
         description=OldEevee_Bloom_Descr.real_time_compositing,
         items=[
             (
-                OldEevee_Bloom_Names.Disabled.upper(), OldEevee_Bloom_Names.Disabled, OldEevee_Bloom_Descr.disabled, "CANCEL", 0
+                UpdateRTCompositingNames.DISABLED, UpdateRTCompositingNames.DISABLED.title(), OldEevee_Bloom_Descr.disabled, "CANCEL", 0
             ),
             (
-                OldEevee_Bloom_Names.Camera.upper(), OldEevee_Bloom_Names.Camera, OldEevee_Bloom_Descr.camera, "CAMERA_DATA", 1
+                UpdateRTCompositingNames.CAMERA, UpdateRTCompositingNames.CAMERA.title(), OldEevee_Bloom_Descr.camera, "CAMERA_DATA", 1
             ),
             (
-                OldEevee_Bloom_Names.Always.upper(), OldEevee_Bloom_Names.Always, OldEevee_Bloom_Descr.always, "CHECKMARK", 2
+                UpdateRTCompositingNames.ALWAYS, UpdateRTCompositingNames.ALWAYS.title(), OldEevee_Bloom_Descr.always, "CHECKMARK", 2
             )
         ],
-        default=OldEevee_Bloom_Names.Disabled.upper(),
+        default=UpdateRTCompositingNames.DISABLED,
         update=update_real_time_compositing  # Attach the callback function here
     )
     prop_scene.bloom_clamp_mix_bool = BoolProperty(
