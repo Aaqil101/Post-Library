@@ -60,21 +60,13 @@ def update_real_time_compositing(self, context):
     Returns:
         None
     """
-    for area in context.screen.areas:  # Iterate through all areas
-        if area.type == 'VIEW_3D':  # Find the 3D Viewport
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':  # Confirm it's a 3D View space
-                    if hasattr(space.shading, 'use_compositor'):  # Ensure shading property exists
-                        if self.real_time_compositing_enum == OE_Bloom_Names.Disabled.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Disabled.upper()
-                        elif self.real_time_compositing_enum == OE_Bloom_Names.Camera.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Camera.upper()
-                        elif self.real_time_compositing_enum == OE_Bloom_Names.Always.upper():
-                            space.shading.use_compositor = OE_Bloom_Names.Always.upper()
-            break
-    else:
-        # self.report({'WARNING'}, "No 3D Viewport available to update the shading property.")
-        print("No 3D Viewport available to update the shading property.")
+    for workspace in bpy.data.workspaces:
+        for screen in workspace.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    view_3d = area.spaces[0]
+                    with context.temp_override(space=view_3d):
+                        view_3d.shading.use_compositor = self.real_time_compositing_enum
 
 def poll_view_3d(self, context):
     """
@@ -272,7 +264,7 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #Socket Threshold
     threshold_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    threshold_socket.default_value = 1.0
+    threshold_socket.default_value = 0.8
     threshold_socket.min_value = 0.0
     threshold_socket.max_value = 1000.0
     threshold_socket.subtype = 'NONE'
@@ -281,7 +273,7 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #Socket Knee
     knee_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    knee_socket.default_value = 0.0
+    knee_socket.default_value = 0.5
     knee_socket.min_value = 0.0
     knee_socket.max_value = 1.0
     knee_socket.subtype = 'FACTOR'
@@ -290,7 +282,7 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #Socket Radius
     radius_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    radius_socket.default_value = 0.0
+    radius_socket.default_value = 6.5
     radius_socket.min_value = 0.0
     radius_socket.max_value = 2048.0
     radius_socket.subtype = 'NONE'
@@ -305,7 +297,7 @@ def oe_bloom_node_group(context, operator, group_name):
 
     #Socket Intensity
     intensity_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    intensity_socket.default_value = 1.0
+    intensity_socket.default_value = 0.05
     intensity_socket.min_value = 0.0
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = 'FACTOR'
