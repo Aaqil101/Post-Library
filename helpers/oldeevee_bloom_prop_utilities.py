@@ -122,7 +122,7 @@ def toggle_oldeevee_bloom(self, context):
                 break
 
         if found_node:
-            found_node.mute = scene.bloom_mute_unmute_bool
+            found_node.mute = not scene.bloom_mute_unmute_bool
             print(f"Node group 'OldEevee_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
         else:
             print("Node group 'OldEevee_Bloom' not found in the Compositor node tree.")
