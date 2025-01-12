@@ -1,6 +1,14 @@
 import bpy
 from typing import Tuple
 from bpy.props import BoolProperty, EnumProperty
+from bpy.app.handlers import persistent
+
+
+@persistent
+def setup_bloom(dummy):
+    bpy.context.scene.use_nodes = True
+    bpy.ops.node.oe_bloom_operator('INVOKE_DEFAULT')
+
 
 def is_compositor_enabled(scene):
     """
@@ -1080,80 +1088,75 @@ class PROP_PT_BLOOM(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
+        layout.enabled = context.scene.bloom_mute_unmute_bool
+        
         scene = context.scene
         node_tree = bpy.context.scene.node_tree  # Access the Compositor node tree
 
-            
-        if not is_compositor_enabled(scene):
-            # If compositor is disabled, show the operator to enable it
-            layout.operator("scene.enable_compositor_operator", text="Enable Compositor", icon='NODE_COMPOSITING')
-        else:
-            # Once the compositor is enabled, check for the OE_Bloom node
-            if node_tree:
-                oe_bloom_node = next(
-                    (
-                        node for node in node_tree.nodes
-                        if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom
-                    ),
-                    None
-                )
-                if oe_bloom_node:
-                    # Add Real-Time Compositing property
-                    # Conditionally display the enum property based on the presence of a VIEW_3D area
-                    if poll_view_3d(self, context):
-                        layout.alignment = 'RIGHT'
-                        layout.prop(
-                            scene,
-                            "real_time_compositing_enum",
-                        ) # Show the enum property
-                    # else:
-                        # layout.label(text="No 3D View found. The enum property will not be shown.")
+        # Once the compositor is enabled, check for the OE_Bloom node
+        if node_tree:
+            oe_bloom_node = next(
+                (
+                    node for node in node_tree.nodes
+                    if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom
+                ),
+                None
+            )
+            if oe_bloom_node:
+                # Add Real-Time Compositing property
+                # Conditionally display the enum property based on the presence of a VIEW_3D area
+                if poll_view_3d(self, context):
+                    layout.alignment = 'RIGHT'
+                    layout.prop(
+                        scene,
+                        "real_time_compositing_enum",
+                    ) # Show the enum property
+                # else:
+                    # layout.label(text="No 3D View found. The enum property will not be shown.")
 
-                    # Organize inputs into panels (same logic as before)
-                    image_inputs = []
-                    clamp_mix_inputs = []
-                    other_inputs = []
+                # Organize inputs into panels (same logic as before)
+                image_inputs = []
+                clamp_mix_inputs = []
+                other_inputs = []
 
-                    for input in oe_bloom_node.inputs:
-                        if input.name == OE_Bloom_Names.Image:
-                            continue
-                        elif input.name in [
-                            OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
-                            OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
-                            OE_Bloom_Names.Color, OE_Bloom_Names.Intensity,
-                            OE_Bloom_Names.Clamp
-                        ]:
-                            image_inputs.append(input)
-                        elif OE_Bloom_Names.Clamp in input.name:
-                            clamp_mix_inputs.append(input)
-                        else:
-                            other_inputs.append(input)
+                for input in oe_bloom_node.inputs:
+                    if input.name == OE_Bloom_Names.Image:
+                        continue
+                    elif input.name in [
+                        OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
+                        OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
+                        OE_Bloom_Names.Color, OE_Bloom_Names.Intensity,
+                        OE_Bloom_Names.Clamp
+                    ]:
+                        image_inputs.append(input)
+                    elif OE_Bloom_Names.Clamp in input.name:
+                        clamp_mix_inputs.append(input)
+                    else:
+                        other_inputs.append(input)
 
-                    # Image Panel
-                    if image_inputs:
-                        box = layout.box()
-                        col = box.column()
-                        for input in image_inputs:
-                            col.prop(input, "default_value", text=input.name)
+                # Image Panel
+                if image_inputs:
+                    box = layout.box()
+                    col = box.column()
+                    for input in image_inputs:
+                        col.prop(input, "default_value", text=input.name)
 
-                    # Clamp Panel
-                    row = layout.row()
-                    row.prop(scene, "bloom_clamp_mix_bool", icon="RESTRICT_RENDER_OFF", emboss=False)
-                    if scene.bloom_clamp_mix_bool:
-                        clamp_mix_box = layout.box()
-                        for input in clamp_mix_inputs:
-                            clamp_mix_box.prop(input, "default_value", text=input.name)
+                # Clamp Panel
+                row = layout.row()
+                row.prop(scene, "bloom_clamp_mix_bool", icon="RESTRICT_RENDER_OFF", emboss=False)
+                if scene.bloom_clamp_mix_bool:
+                    clamp_mix_box = layout.box()
+                    for input in clamp_mix_inputs:
+                        clamp_mix_box.prop(input, "default_value", text=input.name)
 
-                    # Other Panel
-                    row = layout.row()
-                    row.prop(scene, "bloom_other_bool", icon="MODIFIER", emboss=False)
-                    if scene.bloom_other_bool:
-                        other_box = layout.box()
-                        for input in other_inputs:
-                            other_box.prop(input, "default_value", text=input.name)
-                else:
-                    # If OE_Bloom node doesn't exist, show the operator to create it
-                    layout.operator("node.oe_bloom_operator", text="Create OE_Bloom", icon='NODE_MATERIAL')
+                # Other Panel
+                row = layout.row()
+                row.prop(scene, "bloom_other_bool", icon="MODIFIER", emboss=False)
+                if scene.bloom_other_bool:
+                    other_box = layout.box()
+                    for input in other_inputs:
+                        other_box.prop(input, "default_value", text=input.name)
+
 
 # Scene property reference
 prop_scene = bpy.types.Scene
@@ -1163,6 +1166,10 @@ classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
 # Register and unregister
 def register():
+    
+    
+    bpy.app.handlers.load_post.append(setup_bloom)
+    
     # Register properties
     prop_scene.bloom_mute_unmute_bool = BoolProperty(
         name=OE_Bloom_Names.Bloom_Mute_Unmute,
