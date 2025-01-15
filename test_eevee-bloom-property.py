@@ -4,247 +4,111 @@ from pathlib import Path
 from bpy.props import BoolProperty, EnumProperty
 from bpy.app.handlers import persistent
 
-
 @persistent
 def setup_bloom(dummy):
-    bpy.context.scene.use_nodes = True
-    bpy.ops.node.oe_bloom_operator('INVOKE_DEFAULT')
-
-
-def is_compositor_enabled(scene):
     """
-    Check if the compositor is enabled for the given scene.
+    This function is a persistent handler, which means it is called after the file has been loaded into Blender.
 
-    Args:
-        scene: The Blender scene to check.
+    It is responsible for setting up the Old Eevee Bloom node group in the Compositor after the file has been loaded into Blender. If the Compositor is not enabled, it will be enabled. Then it will call the Old Eevee Bloom operator to create the node group if it does not already exist.
 
-    Returns:
-        bool: True if the compositor is enabled, otherwise False.
-    """
-    return scene.use_nodes  # 'use_nodes' tells if the compositor is enabled
-
-def toggle_oe_bloom_mute(self, context):
-    """
-    Toggle the mute property of the 'OE_Bloom' node group in the Compositor.
-
-    Args:
-        self: The instance of the class.
-        context: The Blender context.
+    Parameters:
+        dummy (None): This argument is not used in the function. It is included because it is required by the @persistent decorator.
 
     Returns:
         None
     """
-    scene = context.scene
-    node_tree = context.scene.node_tree  # Access the active node tree
+    scene = bpy.context.scene
 
-    if node_tree and node_tree.type == 'COMPOSITING':
-        found_node = None
-        for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom:
-                found_node = node
-                break
+    if not scene.use_nodes:
+        scene.use_nodes = True
+        
+    bpy.ops.node.oldeevee_bloom_operator('INVOKE_DEFAULT')
 
-        if found_node:
-            found_node.mute = not scene.bloom_mute_unmute_bool
-            print(f"Node group 'OE_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
-        else:
-            print("Node group 'OE_Bloom' not found in the Compositor node tree.")
+# Determine script path
+try:
+    script_path = (
+        bpy.context.space_data.text.filepath
+        if bpy.context.space_data and bpy.context.space_data.type == "TEXT_EDITOR"
+        else __file__
+    )
+except NameError:
+    raise RuntimeError("Unable to determine script path. Are you running this in Blender?")
+
+if not script_path:
+    raise RuntimeError("The script must be saved to disk before running!")
+
+# Resolve directories
+script_dir = Path(script_path).resolve().parent
+path_to_nodes_folder = script_dir / "nodes"
+path_to_helpers_folder = script_dir / "helpers"
+path_to_core_folder = script_dir / "core"
+
+# List of paths
+paths = [
+    script_dir, path_to_nodes_folder,
+    path_to_helpers_folder
+]
+
+# Add directories to sys.path
+for path in paths:
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.append(path_str)
+        print(f"Added {path_str} to sys.path")
     else:
-        print("Compositor node tree is not active.")
+        print(f"{path_str} already in sys.path")
 
-def update_real_time_compositing(self, context):
-    """
-    Update the real-time compositing settings for 3D Viewport areas based on the 
-    'real_time_compositing_enum' attribute.
+from helpers import (
+    # For adding drivers to sockets
+    add_driver_var, 
 
-    This function iterates through all screen areas in the current context and checks 
-    for 3D Viewport areas. If found, it updates the 'use_compositor' attribute of the 
-    shading settings for the 3D View space based on the value of 'real_time_compositing_enum', 
-    which can be 'DISABLED', 'CAMERA', or 'ALWAYS'.
+    # Color references
+    Color,
 
-    Args:
-        self: The instance of the class containing the 'real_time_compositing_enum' attribute.
-        context: The Blender context, providing access to the current screen and its areas.
+    # Names and descriptions
+    CompositorNodeNames,
+    OldEevee_Bloom_Names,
+    OldEevee_Bloom_Descr,
 
-    Returns:
-        None
-    """
-    for workspace in bpy.data.workspaces:
-        for screen in workspace.screens:
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    view_3d = area.spaces[0]
-                    with context.temp_override(space=view_3d):
-                        view_3d.shading.use_compositor = self.real_time_compositing_enum
+    # Functions
+    ensure_connection,
+    poll_view_3d,
+    update_real_time_compositing,
+    toggle_oldeevee_bloom
+)
+from core import (
+    # Import all classes used by the Filter Node Manager
+    FilterNodeManager,
+    GlareSettings,
+    GlareType,
+    GlareQuality,
+    BlurSettings,
+    BlurFilterType,
 
-def poll_view_3d(self, context):
-    """
-    Check if a 3D Viewport area exists in the current screen layout.
+    # Import all classes used by the Color Node Manager
+    ColorNodeManager,
+    MixColorSettings,
+    BlendType,
 
-    Args:
-        self: The current context owner (typically a UI panel or operator).
-        context: The Blender context containing information about the current state.
+    # Import all classes used by the Layout Node Manager
+    LayoutNodeManager,
+    FrameSettings,
 
-    Returns:
-        bool: True if a 3D Viewport area is found, otherwise False.
-    """
-    for area in context.screen.areas:
-        if area.type == 'VIEW_3D':  # Check if VIEW_3D area exists
-            return True
-    return False
+    # Import UtilitiesNodeManager
+    UtilitiesNodeManager,
 
-# what I did is that I downloaded the bpy Building Blocks from Victor Stepanov's github repository.
-# (https://github.com/CGArtPython/bpy-building-blocks)
+    # Import all classes used by the Input Node Manager
+    InputNodeManager,
+    GroupInputSettings,
 
-# and then I modified the code to fit my needs based on this tutorial.
-# (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
+    # Import all classes used by the Output Node Manager
+    OutputNodeManager,
+    GroupOutputSettings,
+)
 
-def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
-    """
-    Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
-    to a Linear RGB
-
-    Supports: "#RRGGBB" or "RRGGBB"
-
-    Note: We are converting into Linear RGB since Blender uses a Linear Color Space internally
-    https://docs.blender.org/manual/en/latest/render/color_management.html
-    """
-    # remove the leading "#" symbol if present
-    if hexcode.startswith("#"):
-        hexcode = hexcode[1:]
-
-    assert len(hexcode) == 6, f"RRGGBB is the supported hex color format: {hexcode}"
-
-    # extracting the Red color component - RRxxxx
-    red = int(hexcode[:2], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_red = red / 255
-
-    # extracting the Green color component - xxGGxx
-    green = int(hexcode[2:4], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_green = green / 255
-
-    # extracting the Blue color component - xxxxBB
-    blue = int(hexcode[4:6], 16)
-    # dividing by 255 to get a number between 0.0 and 1.0
-    srgb_blue = blue / 255
-
-    return tuple([srgb_red, srgb_green, srgb_blue])
-
-def hex_color_add(color1, color2):
-    """
-    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
-    The resulting RGB components are then combined back into a hex color code.
-    """
-    # Split the hex codes into RGB components
-    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
-    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
-    
-    # Add the components and clamp each to a maximum of 255
-    r = min(r1 + r2, 255)
-    g = min(g1 + g2, 255)
-    b = min(b1 + b2, 255)
-    
-    # Combine the components back into a hex color
-    return f"{r:02X}{g:02X}{b:02X}"
-
-# Class to store color values converted from hex codes to RGB
-class Color:
-    LIGHT_RED = hexcode_to_rgb("#94493E")
-    DARK_RED = hexcode_to_rgb("#823A35")
-    LIGHT_BLUE = hexcode_to_rgb("#646E66")
-    DARK_BLUE = hexcode_to_rgb("#4C6160")
-    LIGHT_PURPLE = hexcode_to_rgb("#846167")
-    DARK_PURPLE = hexcode_to_rgb("#77535F")
-    BROWN = hexcode_to_rgb("#866937")
-    DARK_GRAY = hexcode_to_rgb("#3C3937")
-    LIGHT_GRAY = hexcode_to_rgb("#59514B")
-
-# Class to store the names of various nodes and sockets used in the bloom node group
-class OE_Bloom_Names:
-    OE_Bloom = "OE_Bloom"
-    Image = "Image"
-    Color = "Color"
-    Quality = "Quality"
-    Knee = "Knee"
-    Threshold = "Threshold"
-    Radius = "Radius"
-    Blur = "Blur"
-    Intensity = "Intensity"
-    Clamp = "Clamp"
-    Other = "Other"
-    Hue = "Hue"
-    Saturation = "Saturation"
-    Fac = "Fac"
-    Composite = "Composite"
-    Viewer = "Viewer"
-    Disabled = "Disabled"
-    Camera = "Camera"
-    Always = "Always"
-    BM_Clamp = "BM Clamp"
-    KM_Clamp = "KM Clamp"
-    CR_Clamp = "CR Clamp"
-    IY_Clamp = "IY Clamp"
-    Clamp_Mix = "Clamp Mix"
-    Blur_Mix = "Blur Mix"
-    Bloom_Size = "Bloom Size"
-    Group_Output = "Group Output"
-    Group_Input_00 = "Group Input 00"
-    Original_Bloom_High = "Original Bloom High"
-    Knee_Bloom_High = "Knee Bloom High"
-    Knee_Mix = "Knee Mix"
-    Group_Input_01 = "Group Input 01"
-    Group_Input_02 = "Group Input 02"
-    Group_Input_03 = "Group Input 03"
-    Group_Input_04 = "Group Input 04"
-    Group_Input_05 = "Group Input 05"
-    Bloom_High_Low = "Bloom High && Low"
-    Knee_Bloom_Low = "Knee Bloom Low"
-    KB_Switch = "KB Switch"
-    OB_Switch = "OB Switch"
-    Original_Bloom_Low = "Original Bloom Low"
-    Reroute_00 = "Reroute_00"
-    Reroute_01 = "Reroute_01"
-    Render_Layers = "Render Layers"
-    Bloom_Mute_Unmute = "Bloom Mute/Unmute"
-    Real_Time_Compositing = "Real-Time Compositor"
-    Enable_Compositor = "Enable Compositor"
-
-# Class to store all the descriptions of the Bloom properties
-class OE_Bloom_Descr:
-    image = "Standard color output"
-    quality = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
-    threshold = "Filters out pixels under this level of brightness"
-    knee = "Makes transition between under/over-threshold gradual"
-    radius = "Bloom spread distance"
-    color = "Color applied to the bloom effect"
-    intensity = "Blend factor"
-    clamp = "Maximum intensity a bloom pixel can have"
-    other = "Additional options for customizing the bloom effect"
-    hue = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
-    saturation = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
-    fac = "The amount of influence the node exerts on the image"
-    disabled = "The compositor is disabled"
-    camera = "The compositor is enabled only in camera view"
-    always = "The compositor is always enabled regardless of the view"
-    node_ot_bloom = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
-    prop_pt_bloom = "Old Eevee Bloom In Both Eevee And Cycles"
-    scene_ot_enable_compositor = "Enable the compositing node tree"
-    blur_mix = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
-    bloom_size = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
-    bloom_mute_unmute_bool = "Toggle the bloom effect on or off"
-    oe_bloom = "Replication of the legacy eevee bloom option"
-    clamp_mix = "Clamps of each mix nodes in the oe_bloom node group"
-    bm_clamp = "Blur Mix Clamp"
-    km_clamp = "Knee Mix Clamp"
-    cr_clamp = "Color Clamp"
-    iy_clamp = "Intensity Clamp"
-    real_time_compositing = "When to preview the compositor output inside the viewport"
-
-#initialize OE_Bloom node group
-def oe_bloom_node_group(context, operator, group_name):
-    oe_bloom = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
+#initialize OldEevee_Bloom node group
+def oldeevee_bloom_node_group(context, operator, group_name):
+    oldeevee_bloom = bpy.data.node_groups.new(group_name, CompositorNodeNames.TREE)
 
     oldeevee_bloom.color_tag = 'FILTER'
     oldeevee_bloom.description = OldEevee_Bloom_Descr.oldeevee_bloom
@@ -272,8 +136,8 @@ def oe_bloom_node_group(context, operator, group_name):
     quality_socket.description = OldEevee_Bloom_Descr.quality
 
     #Socket Threshold
-    threshold_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    threshold_socket.default_value = 0.8
+    threshold_socket = oldeevee_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Threshold, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    threshold_socket.default_value = 1.0
     threshold_socket.min_value = 0.0
     threshold_socket.max_value = 1000.0
     threshold_socket.subtype = 'NONE'
@@ -281,8 +145,8 @@ def oe_bloom_node_group(context, operator, group_name):
     threshold_socket.description = OldEevee_Bloom_Descr.threshold
 
     #Socket Knee
-    knee_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    knee_socket.default_value = 0.5
+    knee_socket = oldeevee_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Knee, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    knee_socket.default_value = 0.0
     knee_socket.min_value = 0.0
     knee_socket.max_value = 1.0
     knee_socket.subtype = 'FACTOR'
@@ -290,8 +154,8 @@ def oe_bloom_node_group(context, operator, group_name):
     knee_socket.description = OldEevee_Bloom_Descr.knee
 
     #Socket Radius
-    radius_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    radius_socket.default_value = 6.5
+    radius_socket = oldeevee_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Radius, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    radius_socket.default_value = 0.0
     radius_socket.min_value = 0.0
     radius_socket.max_value = 2048.0
     radius_socket.subtype = 'NONE'
@@ -305,8 +169,8 @@ def oe_bloom_node_group(context, operator, group_name):
     color_socket.description = OldEevee_Bloom_Descr.color
 
     #Socket Intensity
-    intensity_socket = oe_bloom.interface.new_socket(name = OE_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
-    intensity_socket.default_value = 0.05
+    intensity_socket = oldeevee_bloom.interface.new_socket(name = OldEevee_Bloom_Names.Intensity, in_out='INPUT', socket_type = 'NodeSocketFloat')
+    intensity_socket.default_value = 1.0
     intensity_socket.min_value = 0.0
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = 'FACTOR'
@@ -1231,14 +1095,14 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 
         # Once the compositor is enabled, check for the OE_Bloom node
         if node_tree:
-            oe_bloom_node = next(
+            oldeevee_bloom_node = next(
                 (
                     node for node in node_tree.nodes
-                    if node.type == 'GROUP' and node.name == OE_Bloom_Names.OE_Bloom
+                    if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OldEevee_Bloom
                 ),
                 None
             )
-            if oe_bloom_node:
+            if oldeevee_bloom_node:
                 # Add Real-Time Compositing property
                 # Conditionally display the enum property based on the presence of a VIEW_3D area
                 if poll_view_3d(self, context):
@@ -1247,25 +1111,25 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                         scene,
                         "real_time_compositing_enum",
                     ) # Show the enum property
-                # else:
-                    # layout.label(text="No 3D View found. The enum property will not be shown.")
+                """else:
+                    layout.label(text="No 3D View found. The enum property will not be shown.")"""
 
                 # Organize inputs into panels (same logic as before)
                 image_inputs = []
                 clamp_mix_inputs = []
                 other_inputs = []
 
-                for input in oe_bloom_node.inputs:
-                    if input.name == OE_Bloom_Names.Image:
+                for input in oldeevee_bloom_node.inputs:
+                    if input.name == OldEevee_Bloom_Names.Image:
                         continue
                     elif input.name in [
-                        OE_Bloom_Names.Quality, OE_Bloom_Names.Threshold,
-                        OE_Bloom_Names.Knee, OE_Bloom_Names.Radius,
-                        OE_Bloom_Names.Color, OE_Bloom_Names.Intensity,
-                        OE_Bloom_Names.Clamp
+                        OldEevee_Bloom_Names.Quality, OldEevee_Bloom_Names.Threshold,
+                        OldEevee_Bloom_Names.Knee, OldEevee_Bloom_Names.Radius,
+                        OldEevee_Bloom_Names.Color, OldEevee_Bloom_Names.Intensity,
+                        OldEevee_Bloom_Names.Clamp
                     ]:
                         image_inputs.append(input)
-                    elif OE_Bloom_Names.Clamp in input.name:
+                    elif OldEevee_Bloom_Names.Clamp in input.name:
                         clamp_mix_inputs.append(input)
                     else:
                         other_inputs.append(input)
@@ -1302,8 +1166,7 @@ classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
 # Register and unregister
 def register():
-    
-    
+    # Register Handlers
     bpy.app.handlers.load_post.append(setup_bloom)
     
     # Register properties

@@ -1,4 +1,4 @@
-from bpy import context
+import bpy
 from dataclasses import dataclass, field
 
 @dataclass
@@ -88,21 +88,9 @@ class OldEevee_Bloom_Descr:
     iy_clamp: str = "Intensity Clamp"
     real_time_compositing: str = "When to preview the compositor output inside the viewport"
 
-def is_compositor_enabled(scene):
-    """
-    Check if the compositor is enabled for the given scene.
-
-    Args:
-        scene: The Blender scene to check.
-
-    Returns:
-        bool: True if the compositor is enabled, otherwise False.
-    """
-    return scene.use_nodes  # 'use_nodes' tells if the compositor is enabled
-
 def toggle_oldeevee_bloom(self, context):
     """
-    Toggle the mute property of the 'OldEevee_Bloom' node group in the Compositor.
+    Toggle the mute property of the 'OE_Bloom' node group in the Compositor.
 
     Args:
         self: The instance of the class.
@@ -117,15 +105,15 @@ def toggle_oldeevee_bloom(self, context):
     if node_tree and node_tree.type == 'COMPOSITING':
         found_node = None
         for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OldEevee_Bloom:
+            if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OE_Bloom:
                 found_node = node
                 break
 
         if found_node:
             found_node.mute = not scene.bloom_mute_unmute_bool
-            print(f"Node group 'OldEevee_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
+            print(f"Node group 'OE_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
         else:
-            print("Node group 'OldEevee_Bloom' not found in the Compositor node tree.")
+            print("Node group 'OE_Bloom' not found in the Compositor node tree.")
     else:
         print("Compositor node tree is not active.")
 
@@ -146,20 +134,13 @@ def update_real_time_compositing(self, context):
     Returns:
         None
     """
-    for area in context.screen.areas:  # Iterate through all areas
-        if area.type == 'VIEW_3D':  # Find the 3D Viewport
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':  # Confirm it's a 3D View space
-                    if hasattr(space.shading, 'use_compositor'):  # Ensure shading property exists
-                        if self.real_time_compositing_enum == OldEevee_Bloom_Names.Disabled.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Disabled.upper()
-                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Camera.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Camera.upper()
-                        elif self.real_time_compositing_enum == OldEevee_Bloom_Names.Always.upper():
-                            space.shading.use_compositor = OldEevee_Bloom_Names.Always.upper()
-            break
-    else:
-        print("No 3D Viewport available to update the shading property.")
+    for workspace in bpy.data.workspaces:
+        for screen in workspace.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    view_3d = area.spaces[0]
+                    with context.temp_override(space=view_3d):
+                        view_3d.shading.use_compositor = self.real_time_compositing_enum
 
 def poll_view_3d(self, context):
     """
@@ -192,7 +173,7 @@ def ensure_connection(output_node, output_socket_name, input_node, input_socket_
         None
     """
     # Get the compositor node tree
-    node_tree = context.scene.node_tree
+    node_tree = bpy.context.scene.node_tree
     links = node_tree.links
 
     # Check if a link already exists
