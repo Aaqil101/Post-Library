@@ -51,7 +51,7 @@ class LayoutNodeManager:
         node_color (list): A list containing two elements for color addition, which will be converted to RGB.
         use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
-    def __init__(self, node_group, node_color: list, use_custom_color=False):       
+    def __init__(self, *, node_group, node_color: list, use_custom_color=False):       
         """
         Initialize a LayoutNodeManager instance.
 
@@ -76,7 +76,7 @@ class LayoutNodeManager:
         else:
             print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
 
-    def create_frame_node(self, frame_name=LayoutNodeNames.Frame, frame_label=LayoutNodeNames.Frame, settings=None):
+    def create_frame_node(self, *, frame_name=LayoutNodeNames.Frame, frame_label=LayoutNodeNames.Frame, settings=None):
         """
         Create a Frame node in a node group and apply the specified settings.
 
@@ -105,7 +105,7 @@ class LayoutNodeManager:
 
         return frame_node
 
-    def create_reroute_node(self, reroute_name=LayoutNodeNames.Reroute, reroute_label=LayoutNodeNames.Reroute, settings=None):
+    def create_reroute_node(self, *, reroute_name=LayoutNodeNames.Reroute, reroute_label=LayoutNodeNames.Reroute, settings=None):
         # Use default settings if none are provided
         if settings is None:
             settings = RerouteSettings()

@@ -25,7 +25,7 @@ class SwitchSettings:
     on: list = (0.8, 0.8, 0.8, 1.0)  # White Color
 
 class UtilitiesNodeManager:
-    def __init__(self, node_group, use_custom_color=False):
+    def __init__(self, *, node_group, use_custom_color=False):
         """
         Initialize a UtilitiesNodeManager instance.
 
@@ -36,7 +36,7 @@ class UtilitiesNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
     
-    def create_switch_node(self, switch_name=UtilitiesNodeNames.Switch, switch_label=UtilitiesNodeNames.Switch, settings=None):
+    def create_switch_node(self, *, switch_name=UtilitiesNodeNames.Switch, switch_label=UtilitiesNodeNames.Switch, settings=None):
         """
         Create a Switch node in a node group and apply the specified settings.
 

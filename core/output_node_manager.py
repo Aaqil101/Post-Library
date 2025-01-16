@@ -32,7 +32,7 @@ class OutputNodeManager:
         node_group (NodeTree): The node group to manage nodes in.
         use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
-    def __init__(self, node_group, use_custom_color=False):
+    def __init__(self, *, node_group, use_custom_color=False):
         """
         Initialize an OutputNodeManager instance.
 
@@ -43,7 +43,7 @@ class OutputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
     
-    def create_group_output_node(self, group_output_name=OutputNodeNames.Group_Output, group_output_label=OutputNodeNames.Group_Output, settings=None):
+    def create_group_output_node(self, *, group_output_name=OutputNodeNames.Group_Output, group_output_label=OutputNodeNames.Group_Output, settings=None):
         """
         Create a Group Output node in a node group and apply the specified settings.
 

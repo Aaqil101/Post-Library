@@ -138,7 +138,7 @@ class ColorNodeManager:
     node_color (tuple): RGB color for the nodes. Defaults to BROWN.
     use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to True.
     """
-    def __init__(self, node_group, use_custom_color=False):
+    def __init__(self, *, node_group, use_custom_color=False):
         """
         Initialize a ColorNodeManager instance.
 
@@ -150,7 +150,7 @@ class ColorNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_mixcolor_node(self, mixcolor_name=ColorNodeNames.Mix_Color, mixcolor_label=ColorNodeNames.Mix_Color, settings=None):
+    def create_mixcolor_node(self, *, mixcolor_name=ColorNodeNames.Mix_Color, mixcolor_label=ColorNodeNames.Mix_Color, settings=None):
         """
         Create a MixColor node in a node group and apply the specified settings.
 
@@ -194,7 +194,7 @@ class ColorNodeManager:
 
         return mixcolor_node
     
-    def create_huesat_node(self, huesat_name=ColorNodeNames.Hue_Saturation_Value, huesat_label=ColorNodeNames.Hue_Saturation_Value, settings=None):
+    def create_huesat_node(self, *, huesat_name=ColorNodeNames.Hue_Saturation_Value, huesat_label=ColorNodeNames.Hue_Saturation_Value, settings=None):
         """
         Create a Hue/Saturation/Value node in a node group and apply the specified settings.
 

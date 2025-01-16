@@ -159,7 +159,7 @@ class FilterNodeManager:
     node_color (tuple): RGB color for the nodes. Defaults to DARK_PURPLE.
     use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
-    def __init__(self, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
+    def __init__(self, *, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
         """
         Initialize a FilterNodeManager instance.
 
@@ -172,7 +172,7 @@ class FilterNodeManager:
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_glare_node(self, glare_name=FilterNodeNames.Glare, glare_label=FilterNodeNames.Glare, settings=None):
+    def create_glare_node(self, *, glare_name=FilterNodeNames.Glare, glare_label=FilterNodeNames.Glare, settings=None):
         """
         Create a Glare node in a node group and apply the specified settings.
 
@@ -207,7 +207,7 @@ class FilterNodeManager:
 
         return glare_node
 
-    def create_blur_node(self, blur_name=FilterNodeNames.Blur, blur_label=FilterNodeNames.Blur, settings=None):
+    def create_blur_node(self, *, blur_name=FilterNodeNames.Blur, blur_label=FilterNodeNames.Blur, settings=None):
         """
         Create a Blur node in a node group and apply the specified settings.
 

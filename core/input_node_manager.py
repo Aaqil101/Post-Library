@@ -28,7 +28,7 @@ class InputNodeManager:
         node_group (NodeTree): The node group to manage nodes in.
         use_custom_color (bool): Whether to use a custom color for the nodes.
     """
-    def __init__(self, node_group, use_custom_color: bool = False):
+    def __init__(self, *, node_group, use_custom_color: bool = False):
         """
         Initialize an InputNodeManager instance.
 
@@ -39,7 +39,7 @@ class InputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_group_input_node(self, group_input_name=InputNodeNames.Group_Input, group_input_label=InputNodeNames.Group_Input, settings: GroupInputSettings=None):
+    def create_group_input_node(self, *, group_input_name=InputNodeNames.Group_Input, group_input_label=InputNodeNames.Group_Input, settings: GroupInputSettings=None):
         """
         Create a Group Input node in a node group and apply the specified settings.
 
