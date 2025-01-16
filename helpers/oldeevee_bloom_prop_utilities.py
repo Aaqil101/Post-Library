@@ -2,11 +2,11 @@ import bpy
 from dataclasses import dataclass, field
 
 @dataclass
-class OldEevee_Bloom_Names:
+class Names:
     """
     Class to store the names of various nodes and sockets used in the bloom node group
     """
-    OldEevee_Bloom: str = "OldEevee_Bloom"
+    OldEevee_Bloom: str = "OldEevee Bloom"
     Image: str = "Image"
     Color: str = "Color"
     Quality: str = "Quality"
@@ -55,7 +55,7 @@ class OldEevee_Bloom_Names:
     Enable_Compositor: str = "Enable Compositor"
 
 @dataclass
-class OldEevee_Bloom_Descr:
+class Descriptions:
     """
     Class to store all the descriptions of the Bloom properties
     """
@@ -88,9 +88,32 @@ class OldEevee_Bloom_Descr:
     iy_clamp: str = "Intensity Clamp"
     real_time_compositing: str = "When to preview the compositor output inside the viewport"
 
+class SocketNames:
+    """
+    Class to store the names of the sockets used in the Bloom node group.
+    """
+    check: str = 'check'
+    threshold: str = 'threshold'
+    size: str = 'size'
+    size_x: str = 'size_x'
+    size_y: str = 'size_y'
+    use_clamp: str = 'use_clamp'
+
+def is_compositor_enabled(scene):
+    """
+    Check if the compositor is enabled for the given scene.
+
+    Args:
+        scene: The Blender scene to check.
+
+    Returns:
+        bool: True if the compositor is enabled, otherwise False.
+    """
+    return scene.use_nodes  # 'use_nodes' tells if the compositor is enabled
+
 def toggle_oldeevee_bloom(self, context):
     """
-    Toggle the mute property of the 'OE_Bloom' node group in the Compositor.
+    Toggle the mute property of the 'OldEevee Bloom' node group in the Compositor.
 
     Args:
         self: The instance of the class.
@@ -105,15 +128,15 @@ def toggle_oldeevee_bloom(self, context):
     if node_tree and node_tree.type == 'COMPOSITING':
         found_node = None
         for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == OldEevee_Bloom_Names.OE_Bloom:
+            if node.type == 'GROUP' and node.name == Names.OldEevee_Bloom:
                 found_node = node
                 break
 
         if found_node:
             found_node.mute = not scene.bloom_mute_unmute_bool
-            print(f"Node group 'OE_Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
+            print(f"Node group 'OldEevee Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
         else:
-            print("Node group 'OE_Bloom' not found in the Compositor node tree.")
+            print("Node group 'OldEevee Bloom' not found in the Compositor node tree.")
     else:
         print("Compositor node tree is not active.")
 
@@ -142,7 +165,7 @@ def update_real_time_compositing(self, context):
                     with context.temp_override(space=view_3d):
                         view_3d.shading.use_compositor = self.real_time_compositing_enum
 
-def poll_view_3d(self, context):
+def poll_view_3d(context):
     """
     Check if a 3D Viewport area exists in the current screen layout.
 
