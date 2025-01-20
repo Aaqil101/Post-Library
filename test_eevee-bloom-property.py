@@ -18,14 +18,12 @@ if not script_path:
 
 # Resolve directories
 script_dir = Path(script_path).resolve().parent
-path_to_nodes_folder = script_dir / "nodes"
 path_to_helpers_folder = script_dir / "helpers"
 path_to_core_folder = script_dir / "core"
 
 # List of paths
 paths = [
-    script_dir, path_to_nodes_folder,
-    path_to_helpers_folder
+    script_dir, path_to_helpers_folder
 ]
 
 # Add directories to sys.path
