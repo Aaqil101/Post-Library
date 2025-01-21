@@ -38,18 +38,14 @@ path_to_core_folder = script_dir / "core"
 # List of paths
 paths = [script_dir, path_to_helpers_folder]
 
-
 # Add directories to sys.path
 for path in paths:
-    if path.exists():
-        path_str = str(path)
-        if path_str not in sys.path:
-            sys.path.append(path_str)
-            print(f"Added {path_str} to sys.path")
-        else:
-            print(f"{path_str} already in sys.path")
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.append(path_str)
+        print(f"Added {path_str} to sys.path")
     else:
-        print(f"Warning: {path} does not exist.")
+        print(f"{path_str} already in sys.path")
 
 from helpers import (
     # For adding drivers to sockets
