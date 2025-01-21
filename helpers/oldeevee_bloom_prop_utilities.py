@@ -1,4 +1,5 @@
 import bpy
+from bpy.app.handlers import persistent
 from dataclasses import dataclass, field
 
 @dataclass
@@ -98,6 +99,26 @@ class SocketNames:
     size_x: str = 'size_x'
     size_y: str = 'size_y'
     use_clamp: str = 'use_clamp'
+
+@persistent
+def setup_bloom(dummy):
+    """
+    This function is a persistent handler, which means it is called after the file has been loaded into Blender.
+
+    It is responsible for setting up the Old Eevee Bloom node group in the Compositor after the file has been loaded into Blender. If the Compositor is not enabled, it will be enabled. Then it will call the Old Eevee Bloom operator to create the node group if it does not already exist.
+
+    Parameters:
+        dummy (None): This argument is not used in the function. It is included because it is required by the @persistent decorator.
+
+    Returns:
+        None
+    """
+    scene = bpy.context.scene
+
+    if not scene.use_nodes:
+        scene.use_nodes = True
+
+    bpy.ops.node.oldeevee_bloom_operator("INVOKE_DEFAULT")
 
 def is_compositor_enabled(scene):
     """

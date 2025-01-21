@@ -61,6 +61,7 @@ from helpers import (
     SocketNames,
 
     # Functions
+    setup_bloom,
     ensure_connection,
     is_compositor_enabled,
     poll_view_3d,
@@ -829,6 +830,9 @@ classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
 # Register and unregister
 def register():
+    # Register Handler
+    bpy.app.handlers.load_post.append(setup_bloom)
+
     # Register properties
     prop_scene.bloom_mute_unmute_bool = BoolProperty(
         name=Names.Bloom_Mute_Unmute,
@@ -869,6 +873,9 @@ def register():
         bpy.utils.register_class(cls)
 
 def unregister():
+    # Unregister Handler
+    bpy.app.handlers.load_post.remove(setup_bloom)
+
     # Unregister properties
     del prop_scene.bloom_mute_unmute_bool
     del prop_scene.real_time_compositing_enum
