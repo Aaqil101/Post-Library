@@ -76,7 +76,7 @@ class Descriptions:
     camera: str = "The compositor is enabled only in camera view"
     always: str = "The compositor is always enabled regardless of the view"
     node_ot_bloom: str = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
-    prop_pt_bloom: str = "Old Eevee Bloom In Both Eevee And Cycles"
+    render_pt_oldeevee_bloom: str = "Old Eevee Bloom In Both Eevee And Cycles"
     scene_ot_enable_compositor: str = "Enable the compositing node tree"
     blur_mix: str = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
     bloom_size: str = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
@@ -155,9 +155,9 @@ def toggle_oldeevee_bloom(self, context):
 
         if found_node:
             found_node.mute = not scene.bloom_mute_unmute_bool
-            print(f"Node group 'OldEevee Bloom' is now {'muted' if found_node.mute else 'unmuted'}.")
+            print(f"Node group {Names.OldEevee_Bloom} is now {'muted' if found_node.mute else 'unmuted'}.")
         else:
-            print("Node group 'OldEevee Bloom' not found in the Compositor node tree.")
+            print(f"Node group {Names.OldEevee_Bloom} not found in the Compositor node tree.")
     else:
         print("Compositor node tree is not active.")
 
