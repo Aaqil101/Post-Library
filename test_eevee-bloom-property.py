@@ -619,13 +619,19 @@ class NODE_OT_BLOOM(bpy.types.Operator):
 
         # Check if nodes exist, otherwise create them
         render_layer_node = nodes.get(Names.Render_Layers) or nodes.new(type=CompositorNodeNames.RENDER_LAYERS)
-        render_layer_node.location = (-200.0000, 200.0000)
+        render_layer_node.use_custom_color = True
+        render_layer_node.color = Color.LIGHT_RED
+        render_layer_node.location = (-200.0000, 220.0000)
 
         composite_node = nodes.get(Names.Composite) or nodes.new(type=CompositorNodeNames.COMPOSITE)
-        composite_node.location = (320.0000, 160.0000)
+        composite_node.use_custom_color = True
+        composite_node.color = Color.DARK_RED
+        composite_node.location = (340.0000, 180.0000)
 
         viewer_node = nodes.get(Names.Viewer) or nodes.new(type=CompositorNodeNames.VIEWER)
-        viewer_node.location = (320.0000, 280.0000)
+        viewer_node.use_custom_color = True
+        viewer_node.color = Color.DARK_RED
+        viewer_node.location = (340.0000, 300.0000)
 
         custom_oldeevee_bloom_node_name = Names.OldEevee_Bloom
         oldeevee_bloom_group = oldeevee_bloom_node_group(shelf, context, custom_oldeevee_bloom_node_name)
