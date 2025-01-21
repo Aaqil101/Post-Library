@@ -22,7 +22,7 @@ path_to_helpers_folder = script_dir / "helpers"
 path_to_core_folder = script_dir / "core"
 
 """
-TODO: When it's time to relese the addon, remove the {# Determine script path} and enable this one
+TODO: When it's time to release the addon, remove the {# Determine script path} and enable this one
 try:
     # Determine script path
     script_path = Path(__file__).resolve()
@@ -36,9 +36,7 @@ path_to_core_folder = script_dir / "core"
 """
 
 # List of paths
-paths = [
-    script_dir, path_to_helpers_folder
-]
+paths = [script_dir, path_to_helpers_folder]
 
 
 # Add directories to sys.path
@@ -624,24 +622,26 @@ class NODE_OT_BLOOM(bpy.types.Operator):
 
         # Check if nodes exist, otherwise create them
         render_layer_node = nodes.get(Names.Render_Layers) or nodes.new(type=CompositorNodeNames.RENDER_LAYERS)
-        render_layer_node.location = (-300, 0)
+        render_layer_node.location = (-200.0000, 200.0000)
 
         composite_node = nodes.get(Names.Composite) or nodes.new(type=CompositorNodeNames.COMPOSITE)
-        composite_node.location = (300, 86)
+        composite_node.location = (320.0000, 160.0000)
 
         viewer_node = nodes.get(Names.Viewer) or nodes.new(type=CompositorNodeNames.VIEWER)
-        viewer_node.location = (300, -24)
+        viewer_node.location = (320.0000, 280.0000)
 
         custom_oldeevee_bloom_node_name = Names.OldEevee_Bloom
         oldeevee_bloom_group = oldeevee_bloom_node_group(shelf, context, custom_oldeevee_bloom_node_name)
         oldeevee_bloom_node = context.scene.node_tree.nodes.new(CompositorNodeNames.GROUP)
         oldeevee_bloom_node.name = Names.OldEevee_Bloom
         oldeevee_bloom_node.label = Names.OldEevee_Bloom
-        oldeevee_bloom_node.width = 174
-        oldeevee_bloom_node.node_tree = bpy.data.node_groups[oldeevee_bloom_group.name]
         oldeevee_bloom_node.use_custom_color = True
-        oldeevee_bloom_node.color = Color.DARK_PURPLE
         oldeevee_bloom_node.select = True
+        oldeevee_bloom_node.mute = False
+        oldeevee_bloom_node.width = 174
+        oldeevee_bloom_node.location = (100.0000, 220.0000)
+        oldeevee_bloom_node.color = Color.DARK_PURPLE
+        oldeevee_bloom_node.node_tree = bpy.data.node_groups[oldeevee_bloom_group.name]
 
         # Initialize NodeDriverManager to manage drivers for the node group
         drivers = NodeDriverManager(node_group=oldeevee_bloom_node, id_type="SCENE", id=bpy.context.scene)
@@ -737,7 +737,6 @@ class PROP_PT_BLOOM(bpy.types.Panel):
         
         scene = context.scene
         node_tree = bpy.context.scene.node_tree  # Access the Compositor node tree
-
             
         if not is_compositor_enabled(scene):
             # If compositor is disabled, show the operator to enable it
@@ -815,7 +814,6 @@ class PROP_PT_BLOOM(bpy.types.Panel):
                 else:
                     # If oldeevee_bloom node doesn't exist, show the operator to create it
                     layout.operator("node.oldeevee_bloom_operator", text="Create OldEevee Bloom", icon='NODE_MATERIAL')
-
                     """
                     split = layout.split(factor=0.7)    # Adjust the split factor for a smaller gap
 
