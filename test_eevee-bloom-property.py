@@ -2,6 +2,34 @@ import bpy
 import sys
 from pathlib import Path
 from bpy.props import BoolProperty, EnumProperty
+from bl_ui.properties_render import (
+    RENDER_PT_eevee_next_sampling,
+    RENDER_PT_eevee_next_sampling_viewport,
+    RENDER_PT_eevee_next_sampling_render,
+    RENDER_PT_eevee_next_sampling_shadows,
+    RENDER_PT_eevee_next_sampling_advanced,
+    RENDER_PT_eevee_next_clamping,
+    RENDER_PT_eevee_next_clamping_surface,
+    RENDER_PT_eevee_next_clamping_volume,
+    RENDER_PT_eevee_next_raytracing_presets,
+    RENDER_PT_eevee_next_raytracing,
+    RENDER_PT_eevee_next_screen_trace,
+    RENDER_PT_eevee_next_denoise,
+    RENDER_PT_eevee_next_gi_approximation,
+    RENDER_PT_eevee_next_volumes,
+    RENDER_PT_eevee_next_volumes_range,
+    RENDER_PT_eevee_hair,
+    RENDER_PT_eevee_next_depth_of_field,
+    RENDER_PT_eevee_next_motion_blur,
+    RENDER_PT_eevee_next_motion_blur_curve,
+    RENDER_PT_eevee_next_film,
+    RENDER_PT_eevee_performance,
+    RENDER_PT_eevee_performance_memory,
+    RENDER_PT_eevee_performance_viewport,
+    RENDER_PT_eevee_performance_compositor,
+    RENDER_PT_opengl_sampling,
+    RENDER_PT_opengl_lighting
+)
 
 # Determine script path
 try:
@@ -714,14 +742,13 @@ class SCENE_OT_ENABLE_COMPOSITOR(bpy.types.Operator):
         self.report({'INFO'}, "Compositor enabled.")
         return {'FINISHED'}
 
-class PROP_PT_BLOOM(bpy.types.Panel):
+class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
     bl_label = 'Bloom'
-    bl_idname = 'PROP_PT_BLOOM'
+    bl_idname = 'RENDER_PT_OLDEEVEE_BLOOM'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'render'
-    bl_description = Descriptions.prop_pt_bloom
-    bl_order = 3
+    bl_description = Descriptions.render_pt_oldeevee_bloom
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -832,7 +859,76 @@ class PROP_PT_BLOOM(bpy.types.Panel):
 prop_scene = bpy.types.Scene
 
 # Classes to Register/Unregister
-classes = [PROP_PT_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
+classes = [NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
+
+# List of panels to unregister
+unregister_classes = [
+    bpy.types.RENDER_PT_eevee_next_sampling,
+    bpy.types.RENDER_PT_eevee_next_sampling_viewport,
+    bpy.types.RENDER_PT_eevee_next_sampling_render,
+    bpy.types.RENDER_PT_eevee_next_sampling_shadows,
+    bpy.types.RENDER_PT_eevee_next_sampling_advanced,
+    bpy.types.RENDER_PT_eevee_next_clamping,
+    bpy.types.RENDER_PT_eevee_next_clamping_surface,
+    bpy.types.RENDER_PT_eevee_next_clamping_volume,
+    bpy.types.RENDER_PT_eevee_next_raytracing_presets,
+    bpy.types.RENDER_PT_eevee_next_raytracing,
+    bpy.types.RENDER_PT_eevee_next_screen_trace,
+    bpy.types.RENDER_PT_eevee_next_denoise,
+    bpy.types.RENDER_PT_eevee_next_gi_approximation,
+    bpy.types.RENDER_PT_eevee_next_volumes,
+    bpy.types.RENDER_PT_eevee_next_volumes_range,
+    bpy.types.RENDER_PT_eevee_hair,
+    bpy.types.RENDER_PT_eevee_next_depth_of_field,
+    bpy.types.RENDER_PT_eevee_next_motion_blur,
+    bpy.types.RENDER_PT_eevee_next_motion_blur_curve,
+    bpy.types.RENDER_PT_eevee_next_film,
+    bpy.types.RENDER_PT_eevee_performance,
+    bpy.types.RENDER_PT_eevee_performance_memory,
+    bpy.types.RENDER_PT_eevee_performance_viewport,
+    bpy.types.RENDER_PT_eevee_performance_compositor,
+    bpy.types.RENDER_PT_opengl_sampling,
+    bpy.types.RENDER_PT_opengl_lighting,
+]
+
+# Unregister all panels
+for cls in unregister_classes:
+    bpy.utils.unregister_class(cls)
+
+# List of panels to register
+register_classes = [
+    RENDER_PT_eevee_next_sampling,
+    RENDER_PT_eevee_next_sampling_viewport,
+    RENDER_PT_eevee_next_sampling_render,
+    RENDER_PT_eevee_next_sampling_shadows,
+    RENDER_PT_eevee_next_sampling_advanced,
+    RENDER_PT_eevee_next_clamping,
+    RENDER_PT_eevee_next_clamping_surface,
+    RENDER_PT_eevee_next_clamping_volume,
+    RENDER_PT_OLDEEVEE_BLOOM,
+    RENDER_PT_eevee_next_raytracing_presets,
+    RENDER_PT_eevee_next_raytracing,
+    RENDER_PT_eevee_next_screen_trace,
+    RENDER_PT_eevee_next_denoise,
+    RENDER_PT_eevee_next_gi_approximation,
+    RENDER_PT_eevee_next_volumes,
+    RENDER_PT_eevee_next_volumes_range,
+    RENDER_PT_eevee_hair,
+    RENDER_PT_eevee_next_depth_of_field,
+    RENDER_PT_eevee_next_motion_blur,
+    RENDER_PT_eevee_next_motion_blur_curve,
+    RENDER_PT_eevee_next_film,
+    RENDER_PT_eevee_performance,
+    RENDER_PT_eevee_performance_memory,
+    RENDER_PT_eevee_performance_viewport,
+    RENDER_PT_eevee_performance_compositor,
+    RENDER_PT_opengl_sampling,
+    RENDER_PT_opengl_lighting
+]
+
+# Register all panels
+for cls in register_classes:
+    bpy.utils.register_class(cls)
 
 # Register and unregister
 def register():
