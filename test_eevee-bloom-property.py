@@ -831,7 +831,7 @@ class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
 prop_scene = bpy.types.Scene
 
 # Classes to Register/Unregister
-classes = [NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
+classes = [RENDER_PT_OLDEEVEE_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
 # Register and unregister
 def register():
