@@ -1,12 +1,15 @@
-from helpers import (Color, CompositorNodeNames)
+from helpers import Color, CompositorNodeNames
 from dataclasses import dataclass, field
+
 
 class FilterNodeNames:
     """
     Class to store the names of various nodes and sockets used in the Filter Node Manager.
     """
+
     Glare: str = "Glare"
     Blur: str = "Blur"
+
 
 @dataclass
 class GlareType:
@@ -21,11 +24,13 @@ class GlareType:
         FOG_GLOW (str): Represents the Fog Glow glare effect.
         SIMPLE_STAR (str): Represents the Simple Star glare effect.
     """
-    BLOOM: str = 'BLOOM'  # Bloom glare effect
-    GHOSTS: str = 'GHOSTS'  # Ghosts glare effect
-    STREAKS: str = 'STREAKS'  # Streaks glare effect
-    FOG_GLOW: str = 'FOG_GLOW'  # Fog Glow glare effect
-    SIMPLE_STAR: str = 'SIMPLE_STAR'  # Simple Star glare effect
+
+    BLOOM: str = "BLOOM"  # Bloom glare effect
+    GHOSTS: str = "GHOSTS"  # Ghosts glare effect
+    STREAKS: str = "STREAKS"  # Streaks glare effect
+    FOG_GLOW: str = "FOG_GLOW"  # Fog Glow glare effect
+    SIMPLE_STAR: str = "SIMPLE_STAR"  # Simple Star glare effect
+
 
 @dataclass
 class GlareQuality:
@@ -38,9 +43,11 @@ class GlareQuality:
         MEDIUM (str): Represents medium quality for the glare effect.
         HIGH (str): Represents high quality for the glare effect.
     """
-    LOW: str = 'LOW'  # Low quality
-    MEDIUM: str = 'MEDIUM'  # Medium quality
-    HIGH: str = 'HIGH'  # High quality
+
+    LOW: str = "LOW"  # Low quality
+    MEDIUM: str = "MEDIUM"  # Medium quality
+    HIGH: str = "HIGH"  # High quality
+
 
 @dataclass
 class GlareSettings:
@@ -61,17 +68,23 @@ class GlareSettings:
         threshold (float): Threshold value for the glare effect.
         use_rotate_45 (bool): Whether to use a 45-degree rotation for the glare effect.
     """
+
     angle_offset: float = 0.0
     color_modulation: float = 0.25
     fade: float = 0.9
-    glare_type: str = GlareType.STREAKS  # Options: GlareType.BLOOM, GlareType.GHOSTS, GlareType.STREAKS, GlareType.FOG_GLOW, GlareType.SIMPLE_STAR
+    glare_type: str = (
+        GlareType.STREAKS
+    )  # Options: GlareType.BLOOM, GlareType.GHOSTS, GlareType.STREAKS, GlareType.FOG_GLOW, GlareType.SIMPLE_STAR
     iterations: int = 3
     mix: float = 0.0
-    quality: str = GlareQuality.LOW  # Options: GlareQuality.LOW, GlareQuality.MEDIUM, GlareQuality.HIGH
+    quality: str = (
+        GlareQuality.LOW
+    )  # Options: GlareQuality.LOW, GlareQuality.MEDIUM, GlareQuality.HIGH
     size: int = 8
     streaks: int = 4
     threshold: float = 1.0
     use_rotate_45: bool = True
+
 
 @dataclass
 class BlurAspectCorrection:
@@ -84,9 +97,11 @@ class BlurAspectCorrection:
         Y (str): Aspect correction along the Y-axis.
         X (str): Aspect correction along the X-axis.
     """
-    NONE: str = 'NONE'
-    Y: str = 'Y'
-    X: str = 'X'
+
+    NONE: str = "NONE"
+    Y: str = "Y"
+    X: str = "X"
+
 
 @dataclass
 class BlurFilterType:
@@ -104,14 +119,16 @@ class BlurFilterType:
         CATROM (str): Catrom filter type.
         MITCH (str): Mitch filter type.
     """
-    FLAT: str = 'FLAT'
-    TENT: str = 'TENT'
-    QUAD: str = 'QUAD'
-    CUBIC: str = 'CUBIC'
-    GAUSS: str = 'GAUSS'
-    FAST_GAUSS: str = 'FAST_GAUSS'
-    CATROM: str = 'CATROM'
-    MITCH: str = 'MITCH'
+
+    FLAT: str = "FLAT"
+    TENT: str = "TENT"
+    QUAD: str = "QUAD"
+    CUBIC: str = "CUBIC"
+    GAUSS: str = "GAUSS"
+    FAST_GAUSS: str = "FAST_GAUSS"
+    CATROM: str = "CATROM"
+    MITCH: str = "MITCH"
+
 
 @dataclass
 class BlurSettings:
@@ -133,11 +150,16 @@ class BlurSettings:
         use_relative (bool): Whether to use relative sizing for the blur.
         use_variable_size (bool): Whether to use variable size for the blur.
     """
-    aspect_correction: str = BlurAspectCorrection.NONE # Options: BlurAspectCorrection.NONE, BlurAspectCorrection.Y, BlurAspectCorrection.X
+
+    aspect_correction: str = (
+        BlurAspectCorrection.NONE
+    )  # Options: BlurAspectCorrection.NONE, BlurAspectCorrection.Y, BlurAspectCorrection.X
     factor: int = 0.0
     factor_x: int = 0.0
     factor_y: int = 0.0
-    filter_type: str = BlurFilterType.GAUSS # Options: BlurFilterType.FLAT, BlurFilterType.TENT, BlurFilterType.QUAD, BlurFilterType.CUBIC, BlurFilterType.GAUSS, BlurFilterType.FAST_GAUSS, BlurFilterType.CATROM, BlurFilterType.MITCH
+    filter_type: str = (
+        BlurFilterType.GAUSS
+    )  # Options: BlurFilterType.FLAT, BlurFilterType.TENT, BlurFilterType.QUAD, BlurFilterType.CUBIC, BlurFilterType.GAUSS, BlurFilterType.FAST_GAUSS, BlurFilterType.CATROM, BlurFilterType.MITCH
     size_x: int = 0
     size_y: int = 0
     use_bokeh: bool = False
@@ -146,11 +168,12 @@ class BlurSettings:
     use_relative: bool = False
     use_variable_size: bool = False
 
+
 class FilterNodeManager:
     """
     Manages Filter Nodes in a Node Group
 
-    This class provides methods to create and manage filter nodes 
+    This class provides methods to create and manage filter nodes
     within a specified node group in Blender's compositor.
 
     Attributes:
@@ -159,7 +182,10 @@ class FilterNodeManager:
     node_color (tuple): RGB color for the nodes. Defaults to DARK_PURPLE.
     use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
-    def __init__(self, *, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False):
+
+    def __init__(
+        self, *, node_group, node_color=Color.DARK_PURPLE, use_custom_color=False
+    ):
         """
         Initialize a FilterNodeManager instance.
 
@@ -172,7 +198,13 @@ class FilterNodeManager:
         self.use_custom_color = use_custom_color
         self.node_color = node_color
 
-    def create_glare_node(self, *, glare_name=FilterNodeNames.Glare, glare_label=FilterNodeNames.Glare, settings=None):
+    def create_glare_node(
+        self,
+        *,
+        glare_name=FilterNodeNames.Glare,
+        glare_label=FilterNodeNames.Glare,
+        settings=None
+    ):
         """
         Create a Glare node in a node group and apply the specified settings.
 
@@ -197,7 +229,9 @@ class FilterNodeManager:
         if self.use_custom_color:
             glare_node.color = self.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Apply settings from the GlareSettings instance
         for field_name in settings.__dataclass_fields__:
@@ -207,7 +241,13 @@ class FilterNodeManager:
 
         return glare_node
 
-    def create_blur_node(self, *, blur_name=FilterNodeNames.Blur, blur_label=FilterNodeNames.Blur, settings=None):
+    def create_blur_node(
+        self,
+        *,
+        blur_name=FilterNodeNames.Blur,
+        blur_label=FilterNodeNames.Blur,
+        settings=None
+    ):
         """
         Create a Blur node in a node group and apply the specified settings.
 
@@ -232,7 +272,9 @@ class FilterNodeManager:
         if self.use_custom_color:
             blur_node.color = self.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Apply settings from the BlurSettings instance
         for field_name in settings.__dataclass_fields__:

@@ -1,9 +1,11 @@
-from helpers import (hexcode_to_rgb, hex_color_add, CompositorNodeNames)
+from helpers import hexcode_to_rgb, hex_color_add, CompositorNodeNames
 from dataclasses import dataclass, field
+
 
 class LayoutNodeNames:
     Frame = "Frame"
     Reroute = "Reroute"
+
 
 @dataclass
 class SocketColor:
@@ -15,9 +17,11 @@ class SocketColor:
         NodeSocketFloat (str): The float socket type for numerical values.
         NodeSocketVector (str): The vector socket type for vector data.
     """
-    NodeSocketColor: str = 'NodeSocketColor'  # Color socket type
-    NodeSocketFloat: str = 'NodeSocketFloat'  # Float socket type
-    NodeSocketVector: str = 'NodeSocketVector'  # Vector socket type
+
+    NodeSocketColor: str = "NodeSocketColor"  # Color socket type
+    NodeSocketFloat: str = "NodeSocketFloat"  # Float socket type
+    NodeSocketVector: str = "NodeSocketVector"  # Vector socket type
+
 
 @dataclass
 class FrameSettings:
@@ -28,8 +32,10 @@ class FrameSettings:
         label_size (int): Size of the label text. Defaults to 20.
         shrink (bool): Whether to shrink the frame to fit the node. Defaults to False.
     """
+
     label_size: int = 20
     shrink: bool = False
+
 
 @dataclass
 class RerouteSettings:
@@ -40,7 +46,11 @@ class RerouteSettings:
         socket_idname (str): The type of socket to use for the reroute node. Options are:
             SocketColor.NodeSocketColor, SocketColor.NodeSocketFloat, SocketColor.NodeSocketVector
     """
-    socket_idname: str = SocketColor.NodeSocketColor # Options: SocketColor.NodeSocketColor, SocketColor.NodeSocketFloat, SocketColor.NodeSocketVector
+
+    socket_idname: str = (
+        SocketColor.NodeSocketColor
+    )  # Options: SocketColor.NodeSocketColor, SocketColor.NodeSocketFloat, SocketColor.NodeSocketVector
+
 
 class LayoutNodeManager:
     """
@@ -51,7 +61,8 @@ class LayoutNodeManager:
         node_color (list): A list containing two elements for color addition, which will be converted to RGB.
         use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
-    def __init__(self, *, node_group, node_color: list, use_custom_color=False):       
+
+    def __init__(self, *, node_group, node_color: list, use_custom_color=False):
         """
         Initialize a LayoutNodeManager instance.
 
@@ -68,15 +79,20 @@ class LayoutNodeManager:
             if len(node_color) != 2:
                 raise ValueError("node_color must contain exactly two elements.")
             self.node_color = hexcode_to_rgb(
-                hex_color_add(
-                    node_color[0],
-                    node_color[1]
-                )
+                hex_color_add(node_color[0], node_color[1])
             )
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
-    def create_frame_node(self, *, frame_name=LayoutNodeNames.Frame, frame_label=LayoutNodeNames.Frame, settings=None):
+    def create_frame_node(
+        self,
+        *,
+        frame_name=LayoutNodeNames.Frame,
+        frame_label=LayoutNodeNames.Frame,
+        settings=None
+    ):
         """
         Create a Frame node in a node group and apply the specified settings.
 
@@ -105,7 +121,13 @@ class LayoutNodeManager:
 
         return frame_node
 
-    def create_reroute_node(self, *, reroute_name=LayoutNodeNames.Reroute, reroute_label=LayoutNodeNames.Reroute, settings=None):
+    def create_reroute_node(
+        self,
+        *,
+        reroute_name=LayoutNodeNames.Reroute,
+        reroute_label=LayoutNodeNames.Reroute,
+        settings=None
+    ):
         # Use default settings if none are provided
         if settings is None:
             settings = RerouteSettings()

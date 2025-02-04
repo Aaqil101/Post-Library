@@ -1,13 +1,16 @@
-from helpers import (Color, CompositorNodeNames)
+from helpers import Color, CompositorNodeNames
 from typing import Tuple
 from dataclasses import dataclass, field
+
 
 class ColorNodeNames:
     """
     Class to store the names of various nodes used in the ColorNodeManager class.
     """
+
     Hue_Saturation_Value = "Hue/Saturation/Value"  # Name of the Hue Saturation node.
     Mix_Color = "Mix Color"  # Name of the MixColor node.
+
 
 @dataclass
 class BlendType:
@@ -17,7 +20,7 @@ class BlendType:
     Attributes:
     ---
         DARKEN (str): Darken blend type. The result color is the lowest value of each component.
-        MULTIPLY (str): Multiply blend type. The result color is each component multiplied by the 
+        MULTIPLY (str): Multiply blend type. The result color is each component multiplied by the
             corresponding component of the other color.
         BURN (str): Burn blend type. The result color is the darkest possible color that can be made
             by multiplying or screening the two colors.
@@ -50,25 +53,27 @@ class BlendType:
         VALUE (str): Value blend type. The result color has the value of the first color and the hue and
             saturation of the second color.
     """
-    MIX: str = 'MIX'
-    DARKEN: str = 'DARKEN'
-    MULTIPLY: str = 'MULTIPLY'
-    BURN: str = 'BURN'
-    LIGHTEN: str = 'LIGHTEN'
-    SCREEN: str = 'SCREEN'
-    DODGE: str = 'DODGE'
-    ADD: str = 'ADD'
-    OVERLAY: str = 'OVERLAY'
-    SOFT_LIGHT: str = 'SOFT_LIGHT'
-    LINEAR_LIGHT: str = 'LINEAR_LIGHT'
-    DIFFERENCE: str = 'DIFFERENCE'
-    EXCLUSION: str = 'EXCLUSION'
-    SUBTRACT: str = 'SUBTRACT'
-    DIVIDE: str = 'DIVIDE'
-    HUE: str = 'HUE'
-    SATURATION: str = 'SATURATION'
-    COLOR: str = 'COLOR'
-    VALUE: str = 'VALUE'
+
+    MIX: str = "MIX"
+    DARKEN: str = "DARKEN"
+    MULTIPLY: str = "MULTIPLY"
+    BURN: str = "BURN"
+    LIGHTEN: str = "LIGHTEN"
+    SCREEN: str = "SCREEN"
+    DODGE: str = "DODGE"
+    ADD: str = "ADD"
+    OVERLAY: str = "OVERLAY"
+    SOFT_LIGHT: str = "SOFT_LIGHT"
+    LINEAR_LIGHT: str = "LINEAR_LIGHT"
+    DIFFERENCE: str = "DIFFERENCE"
+    EXCLUSION: str = "EXCLUSION"
+    SUBTRACT: str = "SUBTRACT"
+    DIVIDE: str = "DIVIDE"
+    HUE: str = "HUE"
+    SATURATION: str = "SATURATION"
+    COLOR: str = "COLOR"
+    VALUE: str = "VALUE"
+
 
 @dataclass
 class MixColorSettings:
@@ -86,6 +91,7 @@ class MixColorSettings:
         hide_col1 (bool): Whether to hide the Color1 input of the MixColor node. Defaults to False.
         hide_col2 (bool): Whether to hide the Color2 input of the MixColor node. Defaults to False.
     """
+
     node_color: Tuple[float, float, float] = Color.BROWN
     blend_type: str = BlendType.MIX  # Blend type for the MixColor node
     use_alpha: bool = False  # Use alpha in the MixColor node
@@ -94,6 +100,7 @@ class MixColorSettings:
     hide_fac: bool = False  # Hide the Fac input
     hide_col1: bool = False  # Hide the Color1 input
     hide_col2: bool = False  # Hide the Color2 input
+
 
 @dataclass
 class HueSatSettings:
@@ -114,6 +121,7 @@ class HueSatSettings:
         hide_val (bool): Hide the Value input of the Hue/Saturation/Value node. Defaults to False.
         hide_fac (bool): Hide the Factor input of the Hue/Saturation/Value node. Defaults to False.
     """
+
     node_color: Tuple[float, float, float] = Color.BROWN
     img_default_value: list = (1.0, 1.0, 1.0, 1.0)
     hue_default_value: float = 0.5
@@ -125,6 +133,7 @@ class HueSatSettings:
     hide_sat: bool = False
     hide_val: bool = False
     hide_fac: bool = False
+
 
 class ColorNodeManager:
     """
@@ -138,6 +147,7 @@ class ColorNodeManager:
     node_color (tuple): RGB color for the nodes. Defaults to BROWN.
     use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to True.
     """
+
     def __init__(self, *, node_group, use_custom_color=False):
         """
         Initialize a ColorNodeManager instance.
@@ -150,7 +160,13 @@ class ColorNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_mixcolor_node(self, *, mixcolor_name=ColorNodeNames.Mix_Color, mixcolor_label=ColorNodeNames.Mix_Color, settings=None):
+    def create_mixcolor_node(
+        self,
+        *,
+        mixcolor_name=ColorNodeNames.Mix_Color,
+        mixcolor_label=ColorNodeNames.Mix_Color,
+        settings=None
+    ):
         """
         Create a MixColor node in a node group and apply the specified settings.
 
@@ -171,11 +187,13 @@ class ColorNodeManager:
         mixcolor_node.name = mixcolor_name
         mixcolor_node.label = mixcolor_label
         mixcolor_node.use_custom_color = self.use_custom_color
-        
+
         if self.use_custom_color:
             mixcolor_node.color = settings.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Apply settings from the MixColorSettings instance
         mixcolor_node.blend_type = settings.blend_type
@@ -193,8 +211,14 @@ class ColorNodeManager:
         mixcolor_node.inputs[2].hide = settings.hide_col2
 
         return mixcolor_node
-    
-    def create_huesat_node(self, *, huesat_name=ColorNodeNames.Hue_Saturation_Value, huesat_label=ColorNodeNames.Hue_Saturation_Value, settings=None):
+
+    def create_huesat_node(
+        self,
+        *,
+        huesat_name=ColorNodeNames.Hue_Saturation_Value,
+        huesat_label=ColorNodeNames.Hue_Saturation_Value,
+        settings=None
+    ):
         """
         Create a Hue/Saturation/Value node in a node group and apply the specified settings.
 
@@ -211,7 +235,9 @@ class ColorNodeManager:
             settings = HueSatSettings()
 
         # Create the Hue/Saturation/Value Node
-        huesat_node = self.node_group.nodes.new(CompositorNodeNames.HUE_SATURATION_VALUE)
+        huesat_node = self.node_group.nodes.new(
+            CompositorNodeNames.HUE_SATURATION_VALUE
+        )
         huesat_node.name = huesat_name
         huesat_node.label = huesat_label
         huesat_node.use_custom_color = self.use_custom_color
@@ -219,7 +245,9 @@ class ColorNodeManager:
         if self.use_custom_color:
             huesat_node.color = settings.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Apply settings from the HueSatSettings instance
         # Configure the Image input

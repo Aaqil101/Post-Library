@@ -2,11 +2,13 @@ import bpy
 from bpy.app.handlers import persistent
 from dataclasses import dataclass, field
 
+
 @dataclass
 class Names:
     """
     Class to store the names of various nodes and sockets used in the bloom node group
     """
+
     OldEevee_Bloom: str = "OldEevee Bloom"
     Image: str = "Image"
     Color: str = "Color"
@@ -55,13 +57,17 @@ class Names:
     Real_Time_Compositing: str = "Real-Time Compositor"
     Enable_Compositor: str = "Enable Compositor"
 
+
 @dataclass
 class Descriptions:
     """
     Class to store all the descriptions of the Bloom properties
     """
+
     image: str = "Standard color output"
-    quality: str = "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    quality: str = (
+        "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    )
     threshold: str = "Filters out pixels under this level of brightness"
     knee: str = "Makes transition between under/over-threshold gradual"
     radius: str = "Bloom spread distance"
@@ -69,17 +75,27 @@ class Descriptions:
     intensity: str = "Blend factor"
     clamp: str = "Maximum intensity a bloom pixel can have"
     other: str = "Additional options for customizing the bloom effect"
-    hue: str = "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
-    saturation: str = "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
+    hue: str = (
+        "The hue rotation offset, from 0 (-180°) to 1 (+180°). Note that 0 and 1 have the same result"
+    )
+    saturation: str = (
+        "A value of 0 removes color from the image, making it black-and-white. A value greater than 1.0 increases saturation"
+    )
     fac: str = "The amount of influence the node exerts on the image"
     disabled: str = "The compositor is disabled"
     camera: str = "The compositor is enabled only in camera view"
     always: str = "The compositor is always enabled regardless of the view"
-    node_ot_bloom: str = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
+    node_ot_bloom: str = (
+        "Replication of the legacy eevee bloom option, but can be used in cycles as well"
+    )
     render_pt_oldeevee_bloom: str = "Old Eevee Bloom In Both Eevee And Cycles"
     scene_ot_enable_compositor: str = "Enable the compositing node tree"
-    blur_mix: str = "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
-    bloom_size: str = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    blur_mix: str = (
+        "The optional Size input will be multiplied with the X and Y blur radius values. It also accepts a value image, to control the blur radius with a mask. The values should be mapped between (0 to 1) for an optimal effect"
+    )
+    bloom_size: str = (
+        "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    )
     bloom_mute_unmute_bool: str = "Toggle the bloom effect on or off"
     oldeevee_bloom: str = "Replication of the legacy eevee bloom option"
     clamp_mix: str = "Clamps of each mix nodes in the OldEevee_Bloom node group"
@@ -87,18 +103,23 @@ class Descriptions:
     km_clamp: str = "Knee Mix Clamp"
     cr_clamp: str = "Color Clamp"
     iy_clamp: str = "Intensity Clamp"
-    real_time_compositing: str = "When to preview the compositor output inside the viewport"
+    real_time_compositing: str = (
+        "When to preview the compositor output inside the viewport"
+    )
+
 
 class SocketNames:
     """
     Class to store the names of the sockets used in the Bloom node group.
     """
-    check: str = 'check'
-    threshold: str = 'threshold'
-    size: str = 'size'
-    size_x: str = 'size_x'
-    size_y: str = 'size_y'
-    use_clamp: str = 'use_clamp'
+
+    check: str = "check"
+    threshold: str = "threshold"
+    size: str = "size"
+    size_x: str = "size_x"
+    size_y: str = "size_y"
+    use_clamp: str = "use_clamp"
+
 
 @persistent
 def setup_bloom(dummy):
@@ -120,6 +141,7 @@ def setup_bloom(dummy):
 
     bpy.ops.node.oldeevee_bloom_operator("INVOKE_DEFAULT")
 
+
 def is_compositor_enabled(scene):
     """
     Check if the compositor is enabled for the given scene.
@@ -131,6 +153,7 @@ def is_compositor_enabled(scene):
         bool: True if the compositor is enabled, otherwise False.
     """
     return scene.use_nodes  # 'use_nodes' tells if the compositor is enabled
+
 
 def toggle_oldeevee_bloom(self, context):
     """
@@ -146,29 +169,34 @@ def toggle_oldeevee_bloom(self, context):
     scene = context.scene
     node_tree = context.scene.node_tree  # Access the active node tree
 
-    if node_tree and node_tree.type == 'COMPOSITING':
+    if node_tree and node_tree.type == "COMPOSITING":
         found_node = None
         for node in node_tree.nodes:
-            if node.type == 'GROUP' and node.name == Names.OldEevee_Bloom:
+            if node.type == "GROUP" and node.name == Names.OldEevee_Bloom:
                 found_node = node
                 break
 
         if found_node:
             found_node.mute = not scene.bloom_mute_unmute_bool
-            print(f"Node group {Names.OldEevee_Bloom} is now {'muted' if found_node.mute else 'unmuted'}.")
+            print(
+                f"Node group {Names.OldEevee_Bloom} is now {'muted' if found_node.mute else 'unmuted'}."
+            )
         else:
-            print(f"Node group {Names.OldEevee_Bloom} not found in the Compositor node tree.")
+            print(
+                f"Node group {Names.OldEevee_Bloom} not found in the Compositor node tree."
+            )
     else:
         print("Compositor node tree is not active.")
 
+
 def update_real_time_compositing(self, context):
     """
-    Update the real-time compositing settings for 3D Viewport areas based on the 
+    Update the real-time compositing settings for 3D Viewport areas based on the
     'real_time_compositing_enum' attribute.
 
-    This function iterates through all screen areas in the current context and checks 
-    for 3D Viewport areas. If found, it updates the 'use_compositor' attribute of the 
-    shading settings for the 3D View space based on the value of 'real_time_compositing_enum', 
+    This function iterates through all screen areas in the current context and checks
+    for 3D Viewport areas. If found, it updates the 'use_compositor' attribute of the
+    shading settings for the 3D View space based on the value of 'real_time_compositing_enum',
     which can be 'DISABLED', 'CAMERA', or 'ALWAYS'.
 
     Args:
@@ -181,10 +209,11 @@ def update_real_time_compositing(self, context):
     for workspace in bpy.data.workspaces:
         for screen in workspace.screens:
             for area in screen.areas:
-                if area.type == 'VIEW_3D':
+                if area.type == "VIEW_3D":
                     view_3d = area.spaces[0]
                     with context.temp_override(space=view_3d):
                         view_3d.shading.use_compositor = self.real_time_compositing_enum
+
 
 def poll_view_3d(context):
     """
@@ -198,9 +227,10 @@ def poll_view_3d(context):
         bool: True if a 3D Viewport area is found, otherwise False.
     """
     for area in context.screen.areas:
-        if area.type == 'VIEW_3D':  # Check if VIEW_3D area exists
+        if area.type == "VIEW_3D":  # Check if VIEW_3D area exists
             return True
     return False
+
 
 # Ensure all connections exist
 def ensure_connection(output_node, output_socket_name, input_node, input_socket_name):
@@ -231,4 +261,6 @@ def ensure_connection(output_node, output_socket_name, input_node, input_socket_
             return  # Connection already exists
 
     # Create the link if not found
-    links.new(output_node.outputs[output_socket_name], input_node.inputs[input_socket_name])
+    links.new(
+        output_node.outputs[output_socket_name], input_node.inputs[input_socket_name]
+    )

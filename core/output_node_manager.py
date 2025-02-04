@@ -1,12 +1,15 @@
-from helpers import (Color, CompositorNodeNames)
+from helpers import Color, CompositorNodeNames
 from typing import Tuple, List
 from dataclasses import dataclass, field
+
 
 class OutputNodeNames:
     """
     Class to store the names of various nodes and sockets used in the Output Node Manager
     """
+
     Group_Output = "Group Output"
+
 
 @dataclass
 class GroupOutputSettings:
@@ -18,9 +21,11 @@ class GroupOutputSettings:
         outputs_to_hide (List[int]): Indices of outputs to hide from the user in the Group Output node.
         is_active_output (bool): Whether the Group Output node is the active output of the node group. Defaults to False.
     """
+
     node_color: Tuple[float, float, float] = Color.DARK_GRAY
     outputs_to_hide: List[int] = field(default_factory=list)
     is_active_output: bool = False
+
 
 class OutputNodeManager:
     """
@@ -32,6 +37,7 @@ class OutputNodeManager:
         node_group (NodeTree): The node group to manage nodes in.
         use_custom_color (bool): Whether to use a custom color for the nodes. Defaults to False.
     """
+
     def __init__(self, *, node_group, use_custom_color=False):
         """
         Initialize an OutputNodeManager instance.
@@ -42,8 +48,14 @@ class OutputNodeManager:
         """
         self.node_group = node_group
         self.use_custom_color = use_custom_color
-    
-    def create_group_output_node(self, *, group_output_name=OutputNodeNames.Group_Output, group_output_label=OutputNodeNames.Group_Output, settings=None):
+
+    def create_group_output_node(
+        self,
+        *,
+        group_output_name=OutputNodeNames.Group_Output,
+        group_output_label=OutputNodeNames.Group_Output,
+        settings=None
+    ):
         """
         Create a Group Output node in a node group and apply the specified settings.
 
@@ -70,7 +82,9 @@ class OutputNodeManager:
         if self.use_custom_color:
             group_output_node.color = settings.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Hide specified outputs
         for output_index in settings.outputs_to_hide:

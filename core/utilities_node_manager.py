@@ -1,12 +1,15 @@
-from helpers import (Color, CompositorNodeNames)
+from helpers import Color, CompositorNodeNames
 from typing import Tuple
 from dataclasses import dataclass, field
+
 
 class UtilitiesNodeNames:
     """
     Class to store the names of various utility nodes.
     """
+
     Switch = "Switch"
+
 
 @dataclass
 class SwitchSettings:
@@ -19,10 +22,12 @@ class SwitchSettings:
         off (list): Color of the "Off" output of the Switch node. Defaults to pure white.
         on (list): Color of the "On" output of the Switch node. Defaults to pure white.
     """
+
     node_color: Tuple[float, float, float] = Color.LIGHT_GRAY  # LIGHT_GRAY Color
     check: bool = False
     off: list = (0.8, 0.8, 0.8, 1.0)  # White Color
     on: list = (0.8, 0.8, 0.8, 1.0)  # White Color
+
 
 class UtilitiesNodeManager:
     def __init__(self, *, node_group, use_custom_color=False):
@@ -35,8 +40,14 @@ class UtilitiesNodeManager:
         """
         self.node_group = node_group
         self.use_custom_color = use_custom_color
-    
-    def create_switch_node(self, *, switch_name=UtilitiesNodeNames.Switch, switch_label=UtilitiesNodeNames.Switch, settings=None):
+
+    def create_switch_node(
+        self,
+        *,
+        switch_name=UtilitiesNodeNames.Switch,
+        switch_label=UtilitiesNodeNames.Switch,
+        settings=None
+    ):
         """
         Create a Switch node in a node group and apply the specified settings.
 
@@ -62,7 +73,9 @@ class UtilitiesNodeManager:
         if self.use_custom_color:
             switch_node.color = settings.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         switch_node.check = settings.check
         switch_node.inputs[0].default_value = settings.off

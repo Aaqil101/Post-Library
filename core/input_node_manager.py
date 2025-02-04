@@ -1,12 +1,15 @@
-from helpers import (Color, CompositorNodeNames)
+from helpers import Color, CompositorNodeNames
 from typing import Tuple, List
 from dataclasses import dataclass, field
+
 
 class InputNodeNames:
     """
     Class to store the names of various nodes and sockets used in the Input Node Manager
     """
+
     Group_Input = "Group Input"
+
 
 @dataclass
 class GroupInputSettings:
@@ -17,8 +20,14 @@ class GroupInputSettings:
         node_color (Tuple[float, float, float]): Color of the node. Defaults to DARK_GRAY.
         outputs_to_hide (List[int]): Indices of outputs to hide from the user in the Group Input node.
     """
-    node_color: Tuple[float, float, float] = Color.DARK_GRAY  # Default to pure DARK_GRAY
-    outputs_to_hide: List[int] = field(default_factory=list)  # Indices of outputs to hide
+
+    node_color: Tuple[float, float, float] = (
+        Color.DARK_GRAY
+    )  # Default to pure DARK_GRAY
+    outputs_to_hide: List[int] = field(
+        default_factory=list
+    )  # Indices of outputs to hide
+
 
 class InputNodeManager:
     """
@@ -28,6 +37,7 @@ class InputNodeManager:
         node_group (NodeTree): The node group to manage nodes in.
         use_custom_color (bool): Whether to use a custom color for the nodes.
     """
+
     def __init__(self, *, node_group, use_custom_color: bool = False):
         """
         Initialize an InputNodeManager instance.
@@ -39,7 +49,13 @@ class InputNodeManager:
         self.node_group = node_group
         self.use_custom_color = use_custom_color
 
-    def create_group_input_node(self, *, group_input_name=InputNodeNames.Group_Input, group_input_label=InputNodeNames.Group_Input, settings: GroupInputSettings=None):
+    def create_group_input_node(
+        self,
+        *,
+        group_input_name=InputNodeNames.Group_Input,
+        group_input_label=InputNodeNames.Group_Input,
+        settings: GroupInputSettings = None
+    ):
         """
         Create a Group Input node in a node group and apply the specified settings.
 
@@ -66,7 +82,9 @@ class InputNodeManager:
         if self.use_custom_color:
             group_input_node.color = settings.node_color
         else:
-            print("Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors.")
+            print(
+                "Custom color usage is disabled. Please set 'use_custom_color' to True to apply custom colors."
+            )
 
         # Hide specified outputs
         for output_index in settings.outputs_to_hide:
