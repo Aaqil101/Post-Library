@@ -169,7 +169,7 @@ class NODE_OT_FFGRAIN(bpy.types.Operator):
     bl_label = "FF Grain"
     bl_idname = "node.filmgrain_operator"
 
-    # I don't know why it says like this but it works so i am might not worie about it for know
+    # I don't know why it says like this but it works so i am might not worry about it for know
     # and I did search for a solution but I didn't find any. (https://youtu.be/P8w-tswp0JI?list=PLB8-FQgROBmlqzZ4HBzIAGpho-xp0Bn_h)
     # Error: Call expression not allowed in type expression
 
@@ -210,7 +210,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
     bl_label = "Vignette"
     bl_idname = "node.vignette_operator"
 
-    # I don't know why it says like this but it works so i am might not worie about it for know
+    # I don't know why it says like this but it works so i am might not worry about it for know
     # and I did search for a solution but I didn't find any. (https://youtu.be/P8w-tswp0JI?list=PLB8-FQgROBmlqzZ4HBzIAGpho-xp0Bn_h)
     # Error: Call expression not allowed in type expression
 

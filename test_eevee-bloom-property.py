@@ -67,6 +67,7 @@ from helpers import (
     update_real_time_compositing,
     toggle_oldeevee_bloom,
 )
+
 from core import (
     # Import all classes used by the Filter Node Manager
     FilterNodeManager,
