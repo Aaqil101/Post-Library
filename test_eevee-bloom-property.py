@@ -1,6 +1,7 @@
-import bpy
 import sys
 from pathlib import Path
+
+import bpy
 from bpy.props import BoolProperty, EnumProperty
 
 # Determine script path
@@ -49,48 +50,40 @@ for path in paths:
     else:
         print(f"{path_str} already in sys.path")
 
+# Importing the modules for creating the nodes, sockets, panels, etc...
+from core import (
+    BlendType,
+    BlurFilterType,
+    BlurSettings,
+    ColorNodeManager,
+    FilterNodeManager,
+    FrameSettings,
+    GlareQuality,
+    GlareSettings,
+    GlareType,
+    GroupInputSettings,
+    GroupOutputSettings,
+    InputNodeManager,
+    LayoutNodeManager,
+    MixColorSettings,
+    OutputNodeManager,
+    UtilitiesNodeManager,
+)
+
+# Import helper functions and constants
 from helpers import (
-    # For adding drivers to sockets
-    NodeDriverManager,
-    # Color references
     Color,
-    # Names and descriptions
     CompositorNodeNames,
-    Names,
     Descriptions,
+    Names,
+    NodeDriverManager,
     SocketNames,
-    # Functions
-    setup_bloom,
     ensure_connection,
     is_compositor_enabled,
     poll_view_3d,
-    update_real_time_compositing,
+    setup_bloom,
     toggle_oldeevee_bloom,
-)
-
-from core import (
-    # Import all classes used by the Filter Node Manager
-    FilterNodeManager,
-    GlareSettings,
-    GlareType,
-    GlareQuality,
-    BlurSettings,
-    BlurFilterType,
-    # Import all classes used by the Color Node Manager
-    ColorNodeManager,
-    MixColorSettings,
-    BlendType,
-    # Import all classes used by the Layout Node Manager
-    LayoutNodeManager,
-    FrameSettings,
-    # Import UtilitiesNodeManager
-    UtilitiesNodeManager,
-    # Import all classes used by the Input Node Manager
-    InputNodeManager,
-    GroupInputSettings,
-    # Import all classes used by the Output Node Manager
-    OutputNodeManager,
-    GroupOutputSettings,
+    update_real_time_compositing,
 )
 
 
