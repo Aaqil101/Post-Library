@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Optional
+from bpy.types import NodeTreeInterfaceSocket
 
 
 @dataclass
@@ -29,6 +30,9 @@ class SocketType:
 
 @dataclass
 class SubType:
+    # General
+    NONE: str = "NONE"
+
     # For Float
     PERCENTAGE: str = "PERCENTAGE"
     FACTOR: str = "FACTOR"
@@ -94,8 +98,9 @@ class SocketSettings:
     hide_value: bool = False
 
 
-ALLOWED_SUBTYPES = {
+ALLOWED_SUBTYPES: dict[str, set[str]] = {
     SocketType.FLOAT: {
+        SubType.NONE,
         SubType.PERCENTAGE,
         SubType.FACTOR,
         SubType.ANGLE,
@@ -107,6 +112,7 @@ ALLOWED_SUBTYPES = {
         SubType.FREQUENCY,
     },
     SocketType.VECTOR: {
+        SubType.NONE,
         SubType.TRANSLATION,
         SubType.DIRECTION,
         SubType.VELOCITY,
@@ -140,7 +146,7 @@ class NodeTreeSocket:
         node_tree (NodeTree): The node tree to manage sockets in.
     """
 
-    def __init__(self, *, node_tree):
+    def __init__(self, *, node_tree) -> None:
         """
         Initialize a NodeTreeSocket instance.
 
@@ -148,7 +154,7 @@ class NodeTreeSocket:
             node_tree (NodeTree): The node tree to manage sockets in.
         """
 
-        self.node_tree = node_tree
+        self.node_tree: Any = node_tree
 
     def create_socket(
         self,
@@ -159,7 +165,24 @@ class NodeTreeSocket:
         parent: Optional[str] = None,
         description: Optional[str] = "",
         settings: Optional[SocketSettings] = None,
-    ):
+    ) -> Any:
+        """
+        Creates a new socket in the node tree.
+
+        Args:
+            name (str): The name of the socket.
+            in_out (str): The direction of the socket. Must be 'INPUT' or 'OUTPUT'.
+            socket_type (str): The type of the socket. Must be one of the values in `SocketType`.
+            parent (Optional[str], optional): The name of the parent socket. Defaults to None.
+            description (Optional[str], optional): The description of the socket. Defaults to "".
+            settings (Optional[SocketSettings], optional): The settings for the socket. Defaults to `SocketSettings()` if not specified.
+
+        Raises:
+            ValueError: If the in_out or socket_type is invalid.
+
+        Returns:
+            NodeSocket: The newly created socket.
+        """
         if in_out not in (InOut.INPUT, InOut.OUTPUT):
             raise ValueError(
                 f"Invalid in_out value: {in_out}. Must be 'INPUT' or 'OUTPUT'."
@@ -187,7 +210,7 @@ class NodeTreeSocket:
             )
 
         # Create a new socket
-        socket = self.node_tree.interface.new_socket(
+        socket: NodeTreeInterfaceSocket = self.node_tree.interface.new_socket(
             name=name,
             in_out=in_out,
             socket_type=socket_type,

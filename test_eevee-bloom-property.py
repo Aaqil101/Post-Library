@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
+from typing import Literal
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty
+from bpy.types import Node, NodeTree, UILayout
 
 # Determine script path
 try:
@@ -20,9 +22,9 @@ if not script_path:
     raise RuntimeError("The script must be saved to disk before running!")
 
 # Resolve directories
-script_dir = Path(script_path).resolve().parent
-path_to_helpers_folder = script_dir / "helpers"
-path_to_core_folder = script_dir / "core"
+script_dir: Path = Path(script_path).resolve().parent
+path_to_helpers_folder: Path = script_dir / "helpers"
+path_to_core_folder: Path = script_dir / "core"
 
 """
 TODO: When it's time to release the addon, remove the {# Determine script path} and enable this one
@@ -39,7 +41,7 @@ path_to_core_folder = script_dir / "core"
 """
 
 # List of paths
-paths = [script_dir, path_to_helpers_folder]
+paths: list[Path] = [script_dir, path_to_helpers_folder]
 
 # Add directories to sys.path
 for path in paths:
@@ -93,17 +95,14 @@ from helpers import (
 
 
 # initialize OldEevee_Bloom node group
-def oldeevee_bloom_node_group(context, operator, group_name):
-    oldeevee_bloom = bpy.data.node_groups.new(group_name, CompositorNodeNames.TREE)
+def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
+    oldeevee_bloom: NodeTree = bpy.data.node_groups.new(
+        group_name, CompositorNodeNames.TREE
+    )
 
     oldeevee_bloom.color_tag = "FILTER"
     oldeevee_bloom.description = Descriptions.oldeevee_bloom
     oldeevee_bloom.default_group_node_width = 174
-
-    """
-    !Temporary
-    """
-    SubType
 
     # oldeevee_bloom interface
     # Initialize interface managers with the oldeevee_bloom node group and custom settings
@@ -130,86 +129,79 @@ def oldeevee_bloom_node_group(context, operator, group_name):
         settings=SocketSettings(default_value=(1.0, 1.0, 1.0, 1.0)),
     )
 
-    """ image_socket_1 = oldeevee_bloom.interface.new_socket(
-        name=Names.Image, in_out="INPUT", socket_type="NodeSocketColor"
-    )
-    image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
-    image_socket_1.attribute_domain = "POINT"
-    image_socket_1.description = Descriptions.image_input """
-
     # Socket Quality
-    quality_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Quality, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Quality,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.quality,
+        settings=SocketSettings(
+            default_value=0.0,
+            min_value=0.0,
+            max_value=1.0,
+            subtype=SubType.FACTOR,
+        ),
     )
-    quality_socket.default_value = 0.0
-    quality_socket.min_value = 0.0
-    quality_socket.max_value = 1.0
-    quality_socket.subtype = "FACTOR"
-    quality_socket.attribute_domain = "POINT"
-    quality_socket.description = Descriptions.quality
 
     # Socket Threshold
-    threshold_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Threshold, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Threshold,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.threshold,
+        settings=SocketSettings(default_value=1.0, min_value=0.0, max_value=1000.0),
     )
-    threshold_socket.default_value = 1.0
-    threshold_socket.min_value = 0.0
-    threshold_socket.max_value = 1000.0
-    threshold_socket.subtype = "NONE"
-    threshold_socket.attribute_domain = "POINT"
-    threshold_socket.description = Descriptions.threshold
 
     # Socket Knee
-    knee_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Knee, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Knee,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.knee,
+        settings=SocketSettings(
+            default_value=0.0, min_value=0.0, max_value=1.0, subtype=SubType.FACTOR
+        ),
     )
-    knee_socket.default_value = 0.0
-    knee_socket.min_value = 0.0
-    knee_socket.max_value = 1.0
-    knee_socket.subtype = "FACTOR"
-    knee_socket.attribute_domain = "POINT"
-    knee_socket.description = Descriptions.knee
 
     # Socket Radius
-    radius_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Radius, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Radius,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.radius,
+        settings=SocketSettings(default_value=0.0, min_value=0.0, max_value=2048.0),
     )
-    radius_socket.default_value = 0.0
-    radius_socket.min_value = 0.0
-    radius_socket.max_value = 2048.0
-    radius_socket.subtype = "NONE"
-    radius_socket.attribute_domain = "POINT"
-    radius_socket.description = Descriptions.radius
 
     # Socket Color
-    color_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Color, in_out="INPUT", socket_type="NodeSocketColor"
+    NTS.create_socket(
+        name=Names.Color,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.COLOR,
+        description=Descriptions.color,
+        settings=SocketSettings(default_value=(1.0, 1.0, 1.0, 1.0)),
     )
-    color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
-    color_socket.attribute_domain = "POINT"
-    color_socket.description = Descriptions.color
 
     # Socket Intensity
-    intensity_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Intensity, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Intensity,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.intensity,
+        settings=SocketSettings(
+            default_value=1.0, min_value=0.0, max_value=1.0, subtype=SubType.FACTOR
+        ),
     )
-    intensity_socket.default_value = 1.0
-    intensity_socket.min_value = 0.0
-    intensity_socket.max_value = 1.0
-    intensity_socket.subtype = "FACTOR"
-    intensity_socket.attribute_domain = "POINT"
-    intensity_socket.description = Descriptions.intensity
 
     # Socket Clamp
-    clamp_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Clamp, in_out="INPUT", socket_type="NodeSocketFloat"
+    NTS.create_socket(
+        name=Names.Clamp,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.FLOAT,
+        description=Descriptions.clamp,
+        settings=SocketSettings(
+            default_value=1.0, min_value=0.0, max_value=2.0, subtype=SubType.FACTOR
+        ),
     )
-    clamp_socket.default_value = 1.0
-    clamp_socket.min_value = 0.0
-    clamp_socket.max_value = 2.0
-    clamp_socket.subtype = "FACTOR"
-    clamp_socket.attribute_domain = "POINT"
-    clamp_socket.description = Descriptions.clamp
 
     # Panel Clamp Mix
     clamp_mix_panel = oldeevee_bloom.interface.new_panel(
@@ -916,21 +908,23 @@ class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context) -> Literal[True]:
         return True  # Always display the panel
 
     def draw_header(self, context):
         scene = context.scene
         self.layout.prop(scene, "bloom_mute_unmute_bool", text="")
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
         layout.enabled = context.scene.bloom_mute_unmute_bool
 
         scene = context.scene
-        node_tree = bpy.context.scene.node_tree  # Access the Compositor node tree
+        node_tree: NodeTree = (
+            bpy.context.scene.node_tree
+        )  # Access the Compositor node tree
 
         if not is_compositor_enabled(scene):
             # If compositor is disabled, show the operator to enable it
@@ -942,7 +936,7 @@ class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
         else:
             # Once the compositor is enabled, check for the oldeevee_bloom node
             if node_tree:
-                oldeevee_bloom_node = next(
+                oldeevee_bloom_node: Node | None = next(
                     (
                         node
                         for node in node_tree.nodes
@@ -987,8 +981,8 @@ class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
 
                     # Image Panel
                     if image_inputs:
-                        image_box = layout.box()
-                        image_col = image_box.column()
+                        image_box: UILayout = layout.box()
+                        image_col: UILayout = image_box.column()
                         for input in image_inputs:
                             image_col.separator(factor=0.1)
                             image_col.prop(input, "default_value", text=input.name)
@@ -1002,18 +996,18 @@ class RENDER_PT_OLDEEVEE_BLOOM(bpy.types.Panel):
                         emboss=False,
                     )
                     if scene.bloom_clamp_mix_bool:
-                        clamp_mix_box = layout.box()
-                        clamp_mix_col = clamp_mix_box.column()
+                        clamp_mix_box: UILayout = layout.box()
+                        clamp_mix_col: UILayout = clamp_mix_box.column()
                         for input in clamp_mix_inputs:
                             clamp_mix_col.separator(factor=0.1)
                             clamp_mix_col.prop(input, "default_value", text=input.name)
 
                     # Other Panel
-                    row = layout.row()
+                    row: UILayout = layout.row()
                     row.prop(scene, "bloom_other_bool", icon="MODIFIER", emboss=False)
                     if scene.bloom_other_bool:
-                        other_box = layout.box()
-                        other_col = other_box.column()
+                        other_box: UILayout = layout.box()
+                        other_col: UILayout = other_box.column()
                         for input in other_inputs:
                             other_col.separator(factor=0.1)
                             other_col.prop(input, "default_value", text=input.name)
@@ -1045,7 +1039,7 @@ classes = [RENDER_PT_OLDEEVEE_BLOOM, NODE_OT_BLOOM, SCENE_OT_ENABLE_COMPOSITOR]
 
 
 # Register and unregister
-def register():
+def register() -> None:
     # Register Handler
     bpy.app.handlers.load_post.append(setup_bloom)
 
@@ -1085,7 +1079,7 @@ def register():
         bpy.utils.register_class(cls)
 
 
-def unregister():
+def unregister() -> None:
     # Unregister Handler
     bpy.app.handlers.load_post.remove(setup_bloom)
 
