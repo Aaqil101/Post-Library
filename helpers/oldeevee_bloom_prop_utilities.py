@@ -65,7 +65,8 @@ class Descriptions:
     Class to store all the descriptions of the Bloom properties
     """
 
-    image: str = "Standard color output"
+    image_output: str = "Standard color output"
+    image_input: str = "Standard color input"
     quality: str = (
         "If the value is set to 0 then the bloom effect will be applied to the low resolution copy of the image. If the value is set to 1 then the bloom effect will be applied to the high resolution copy of the image. This can be helpful to save render times while only doing preview renders"
     )

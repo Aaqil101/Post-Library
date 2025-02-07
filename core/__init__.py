@@ -16,6 +16,13 @@ from .filter_node_manager import (
     GlareType,
 )
 from .input_node_manager import GroupInputSettings, InputNodeManager, InputNodeNames
+from .interface_manager import (
+    InOut,
+    NodeTreeSocket,
+    SocketSettings,
+    SocketType,
+    SubType,
+)
 from .layout_node_manager import (
     FrameSettings,
     LayoutNodeManager,
@@ -57,4 +64,9 @@ __all__ = [
     "OutputNodeNames",
     "OutputNodeManager",
     "GroupOutputSettings",
+    "SocketType",
+    "SubType",
+    "InOut",
+    "SocketSettings",
+    "NodeTreeSocket",
 ]

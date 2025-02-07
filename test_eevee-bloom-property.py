@@ -63,10 +63,15 @@ from core import (
     GlareType,
     GroupInputSettings,
     GroupOutputSettings,
+    InOut,
     InputNodeManager,
     LayoutNodeManager,
     MixColorSettings,
+    NodeTreeSocket,
     OutputNodeManager,
+    SocketSettings,
+    SocketType,
+    SubType,
     UtilitiesNodeManager,
 )
 
@@ -95,21 +100,42 @@ def oldeevee_bloom_node_group(context, operator, group_name):
     oldeevee_bloom.description = Descriptions.oldeevee_bloom
     oldeevee_bloom.default_group_node_width = 174
 
+    """
+    !Temporary
+    """
+    SubType
+
     # oldeevee_bloom interface
-    # Socket Image
-    image_socket = oldeevee_bloom.interface.new_socket(
-        name=Names.Image, in_out="OUTPUT", socket_type="NodeSocketColor"
-    )
-    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
-    image_socket.attribute_domain = "POINT"
+    # Initialize interface managers with the oldeevee_bloom node group and custom settings
+    NTS = NodeTreeSocket(node_tree=oldeevee_bloom)
 
     # Socket Image
-    image_socket_1 = oldeevee_bloom.interface.new_socket(
+    NTS.create_socket(
+        name=Names.Image,
+        in_out=InOut.OUTPUT,
+        socket_type=SocketType.COLOR,
+        description=Descriptions.image_output,
+        settings=SocketSettings(
+            default_value=(1.0, 1.0, 1.0, 1.0),
+            hide_value=True,
+        ),
+    )
+
+    # Socket Image
+    NTS.create_socket(
+        name=Names.Image,
+        in_out=InOut.INPUT,
+        socket_type=SocketType.COLOR,
+        description=Descriptions.image_input,
+        settings=SocketSettings(default_value=(1.0, 1.0, 1.0, 1.0)),
+    )
+
+    """ image_socket_1 = oldeevee_bloom.interface.new_socket(
         name=Names.Image, in_out="INPUT", socket_type="NodeSocketColor"
     )
     image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket_1.attribute_domain = "POINT"
-    image_socket_1.description = Descriptions.image
+    image_socket_1.description = Descriptions.image_input """
 
     # Socket Quality
     quality_socket = oldeevee_bloom.interface.new_socket(

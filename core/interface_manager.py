@@ -84,8 +84,6 @@ class SocketSettings:
             `AttributeDomain`.
         hide_value: bool = False
             Whether to hide the value of the socket.
-        description: str = ""
-            A description of the socket.
     """
 
     default_value: Any = 0.0
@@ -94,7 +92,6 @@ class SocketSettings:
     subtype: str = "NONE"
     attribute_domain: str = "POINT"
     hide_value: bool = False
-    description: str = ""
 
 
 ALLOWED_SUBTYPES = {
@@ -117,6 +114,7 @@ ALLOWED_SUBTYPES = {
         SubType.EULER,
         SubType.XYZ,
     },
+    SocketType.COLOR: {"NONE"},  # ✅ Allow "NONE" for NodeSocketColor
 }
 
 
@@ -159,24 +157,9 @@ class NodeTreeSocket:
         in_out: str,
         socket_type: str,
         parent: Optional[str] = None,
+        description: Optional[str] = "",
         settings: Optional[SocketSettings] = None,
     ):
-        """
-        Create a new socket in the node tree.
-
-        Args:
-            name (str): The name of the socket.
-            in_out (str): The type of the socket. Must be 'INPUT' or 'OUTPUT'.
-            socket_type (str): The type of socket. Must be one of the values in `SocketType`.
-            parent (str, optional): The parent socket of the new socket. Defaults to None.
-            settings (SocketSettings, optional): The settings for the socket. Defaults to None.
-
-        Raises:
-            ValueError: If `in_out` or `socket_type` is invalid.
-
-        Returns:
-            socket
-        """
         if in_out not in (InOut.INPUT, InOut.OUTPUT):
             raise ValueError(
                 f"Invalid in_out value: {in_out}. Must be 'INPUT' or 'OUTPUT'."
@@ -204,12 +187,21 @@ class NodeTreeSocket:
             )
 
         # Create a new socket
-        socket = self.node_tree.new_socket(name, in_out, socket_type, parent)
+        socket = self.node_tree.interface.new_socket(
+            name=name,
+            in_out=in_out,
+            socket_type=socket_type,
+            description=description,
+            parent=parent,
+        )
+
+        if socket_type == SocketType.FLOAT and SocketType.VECTOR:
+            socket.min_value = settings.min_value
+            socket.max_value = settings.max_value
+            socket.subtype = settings.subtype
+
         socket.default_value = settings.default_value
-        socket.min_value = settings.min_value
-        socket.max_value = settings.max_value
-        socket.subtype = settings.subtype
         socket.attribute_domain = settings.attribute_domain
         socket.hide_value = settings.hide_value
-        socket.description = settings.description
+
         return socket
