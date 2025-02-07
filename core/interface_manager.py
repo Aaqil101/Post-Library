@@ -97,6 +97,43 @@ class SocketSettings:
     description: str = ""
 
 
+ALLOWED_SUBTYPES = {
+    SocketType.FLOAT: {
+        SubType.PERCENTAGE,
+        SubType.FACTOR,
+        SubType.ANGLE,
+        SubType.TIME,
+        SubType.TIME_ABSOLUTE,
+        SubType.DISTANCE,
+        SubType.WAVELENGTH,
+        SubType.COLOR_TEMPERATURE,
+        SubType.FREQUENCY,
+    },
+    SocketType.VECTOR: {
+        SubType.TRANSLATION,
+        SubType.DIRECTION,
+        SubType.VELOCITY,
+        SubType.ACCELERATION,
+        SubType.EULER,
+        SubType.XYZ,
+    },
+}
+
+
+def is_valid_subtype(socket_type: str, subtype: str) -> bool:
+    """
+    Checks if the given subtype is valid for the given socket type.
+
+    Args:
+        socket_type (str): The type of the socket.
+        subtype (str): The subtype to check.
+
+    Returns:
+        bool: True if the subtype is valid, False otherwise.
+    """
+    return subtype in ALLOWED_SUBTYPES.get(socket_type, set())
+
+
 class NodeTreeSocket:
     """
     A class for managing sockets in a NodeTree.
@@ -114,9 +151,6 @@ class NodeTreeSocket:
         """
 
         self.node_tree = node_tree
-
-    def is_valid_subtype(socket_type: str, subtype: str) -> bool:
-        return subtype in ALLOWD_SUBTYPES.get(socket_type, set())
 
     def create_socket(
         self,
@@ -149,9 +183,9 @@ class NodeTreeSocket:
             )
 
         if socket_type not in (
-            SocketType.BOOLEAN,
+            # SocketType.BOOLEAN, # TODO: Implement BOOLEAN socket type
             SocketType.VECTOR,
-            SocketType.INTEGER,
+            # SocketType.INTEGER, # TODO: Implement INTEGER socket type
             SocketType.FLOAT,
             SocketType.COLOR,
         ):
@@ -162,6 +196,12 @@ class NodeTreeSocket:
         # Use default settings if none are provided
         if settings is None:
             settings = SocketSettings()
+
+        # Validate subtype
+        if not is_valid_subtype(socket_type, settings.subtype):
+            raise ValueError(
+                f"Invalid subtype {settings.subtype} for socket type {socket_type}."
+            )
 
         # Create a new socket
         socket = self.node_tree.new_socket(name, in_out, socket_type, parent)
