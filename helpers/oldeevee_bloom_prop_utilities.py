@@ -1,6 +1,7 @@
+from dataclasses import dataclass
+
 import bpy
 from bpy.app.handlers import persistent
-from dataclasses import dataclass, field
 
 
 @dataclass
