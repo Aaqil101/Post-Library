@@ -1,6 +1,7 @@
-from helpers import Color, CompositorNodeNames
-from typing import Tuple, List
 from dataclasses import dataclass, field
+from typing import List, Tuple
+
+from helpers import Color, CompositorNodeNames
 
 
 class OutputNodeNames:

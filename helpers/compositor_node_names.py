@@ -1,10 +1,12 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+
 
 @dataclass
 class CompositorNodeNames:
     """
     Class to store the names of every nodes and other items used in the Blender Compositor.
     """
+
     # Input
     BOKEH_IMAGE: str = "CompositorNodeBokehImage"
     IMAGE: str = "CompositorNodeImage"
@@ -66,7 +68,7 @@ class CompositorNodeNames:
     PIXELATE: str = "CompositorNodePixelate"
     POSTERIZE: str = "CompositorNodePosterize"
     SUN_BEAMS: str = "CompositorNodeSunBeams"
-    
+
     # Filter.Blur
     BILATERAL_BLUR: str = "CompositorNodeBilateralblur"
     BLUR: str = "CompositorNodeBlur"

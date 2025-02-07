@@ -1,5 +1,6 @@
-from helpers import hexcode_to_rgb, hex_color_add, CompositorNodeNames
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+
+from helpers import CompositorNodeNames, hex_color_add, hexcode_to_rgb
 
 
 class LayoutNodeNames:

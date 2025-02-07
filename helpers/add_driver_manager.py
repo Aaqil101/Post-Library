@@ -4,17 +4,8 @@
 * His youtube channel (https://www.youtube.com/@CGPython)
 """
 
-"""
-oldeevee_bloom_obs_driver = oldeevee_bloom_node.node_tree.nodes[OldEevee_Bloom_Names.OB_Switch].driver_add('check').driver
-oldeevee_bloom_obs_driver.type = "AVERAGE"
-driver = oldeevee_bloom_obs_driver.variables.new()
-driver.name = "default_value"
-driver.targets[0].id_type = "SCENE"
-driver.targets[0].id = bpy.context.scene
-driver.targets[0].data_path = f'node_tree.nodes["{oldeevee_bloom_node.name}"].inputs[1].default_value'
-"""
-
 import bpy
+
 
 class NodeDriverManager:
     """
@@ -38,7 +29,16 @@ class NodeDriverManager:
     :param driver_type: The type of driver to create
     :type driver_type: str
     """
-    def __init__(self, *, node_group: str, id_type: str, id: bpy.types.ID, var_name="default_value", driver_type="AVERAGE"):
+
+    def __init__(
+        self,
+        *,
+        node_group: str,
+        id_type: str,
+        id: bpy.types.ID,
+        var_name="default_value",
+        driver_type="AVERAGE",
+    ):
         """
         Constructor for NodeDriverManager
 
@@ -69,15 +69,15 @@ class NodeDriverManager:
     def add_driver(self, *, node_name: str, socket_name: str):
         """
         Adds a driver to a specified node and socket within the node group.
-    
+
         :param node_name: The name of the node to which the driver will be added.
         :type node_name: str
-    
+
         :param socket_name: The name of the socket on the node where the driver will be added.
         :type socket_name: str
-    
+
         :raises ValueError: If the node with the specified name is not found.
-    
+
         :return: The created driver.
         :rtype: bpy.types.Driver
         """
@@ -97,7 +97,7 @@ class NodeDriverManager:
         to point to the default value of the specified input number in the node group.
 
         Args:
-            number (int): The index of the input in the node group whose default value 
+            number (int): The index of the input in the node group whose default value
                           will be linked to the driver variable.
 
         Raises:
@@ -114,5 +114,7 @@ class NodeDriverManager:
         driver_var.name = self.var_name
         driver_var.targets[0].id_type = self.id_type
         driver_var.targets[0].id = self.id
-        driver_var.targets[0].data_path = f'node_tree.nodes["{self.node_group.name}"].inputs[{number}].default_value'
+        driver_var.targets[0].data_path = (
+            f'node_tree.nodes["{self.node_group.name}"].inputs[{number}].default_value'
+        )
         return driver_var

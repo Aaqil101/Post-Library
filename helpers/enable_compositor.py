@@ -10,7 +10,7 @@ def enable_compositor(scene=None):
     """
     if scene is None:
         scene = bpy.context.scene
-    
+
     # Enable the compositor
     if not scene.use_nodes:
         scene.use_nodes = True

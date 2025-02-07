@@ -1,5 +1,6 @@
+from dataclasses import dataclass
+
 from helpers import Color, CompositorNodeNames
-from dataclasses import dataclass, field
 
 
 class FilterNodeNames:

@@ -13,19 +13,16 @@ def rename_and_label_nodes(node_data):
         dict: A dictionary summarizing the results:
               {'renamed': int, 'errors': list}
     """
-    results = {
-        'renamed': 0,
-        'errors': []
-    }
+    results = {"renamed": 0, "errors": []}
 
     for entry in node_data:
         if len(entry) < 2:
-            results['errors'].append(f"Invalid entry (too few elements): {entry}")
+            results["errors"].append(f"Invalid entry (too few elements): {entry}")
             continue
 
         node, name, *optional_width = entry
         if not node:
-            results['errors'].append(f"Node is None for name '{name}'.")
+            results["errors"].append(f"Node is None for name '{name}'.")
             continue
 
         try:
@@ -41,8 +38,8 @@ def rename_and_label_nodes(node_data):
             if optional_width:
                 node.width = optional_width[0]
 
-            results['renamed'] += 1
+            results["renamed"] += 1
         except Exception as e:
-            results['errors'].append(f"Error processing node '{name}': {e}")
+            results["errors"].append(f"Error processing node '{name}': {e}")
 
     return results

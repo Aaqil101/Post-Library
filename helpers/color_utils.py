@@ -10,6 +10,7 @@ from typing import Tuple
 # and then I modified the code to fit my needs based on this tutorial.
 # (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
 
+
 def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
     """
     Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
@@ -43,6 +44,7 @@ def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
 
     return tuple([srgb_red, srgb_green, srgb_blue])
 
+
 def hex_color_add(color1, color2):
     """
     This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
@@ -51,14 +53,15 @@ def hex_color_add(color1, color2):
     # Split the hex codes into RGB components
     r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
     r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
-    
+
     # Add the components and clamp each to a maximum of 255
     r = min(r1 + r2, 255)
     g = min(g1 + g2, 255)
     b = min(b1 + b2, 255)
-    
+
     # Combine the components back into a hex color
     return f"{r:02X}{g:02X}{b:02X}"
+
 
 class Color:
     """
@@ -66,7 +69,7 @@ class Color:
 
     Example:
         Import the Color class
-        
+
         Color.LIGHT_RED
     """
 
