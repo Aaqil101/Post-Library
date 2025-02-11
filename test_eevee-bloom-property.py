@@ -36,8 +36,6 @@ except NameError:
 
 # Resolve directories
 script_dir = script_path.parent
-path_to_helpers_folder = script_dir / "helpers"
-path_to_core_folder = script_dir / "core"
 """
 
 # List of paths
