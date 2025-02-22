@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Optional
+
 from bpy.types import NodeTreeInterfaceSocket
 
 
@@ -228,3 +229,6 @@ class NodeTreeSocket:
         socket.hide_value = settings.hide_value
 
         return socket
+
+    def create_panels(self, *, name: str):
+        pass
