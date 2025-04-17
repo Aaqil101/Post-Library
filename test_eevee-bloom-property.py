@@ -495,6 +495,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
         group_input_name=Names.Group_Input_01,
         group_input_label=Names.Group_Input_01,
         settings=GroupInputSettings(
+            # Outputs to hide
             outputs_to_hide=[
                 0,
                 1,
@@ -513,7 +514,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
                 14,
                 16,
                 17,
-            ]  # Outputs to hide
+            ]
         ),
     )
 
@@ -522,6 +523,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
         group_input_name=Names.Group_Input_02,
         group_input_label=Names.Group_Input_02,
         settings=GroupInputSettings(
+            # Outputs to hide
             outputs_to_hide=[
                 0,
                 1,
@@ -540,7 +542,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
                 15,
                 16,
                 17,
-            ]  # Outputs to hide
+            ]
         ),
     )
 
@@ -549,6 +551,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
         group_input_name=Names.Group_Input_03,
         group_input_label=Names.Group_Input_03,
         settings=GroupInputSettings(
+            # Outputs to hide
             outputs_to_hide=[
                 0,
                 1,
@@ -567,7 +570,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
                 15,
                 16,
                 17,
-            ]  # Outputs to hide
+            ]
         ),
     )
 
@@ -576,6 +579,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
         group_input_name=Names.Group_Input_04,
         group_input_label=Names.Group_Input_04,
         settings=GroupInputSettings(
+            # Outputs to hide
             outputs_to_hide=[
                 0,
                 1,
@@ -591,7 +595,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
                 15,
                 16,
                 17,
-            ]  # Outputs to hide
+            ]
         ),
     )
 
@@ -600,6 +604,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
         group_input_name=Names.Group_Input_05,
         group_input_label=Names.Group_Input_05,
         settings=GroupInputSettings(
+            # Outputs to hide
             outputs_to_hide=[
                 1,
                 2,
@@ -617,7 +622,7 @@ def oldeevee_bloom_node_group(context, operator, group_name) -> NodeTree:
                 15,
                 16,
                 17,
-            ]  # Outputs to hide
+            ]
         ),
     )
 
