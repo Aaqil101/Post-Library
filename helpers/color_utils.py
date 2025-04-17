@@ -10,6 +10,7 @@ from typing import Tuple
 # and then I modified the code to fit my needs based on this tutorial.
 # (https://youtu.be/knc1CGBhJeU?list=TLPQMTcwOTIwMjRqvGTVRWN4sg)
 
+
 def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
     """
     Converting from a color in the form of a hex triplet string (en.wikipedia.org/wiki/Web_colors#Hex_triplet)
@@ -42,3 +43,42 @@ def hexcode_to_rgb(hexcode: str) -> Tuple[float]:
     srgb_blue = blue / 255
 
     return tuple([srgb_red, srgb_green, srgb_blue])
+
+
+def hex_color_add(color1, color2):
+    """
+    This function takes two hex color codes, adds their RGB components, and clamps each component to a maximum of 255.
+    The resulting RGB components are then combined back into a hex color code.
+    """
+    # Split the hex codes into RGB components
+    r1, g1, b1 = int(color1[:2], 16), int(color1[2:4], 16), int(color1[4:], 16)
+    r2, g2, b2 = int(color2[:2], 16), int(color2[2:4], 16), int(color2[4:], 16)
+
+    # Add the components and clamp each to a maximum of 255
+    r = min(r1 + r2, 255)
+    g = min(g1 + g2, 255)
+    b = min(b1 + b2, 255)
+
+    # Combine the components back into a hex color
+    return f"{r:02X}{g:02X}{b:02X}"
+
+
+class Color:
+    """
+    Class to store color values converted from hex codes to RGB
+
+    Example:
+        Import the Color class
+
+        Color.LIGHT_RED
+    """
+
+    LIGHT_RED = hexcode_to_rgb("#94493E")
+    DARK_RED = hexcode_to_rgb("#823A35")
+    LIGHT_BLUE = hexcode_to_rgb("#646E66")
+    DARK_BLUE = hexcode_to_rgb("#4C6160")
+    LIGHT_PURPLE = hexcode_to_rgb("#846167")
+    DARK_PURPLE = hexcode_to_rgb("#77535F")
+    BROWN = hexcode_to_rgb("#866937")
+    DARK_GRAY = hexcode_to_rgb("#3C3937")
+    LIGHT_GRAY = hexcode_to_rgb("#59514B")
