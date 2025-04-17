@@ -1,6 +1,8 @@
-import bpy
 from typing import Tuple
+
+import bpy
 from bpy.props import BoolProperty, EnumProperty
+
 
 class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_label = "test"
@@ -11,7 +13,7 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        
+
         row = layout.row()
         row.operator("node.beautymixer_operator", text=Names.BeautyMixer, icon="IMAGE_RGB")
 
@@ -201,7 +203,7 @@ def glossy_node_group():
 
     glossy.color_tag = "CONVERTER"
     glossy.description = "A node group for mixing glossy passes together."
-    glossy.default_group_node_width = 163     
+    glossy.default_group_node_width = 163
 
     #glossy interface
     #Socket Gloss
@@ -494,7 +496,7 @@ def volume_node_group():
     #initialize volume links
     #add_volume.Image -> multiply_volume.Image
     volume.links.new(add_volume.outputs[0], multiply_volume.inputs[1])
-        
+
     #volume_group_input.VolumeInd -> add_volume.Image
     volume.links.new(volume_group_input.outputs[1], add_volume.inputs[2])
 
@@ -512,7 +514,7 @@ def beautymixer_node_group(context, operator, group_name):
     bpy.context.scene.use_nodes = True
 
     beautymixer = bpy.data.node_groups.new(group_name, 'CompositorNodeTree')
-        
+
     beautymixer.color_tag = "CONVERTER"
     beautymixer.description = "Mix all the beauty passes"
     beautymixer.default_group_node_width = 162
@@ -563,7 +565,7 @@ def beautymixer_node_group(context, operator, group_name):
     #Panel Glossy
     glossy_panel = beautymixer.interface.new_panel(Names.Glossy, default_closed=False)
     glossy_panel.description = "For mixing glossy pass"
-    
+
     #Socket GlossDir
     glossdir_socket_1 = beautymixer.interface.new_socket(name = Names.GlossDir, in_out='INPUT', socket_type = 'NodeSocketColor', parent = glossy_panel)
     glossdir_socket_1.default_value = (0.0, 0.0, 0.0, 1.0)
@@ -782,7 +784,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         ],
         default="GROUP"
     ) # type: ignore
-    
+
     def invoke(self, context, event):
 
         node_tree = bpy.context.scene.node_tree
@@ -793,7 +795,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             if Names.BeautyMixer in node.name and node.select:
                 self.beauty_mixer_node = node
                 break
-            
+
         if self.beauty_mixer_node is None:
             self.report({'WARNING'}, "Please select a BeautyMixer node!")
             return {'CANCELLED'}
@@ -825,7 +827,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
         tb = self.transmission_bool
         vb = self.volume_bool
         enum = self.group_ungroup_enum
-        
+
         # Get the current node tree
         node_tree = bpy.context.scene.node_tree
         node_selected = bpy.context.selected_nodes
@@ -844,7 +846,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             if not parent_node_group:
                 print(f"Parent node group not provided or not found.")
                 return
-    
+
             nodes_to_remove = []
 
             # Iterate through nodes in the parent node group
@@ -923,7 +925,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             for socket_name in socket_names:
                 socket = parent_node_group.node_tree.interface.items_tree[socket_name]
                 parent_node_group.node_tree.interface.remove(socket)
-            
+
             for panel_name in panels_names:
                 panel = parent_node_group.node_tree.interface.items_tree[panel_name]
                 parent_node_group.node_tree.interface.remove(panel)
@@ -961,20 +963,20 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             """
             if tree is None:
                 tree = node_tree
-            
+
             nodes = {}
             for i, name in enumerate(names):
                 nodes[i] = tree.nodes.get(name)  # Access by index
                 nodes[name] = tree.nodes.get(name)  # Access by name
             return nodes
-        
+
         def group_ungroup_node(parent_node_group):
             """
             Groups or ungroups nodes within a parent node group in Blender's compositor.
 
-            If nodes are selected, this function will ungroup them. If not, it checks if the 
-            specified node group exists in the compositor's node tree. If it exists, it purges 
-            orphaned data. If not, it attempts to remove the node group from Blender's data and 
+            If nodes are selected, this function will ungroup them. If not, it checks if the
+            specified node group exists in the compositor's node tree. If it exists, it purges
+            orphaned data. If not, it attempts to remove the node group from Blender's data and
             reports the results.
 
             Args:
@@ -1068,7 +1070,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 (transmission_node, "GTV_Trans_Mixer", 178),
                 (volume_node, "GTV_Vol_Mixer", 178)
             ]
-            
+
             rename_and_label_nodes(GTV_node_data)
 
             self.beauty_mixer_node.name = "Gloss&Trans&Vol"
@@ -1112,7 +1114,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 (transmission_node, "DTV_Trans_Mixer", 178),
                 (volume_node, "DTV_Vol_Mixer", 178)
             ]
-            
+
             rename_and_label_nodes(DTV_node_data)
 
             self.beauty_mixer_node.name = "Diff&Trans&Vol"
@@ -1142,7 +1144,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 self.beauty_mixer_node,
                 db_gb_vb_rm_node_groups
             )
-            
+
             db_gb_vb_rm_sockets = [Names.Trans, Names.TransDir, Names.TransInd, Names.TransCol]
             db_gb_vb_rm_panels = [Names.Transmission]
             rm_sockets_and_panels(
@@ -1156,7 +1158,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 (glossy_node, "DGV_Gloss_Mixer", 178),
                 (volume_node, "DGV_Vol_Mixer", 178)
             ]
-            
+
             rename_and_label_nodes(DGV_node_data)
 
             self.beauty_mixer_node.name = "Diff&Gloss&Vol"
@@ -1186,7 +1188,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 self.beauty_mixer_node,
                 db_gb_tb_rm_node_groups
             )
-            
+
             db_gb_tb_rm_sockets = [Names.Vol, Names.VolumeDir, Names.VolumeInd]
             db_gb_tb_rm_panels = [Names.Volume]
             rm_sockets_and_panels(
@@ -1200,7 +1202,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 (glossy_node, "DGT_Gloss_Mixer", 178),
                 (transmission_node, "DGT_Trans_Mixer", 178)
             ]
-            
+
             rename_and_label_nodes(DGT_node_data)
 
             self.beauty_mixer_node.name = "Diff&Gloss&Trans"
@@ -1353,7 +1355,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
                 self.beauty_mixer_node,
                 db_vb_rm_node_groups
             )
-            
+
             db_vb_rm_sockets = [Names.Gloss, Names.Trans, Names.GlossDir, Names.GlossInd, Names.GlossCol, Names.TransDir, Names.TransInd, Names.TransCol]
             db_vb_rm_panels = [Names.Glossy, Names.Transmission]
             rm_sockets_and_panels(
@@ -1468,7 +1470,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             elif enum == "GROUP":
                 # Intentionally does nothing, as this case is not implemented by design.
                 pass
-        
+
         # 4 If volume pass is selected
         elif vb:
             vb_rm_node_groups = [Names.Diff, Names.Gloss, Names.Trans]
@@ -1494,7 +1496,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             self.beauty_mixer_node.name = Names.Volume
             self.beauty_mixer_node.label = Names.Volume
             self.beauty_mixer_node.node_tree.name = Names.Volume
-        
+
         # 3 If transmission pass is selected
         elif tb:
             tb_rm_node_groups = [Names.Diff, Names.Gloss, Names.Vol]
@@ -1516,7 +1518,7 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             ]
 
             rename_and_label_nodes(T_node_data)
-                
+
             self.beauty_mixer_node.name = Names.Transmission
             self.beauty_mixer_node.label = Names.Transmission
             self.beauty_mixer_node.node_tree.name = Names.Transmission
@@ -1568,13 +1570,13 @@ class WM_OT_SELECT_PASSES(bpy.types.Operator):
             ]
 
             rename_and_label_nodes(D_node_data)
-                
+
             self.beauty_mixer_node.name = Names.Diffuse
             self.beauty_mixer_node.label = Names.Diffuse
             self.beauty_mixer_node.node_tree.name = Names.Diffuse
 
         return {'FINISHED'}
-    
+
 # Register and unregister
 classes = [COMP_PT_MAINPANEL, NODE_OT_BEAUTYMIXER, WM_OT_SELECT_PASSES]
 
