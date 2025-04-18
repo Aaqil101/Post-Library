@@ -2,7 +2,7 @@ bl_info = {
     "name": "Post Library",
     "author": "Aaqil",
     "version": (2, 0, 0),
-    "blender": (4, 3, 0),
+    "blender": (4, 4, 0),
     "location": "Compositor > Toolshelf",
     "description": "Boost your Blender workflow with essential tools for efficient VFX and post-processing. Simplify compositing, and finishing touches with this powerful addon.",
     "warning": "",
@@ -10,16 +10,20 @@ bl_info = {
     "category": "Nodes",
 }
 
+# Build-in Modules
 import sys
 from pathlib import Path
 
+# Blender Modules
 import bpy
+from bpy.types import UILayout
 
 """
-* I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
+INFO: I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
 """
 
-# Determine script path
+# Determine script pat
+# h
 try:
     script_path = (
         bpy.context.space_data.text.filepath
@@ -35,10 +39,10 @@ if not script_path:
     raise RuntimeError("The script must be saved to disk before running!")
 
 # Resolve directories
-script_dir = Path(script_path).resolve().parent
-path_to_nodes_folder = script_dir / "nodes"
-path_to_helpers_folder = script_dir / "helpers"
-path_to_core_folder = script_dir / "core"
+script_dir: Path = Path(script_path).resolve().parent
+path_to_nodes_folder: Path = script_dir / "nodes"
+path_to_helpers_folder: Path = script_dir / "helpers"
+path_to_core_folder: Path = script_dir / "core"
 
 """
 TODO: When it's time to release the addon, remove the {# Determine script path} and enable this one
@@ -55,7 +59,7 @@ path_to_core_folder = script_dir / "core"
 """
 
 # List of paths
-paths = [script_dir, path_to_nodes_folder, path_to_helpers_folder]
+paths: list[Path] = [script_dir, path_to_nodes_folder, path_to_helpers_folder]
 
 # Add directories to sys.path
 for path in paths:
@@ -66,7 +70,7 @@ for path in paths:
     else:
         print(f"{path_str} already in sys.path")
 
-from helpers import Color, add_driver_var
+from helpers import Color, NodeDriverManager
 from nodes import (
     beautymixer_node_group,
     bloom_node_group,
@@ -90,10 +94,10 @@ class COMP_PT_MAINPANEL(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "PLib"
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         layout = self.layout
 
-        row = layout.row()
+        row: UILayout = layout.row()
         row.label(text="Welcome to Post Library!", icon="INFO")
 
 
@@ -105,7 +109,7 @@ class COMP_PT_FINALTOUCHES(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "PLib"
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         layout = self.layout
 
         row = layout.row()
@@ -137,7 +141,7 @@ class NODE_OT_PASSMIXER(bpy.types.Operator):
     bl_label = "PassMixer"
     bl_idname = "node.passmixer_operator"
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_passmixer_node_name = "PassMixer"
         passmixer_group = passmixer_node_group(
@@ -158,7 +162,7 @@ class NODE_OT_LENSDISTORTION(bpy.types.Operator):
     bl_label = "Lens Distortion"
     bl_idname = "node.lensdistortion_operator"
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         lensdistortion_node(context, shelf)
 
@@ -181,7 +185,7 @@ class NODE_OT_FFGRAIN(bpy.types.Operator):
         options={"HIDDEN"},
     )  # type: ignore
 
-    def execute(self, context):
+    def execute(self, context) -> set[str]:
 
         custom_ff_grain_node_name = "FF Grain"
         image_path = self.filepath
@@ -199,7 +203,7 @@ class NODE_OT_FFGRAIN(bpy.types.Operator):
 
         return {"FINISHED"}
 
-    def invoke(self, context, event):
+    def invoke(self, context, event) -> set[str]:
         # Open the file browser to select an image
         context.window_manager.fileselect_add(self)
 
@@ -222,7 +226,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
         options={"HIDDEN"},
     )  # type: ignore
 
-    def execute(self, context):
+    def execute(self, context) -> set[str]:
 
         custom_vignette_node_name = "Vignette"
         image_path = self.filepath
@@ -240,7 +244,7 @@ class NODE_OT_VIGNETTE(bpy.types.Operator):
 
         return {"FINISHED"}
 
-    def invoke(self, context, event):
+    def invoke(self, context, event) -> set[str]:
         # Open the file browser to select an image
 
         context.window_manager.fileselect_add(self)
@@ -253,7 +257,7 @@ class NODE_OT_BASICVIGNETTE(bpy.types.Operator):
     bl_idname = "node.vignette_basic_operator"
     bl_description = "A basic node group for vignette effect"
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_vignette_basic_node_name = "Vignette-Basic"
         vignette_basic_group = vignette_basic_node_group(
@@ -276,7 +280,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
     bl_idname = "node.bloom_operator"
     bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_bloom_node_name = "Bloom"
         bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
@@ -295,89 +299,42 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         * His youtube channel (https://www.youtube.com/@CGPython)
         """
 
+        # Initialize NodeDriverManager to manage drivers for the node group
+        drivers = NodeDriverManager(
+            node_group=bloom_group, id_type="SCENE", id=bpy.context.scene
+        )
+
         # Original Bloom Switch
-        bloom_obs_driver = (
-            bloom_node.node_tree.nodes["OB Switch"].driver_add("check").driver
-        )
-        bloom_obs_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_obs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value',
-        )
+        drivers.add_driver(node_name="OB Switch", socket_name="check")
+        drivers.add_driver_var(2)
 
         # Knee Bloom Switch
-        bloom_kbs_driver = (
-            bloom_node.node_tree.nodes["KB Switch"].driver_add("check").driver
-        )
-        bloom_kbs_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_kbs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[2].default_value',
-        )
+        drivers.add_driver(node_name="KB Switch", socket_name="check")
+        drivers.add_driver_var(2)
 
         # Original Bloom High
-        bloom_obh_driver = (
-            bloom_node.node_tree.nodes["Original Bloom High"]
-            .driver_add("threshold")
-            .driver
-        )
-        bloom_obh_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_obh_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value',
-        )
+        drivers.add_driver(node_name="Original Bloom High", socket_name="threshold")
+        drivers.add_driver_var(4)
 
         # Original Bloom Low
-        bloom_obl_driver = (
-            bloom_node.node_tree.nodes["Original Bloom Low"]
-            .driver_add("threshold")
-            .driver
-        )
-        bloom_obl_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_obl_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[4].default_value',
-        )
+        drivers.add_driver(node_name="Original Bloom Low", socket_name="threshold")
+        drivers.add_driver_var(4)
 
         # Original Bloom High Size
-        bloom_obhs_driver = (
-            bloom_node.node_tree.nodes["Original Bloom High"].driver_add("size").driver
-        )
-        bloom_obhs_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_obhs_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value',
-        )
+        drivers.add_driver(node_name="Original Bloom High", socket_name="size")
+        drivers.add_driver_var(8)
 
         # Original Bloom Low Size
-        bloom_obls_driver = (
-            bloom_node.node_tree.nodes["Original Bloom Low"].driver_add("size").driver
-        )
-        bloom_obls_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_obls_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[8].default_value',
-        )
+        drivers.add_driver(node_name="Original Bloom Low", socket_name="size")
+        drivers.add_driver_var(8)
 
         # Added Radius X
-        bloom_arx_driver = (
-            bloom_node.node_tree.nodes["Blur"].driver_add("size_x").driver
-        )
-        bloom_arx_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_arx_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value',
-        )
+        drivers.add_driver(node_name="Blur", socket_name="size_x")
+        drivers.add_driver_var(5)
 
         # Added Radius Y
-        bloom_ary_driver = (
-            bloom_node.node_tree.nodes["Blur"].driver_add("size_y").driver
-        )
-        bloom_ary_driver.type = "AVERAGE"
-        add_driver_var(
-            bloom_ary_driver,
-            f'node_tree.nodes["{bloom_node.name}"].inputs[5].default_value',
-        )
+        drivers.add_driver(node_name="Blur", socket_name="size_y")
+        drivers.add_driver_var(5)
 
         return {"FINISHED"}
 
@@ -387,7 +344,7 @@ class NODE_OT_BEAUTYMIXER(bpy.types.Operator):
     bl_idname = "node.beautymixer_operator"
     bl_description = "To mix all the beauty passes"
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_beautymixer_node_name = "BeautyMixer"
         beautymixer_group = beautymixer_node_group(
@@ -410,7 +367,7 @@ class NODE_OT_CHROMATICABERRATION(bpy.types.Operator):
     bl_idname = "node.chromatic_aberration_operator"
     bl_description = "This node group is used to create a chromatic aberration effect."
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_chromatic_aberration_node_name = "Chromatic Aberration"
         chromatic_aberration_group = chromatic_aberration_node_group(
@@ -437,7 +394,7 @@ class NODE_OT_CONTRAST(bpy.types.Operator):
     bl_idname = "node.contrast_operator"
     bl_description = "This node group is used to add contrast to an image."
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_contrast_node_name = "Contrast"
         contrast_group = contrast_node_group(shelf, context, custom_contrast_node_name)
@@ -450,25 +407,18 @@ class NODE_OT_CONTRAST(bpy.types.Operator):
         contrast_node.color = Color.BROWN
         contrast_node.select = False
 
-        # Blur Size X
-        contrast_bsx_driver = (
-            contrast_node.node_tree.nodes["C Blur"].driver_add("size_x").driver
-        )
-        contrast_bsx_driver.type = "AVERAGE"
-        add_driver_var(
-            contrast_bsx_driver,
-            f'node_tree.nodes["{contrast_node.name}"].inputs[2].default_value',
+        # Initialize NodeDriverManager to manage drivers for the node group
+        drivers = NodeDriverManager(
+            node_group=contrast_group, id_type="SCENE", id=bpy.context.scene
         )
 
+        # Blur Size X
+        drivers.add_driver(node_name="C Blur", socket_name="size_x")
+        drivers.add_driver_var(2)
+
         # Blur Size Y
-        contrast_bsy_driver = (
-            contrast_node.node_tree.nodes["C Blur"].driver_add("size_y").driver
-        )
-        contrast_bsy_driver.type = "AVERAGE"
-        add_driver_var(
-            contrast_bsy_driver,
-            f'node_tree.nodes["{contrast_node.name}"].inputs[3].default_value',
-        )
+        drivers.add_driver(node_name="C Blur", socket_name="size_y")
+        drivers.add_driver_var(3)
 
         return {"FINISHED"}
 
@@ -478,7 +428,7 @@ class NODE_OT_EXPONENTIALGLARE(bpy.types.Operator):
     bl_idname = "node.exponential_glare_operator"
     bl_description = "This node group is used to add exponential glare to an image."
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_exponential_glare_node_name = "Exponential Glare"
         exponential_glare_group = exponential_glare_node_group(
@@ -505,7 +455,7 @@ class NODE_OT_GLOW(bpy.types.Operator):
     bl_idname = "node.glow_operator"
     bl_description = "This node group is used to add glow to an image."
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_glow_node_name = "Glow"
         glow_group = glow_node_group(shelf, context, custom_glow_node_name)
@@ -517,191 +467,82 @@ class NODE_OT_GLOW(bpy.types.Operator):
         glow_node.color = Color.DARK_PURPLE
         glow_node.select = False
 
+        # Initialize NodeDriverManager to manage drivers for the node group
+        drivers = NodeDriverManager(
+            node_group=glow_group, id_type="SCENE", id=bpy.context.scene
+        )
+
         # G Switch 01
-        g_switch_01_driver = (
-            glow_node.node_tree.nodes["G Switch 01"].driver_add("check").driver
-        )
-        g_switch_01_driver.type = "AVERAGE"
-        add_driver_var(
-            g_switch_01_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[1].default_value',
-        )
+        drivers.add_driver(node_name="G Switch 01", socket_name="check")
+        drivers.add_driver_var(1)
 
         # G Switch 00
-        g_switch_00_driver = (
-            glow_node.node_tree.nodes["G Switch 00"].driver_add("check").driver
-        )
-        g_switch_00_driver.type = "AVERAGE"
-        add_driver_var(
-            g_switch_00_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[1].default_value',
-        )
+        drivers.add_driver(node_name="G Switch 00", socket_name="check")
+        drivers.add_driver_var(1)
 
         # G Bloom Low Threshold
-        g_bloom_low_threshold_driver = (
-            glow_node.node_tree.nodes["G Bloom Low"].driver_add("threshold").driver
-        )
-        g_bloom_low_threshold_driver.type = "AVERAGE"
-        add_driver_var(
-            g_bloom_low_threshold_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[4].default_value',
-        )
+        drivers.add_driver(node_name="G Bloom Low", socket_name="threshold")
+        drivers.add_driver_var(4)
 
         # G Bloom High Threshold
-        g_bloom_high_threshold_driver = (
-            glow_node.node_tree.nodes["G Bloom High"].driver_add("threshold").driver
-        )
-        g_bloom_high_threshold_driver.type = "AVERAGE"
-        add_driver_var(
-            g_bloom_high_threshold_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[4].default_value',
-        )
+        drivers.add_driver(node_name="G Bloom High", socket_name="threshold")
+        drivers.add_driver_var(4)
 
         # G Bloom Low Size
-        g_bloom_low_size_driver = (
-            glow_node.node_tree.nodes["G Bloom Low"].driver_add("size").driver
-        )
-        g_bloom_low_size_driver.type = "AVERAGE"
-        add_driver_var(
-            g_bloom_low_size_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[5].default_value',
-        )
+        drivers.add_driver(node_name="G Bloom Low", socket_name="size")
+        drivers.add_driver_var(5)
 
         # G Bloom High Size
-        g_bloom_high_size_driver = (
-            glow_node.node_tree.nodes["G Bloom High"].driver_add("size").driver
-        )
-        g_bloom_high_size_driver.type = "AVERAGE"
-        add_driver_var(
-            g_bloom_high_size_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[5].default_value',
-        )
+        drivers.add_driver(node_name="G Bloom High", socket_name="size")
+        drivers.add_driver_var(5)
 
         # G Streaks Low Iterations
-        g_streaks_low_iterations_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"].driver_add("iterations").driver
-        )
-        g_streaks_low_iterations_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_iterations_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[7].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="iterations")
+        drivers.add_driver_var(7)
 
         # G Streaks High Iterations
-        g_streaks_high_iterations_driver = (
-            glow_node.node_tree.nodes["G Streaks High"].driver_add("iterations").driver
-        )
-        g_streaks_high_iterations_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_iterations_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[7].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="iterations")
+        drivers.add_driver_var(7)
 
         # G Streaks Low Color Modulation
-        g_streaks_low_color_modulation_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"]
-            .driver_add("color_modulation")
-            .driver
-        )
-        g_streaks_low_color_modulation_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_color_modulation_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[8].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="color_modulation")
+        drivers.add_driver_var(8)
 
         # G Streaks High Color Modulation
-        g_streaks_high_color_modulation_driver = (
-            glow_node.node_tree.nodes["G Streaks High"]
-            .driver_add("color_modulation")
-            .driver
-        )
-        g_streaks_high_color_modulation_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_color_modulation_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[8].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="color_modulation")
+        drivers.add_driver_var(8)
 
         # G Streaks Low Threshold
-        g_streaks_low_threshold_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"].driver_add("threshold").driver
-        )
-        g_streaks_low_threshold_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_threshold_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[9].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="threshold")
+        drivers.add_driver_var(9)
 
         # G Streaks High Threshold
-        g_streaks_high_threshold_driver = (
-            glow_node.node_tree.nodes["G Streaks High"].driver_add("threshold").driver
-        )
-        g_streaks_high_threshold_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_threshold_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[9].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="threshold")
+        drivers.add_driver_var(9)
 
         # G Streaks Low Streaks
-        g_streaks_low_streaks_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"].driver_add("streaks").driver
-        )
-        g_streaks_low_streaks_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_streaks_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[10].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="streaks")
+        drivers.add_driver_var(10)
 
         # G Streaks High Streaks
-        g_streaks_high_streaks_driver = (
-            glow_node.node_tree.nodes["G Streaks High"].driver_add("streaks").driver
-        )
-        g_streaks_high_streaks_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_streaks_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[10].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="streaks")
+        drivers.add_driver_var(10)
 
         # G Streaks Low Angle Offset
-        g_streaks_low_angle_offset_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"].driver_add("angle_offset").driver
-        )
-        g_streaks_low_angle_offset_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_angle_offset_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[11].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="angle_offset")
+        drivers.add_driver_var(11)
 
         # G Streaks High Angle Offset
-        g_streaks_high_angle_offset_driver = (
-            glow_node.node_tree.nodes["G Streaks High"]
-            .driver_add("angle_offset")
-            .driver
-        )
-        g_streaks_high_angle_offset_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_angle_offset_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[11].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="angle_offset")
+        drivers.add_driver_var(11)
 
         # G Streaks Low Fade
-        g_streaks_low_fade_driver = (
-            glow_node.node_tree.nodes["G Streaks Low"].driver_add("fade").driver
-        )
-        g_streaks_low_fade_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_low_fade_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[12].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks Low", socket_name="fade")
+        drivers.add_driver_var(12)
 
         # G Streaks High Fade
-        g_streaks_high_fade_driver = (
-            glow_node.node_tree.nodes["G Streaks High"].driver_add("fade").driver
-        )
-        g_streaks_high_fade_driver.type = "AVERAGE"
-        add_driver_var(
-            g_streaks_high_fade_driver,
-            f'node_tree.nodes["{glow_node.name}"].inputs[12].default_value',
-        )
+        drivers.add_driver(node_name="G Streaks High", socket_name="fade")
+        drivers.add_driver_var(12)
 
         return {"FINISHED"}
 
@@ -711,7 +552,7 @@ class NODE_OT_HALATION(bpy.types.Operator):
     bl_idname = "node.halation_operator"
     bl_description = "This node group is used to add halation to an image."
 
-    def execute(shelf, context):
+    def execute(shelf, context) -> set[str]:
 
         custom_halation_node_name = "Halation"
         halation_group = halation_node_group(shelf, context, custom_halation_node_name)
@@ -723,25 +564,18 @@ class NODE_OT_HALATION(bpy.types.Operator):
         halation_node.color = Color.DARK_PURPLE
         halation_node.select = False
 
-        # H Blur Size X
-        h_blur_size_x_driver = (
-            halation_node.node_tree.nodes["H Blur"].driver_add("size_x").driver
-        )
-        h_blur_size_x_driver.type = "AVERAGE"
-        add_driver_var(
-            h_blur_size_x_driver,
-            f'node_tree.nodes["{halation_node.name}"].inputs[1].default_value',
+        # Initialize NodeDriverManager to manage drivers for the node group
+        drivers = NodeDriverManager(
+            node_group=halation_group, id_type="SCENE", id=bpy.context.scene
         )
 
+        # H Blur Size X
+        drivers.add_driver(node_name="H Blur", socket_name="size_x")
+        drivers.add_driver_var(1)
+
         # H Blur Size Y
-        h_blur_size_y_driver = (
-            halation_node.node_tree.nodes["H Blur"].driver_add("size_y").driver
-        )
-        h_blur_size_y_driver.type = "AVERAGE"
-        add_driver_var(
-            h_blur_size_y_driver,
-            f'node_tree.nodes["{halation_node.name}"].inputs[2].default_value',
-        )
+        drivers.add_driver(node_name="H Blur", socket_name="size_y")
+        drivers.add_driver_var(2)
 
         return {"FINISHED"}
 
@@ -767,12 +601,12 @@ classes = [
 ]
 
 
-def register():
+def register() -> None:
     for cls in classes:
         bpy.utils.register_class(cls)
 
 
-def unregister():
+def unregister() -> None:
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
