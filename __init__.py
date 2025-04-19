@@ -22,8 +22,7 @@ from bpy.types import UILayout
 INFO: I used the [node to python add-on](https://extensions.blender.org/add-ons/node-to-python/) to convert the node groups into a Python script.
 """
 
-# Determine script pat
-# h
+# Determine script path
 try:
     script_path = (
         bpy.context.space_data.text.filepath
