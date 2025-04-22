@@ -1,5 +1,6 @@
 # Blender Modules
 import bpy
+import mathutils
 from bpy.types import NodeTree
 
 # Helper Modules
@@ -7,23 +8,26 @@ from helpers import Color
 
 
 # initialize Bloom node group
-def bloom_node_group(context, operator, group_name) -> NodeTree:
-    # enable use nodes
-    bpy.context.scene.use_nodes = True
-
-    bloom = bpy.data.node_groups.new(group_name, "CompositorNodeTree")
+def bloom_node_group() -> NodeTree:
+    bloom = bpy.data.node_groups.new(type="CompositorNodeTree", name="Bloom")
 
     bloom.color_tag = "FILTER"
-    bloom.default_group_node_width = 168
-    bloom.description = "Replication of the legacy eevee bloom option"
+    bloom.description = "Simulates the soft glow around bright areas due to light scattering in eyes and camera lenses"
+    bloom.default_group_node_width = 160
 
     # bloom interface
     # Socket Image
     image_socket = bloom.interface.new_socket(
         name="Image", in_out="OUTPUT", socket_type="NodeSocketColor"
     )
-    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    image_socket.default_value = (
+        0.8,
+        0.8,
+        0.8,
+        1.0,
+    )
     image_socket.attribute_domain = "POINT"
+    image_socket.description = "Standard color output"
 
     # Socket Image
     image_socket_1 = bloom.interface.new_socket(
@@ -31,26 +35,29 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     )
     image_socket_1.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket_1.attribute_domain = "POINT"
-    image_socket_1.description = "Standard color output"
-
-    # Socket Color
-    color_socket = bloom.interface.new_socket(
-        name="Color", in_out="INPUT", socket_type="NodeSocketColor"
-    )
-    color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
-    color_socket.attribute_domain = "POINT"
-    color_socket.description = "Bloom Color"
+    image_socket_1.description = "Standard color input"
 
     # Socket Quality
     quality_socket = bloom.interface.new_socket(
-        name="Quality", in_out="INPUT", socket_type="NodeSocketFloat"
+        name="Quality", in_out="INPUT", socket_type="NodeSocketInt"
     )
-    quality_socket.default_value = 0.0
-    quality_socket.min_value = 0.0
-    quality_socket.max_value = 1.0
-    quality_socket.subtype = "FACTOR"
+    quality_socket.default_value = 1
+    quality_socket.min_value = 1
+    quality_socket.max_value = 3
+    quality_socket.subtype = "NONE"
     quality_socket.attribute_domain = "POINT"
-    quality_socket.description = "If not set to something other the High, then the glare effect will only be applied to a low resolution copy of the image. This can be helpful to save render times while only doing preview renders"
+    quality_socket.description = "Controls the resolution at which the glare effect is processed. This can be helpful to save render times while only doing preview renders"
+
+    # Socket Threshold
+    threshold_socket = bloom.interface.new_socket(
+        name="Threshold", in_out="INPUT", socket_type="NodeSocketFloat"
+    )
+    threshold_socket.default_value = 1.0
+    threshold_socket.min_value = 0.0
+    threshold_socket.max_value = 3.4
+    threshold_socket.subtype = "NONE"
+    threshold_socket.attribute_domain = "POINT"
+    threshold_socket.description = "Defines the minimum luminance required for an area to contribute to the glare effect. Lower values include more areas, while higher values restrict glare to the brightest regions"
 
     # Socket Knee
     knee_socket = bloom.interface.new_socket(
@@ -61,36 +68,26 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     knee_socket.max_value = 1.0
     knee_socket.subtype = "FACTOR"
     knee_socket.attribute_domain = "POINT"
+    knee_socket.description = "Makes transition between under/over-threshold gradual"
 
-    # Socket Threshold
-    threshold_socket = bloom.interface.new_socket(
-        name="Threshold", in_out="INPUT", socket_type="NodeSocketFloat"
+    # Socket Radius
+    radius_socket = bloom.interface.new_socket(
+        name="Radius", in_out="INPUT", socket_type="NodeSocketFloat"
     )
-    threshold_socket.default_value = 1.0
-    threshold_socket.min_value = 0.0
-    threshold_socket.max_value = 1000.0
-    threshold_socket.subtype = "NONE"
-    threshold_socket.attribute_domain = "POINT"
+    radius_socket.default_value = 0.0
+    radius_socket.min_value = 0.0
+    radius_socket.max_value = 2048.0
+    radius_socket.subtype = "FACTOR"
+    radius_socket.attribute_domain = "POINT"
+    radius_socket.description = "Bloom spread distance"
 
-    # Socket Added Radius
-    added_radius_socket = bloom.interface.new_socket(
-        name="Added Radius", in_out="INPUT", socket_type="NodeSocketFloat"
+    # Socket Color
+    color_socket = bloom.interface.new_socket(
+        name="Color", in_out="INPUT", socket_type="NodeSocketColor"
     )
-    added_radius_socket.default_value = 0.0
-    added_radius_socket.min_value = 0.0
-    added_radius_socket.max_value = 2048
-    added_radius_socket.subtype = "NONE"
-    added_radius_socket.attribute_domain = "POINT"
-
-    # Socket Blur Mix
-    blur_mix_socket = bloom.interface.new_socket(
-        name="Blur Mix", in_out="INPUT", socket_type="NodeSocketFloat"
-    )
-    blur_mix_socket.default_value = 1.0
-    blur_mix_socket.min_value = 0.0
-    blur_mix_socket.max_value = 1.0
-    blur_mix_socket.subtype = "NONE"
-    blur_mix_socket.attribute_domain = "POINT"
+    color_socket.default_value = (1.0, 1.0, 1.0, 1.0)
+    color_socket.attribute_domain = "POINT"
+    color_socket.description = "Color applied to the bloom effect"
 
     # Socket Intensity
     intensity_socket = bloom.interface.new_socket(
@@ -101,54 +98,69 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     intensity_socket.max_value = 1.0
     intensity_socket.subtype = "FACTOR"
     intensity_socket.attribute_domain = "POINT"
+    intensity_socket.description = "Blend factor"
 
-    # Socket Bloom Size
-    bloom_size_socket = bloom.interface.new_socket(
-        name="Bloom Size", in_out="INPUT", socket_type="NodeSocketFloat"
+    # Socket Clamp
+    clamp_socket = bloom.interface.new_socket(
+        name="Clamp", in_out="INPUT", socket_type="NodeSocketFloat"
     )
-    bloom_size_socket.default_value = 9.0
-    bloom_size_socket.min_value = 1.0
-    bloom_size_socket.max_value = 9.0
-    bloom_size_socket.subtype = "NONE"
-    bloom_size_socket.attribute_domain = "POINT"
-    bloom_size_socket.description = "Scale of the glow relative to the size of the image. 9 means the glow can cover the entire image, 8 means it can only cover half the image, 7 means it can only cover quarter of the image, and so on."
+    clamp_socket.default_value = 0.0
+    clamp_socket.min_value = 0.0
+    clamp_socket.max_value = 10.0
+    clamp_socket.subtype = "FACTOR"
+    clamp_socket.attribute_domain = "POINT"
+    clamp_socket.description = "Maximum intensity a bloom pixel can have"
+
+    # Socket Size
+    size_socket = bloom.interface.new_socket(
+        name="Size", in_out="INPUT", socket_type="NodeSocketFloat"
+    )
+    size_socket.default_value = 0.5
+    size_socket.min_value = 0.0
+    size_socket.max_value = 1.0
+    size_socket.subtype = "FACTOR"
+    size_socket.attribute_domain = "POINT"
+    size_socket.description = "Defines the relative spread of the glare across the image. A value of 1 makes the glare cover the full image, while 0.5 restricts it to half, and so on"
 
     # initialize bloom nodes
     # node Group Output
     group_output = bloom.nodes.new("NodeGroupOutput")
-    group_output.label = "Group Output"
     group_output.name = "Group Output"
     group_output.use_custom_color = True
     group_output.color = Color.DARK_GRAY
+
+    # Group Output settings
     group_output.is_active_output = True
+    group_output.inputs[1].hide = True
 
-    # node Group Input 00
-    group_input_00 = bloom.nodes.new("NodeGroupInput")
-    group_input_00.label = "Group Input 00"
-    group_input_00.name = "Group Input 00"
-    group_input_00.use_custom_color = True
-    group_input_00.color = Color.DARK_GRAY
-    group_input_00.outputs[1].hide = True
-    group_input_00.outputs[2].hide = True
-    group_input_00.outputs[3].hide = True
-    group_input_00.outputs[4].hide = True
-    group_input_00.outputs[5].hide = True
-    group_input_00.outputs[6].hide = True
-    group_input_00.outputs[7].hide = True
-    group_input_00.outputs[8].hide = True
-    group_input_00.outputs[9].hide = True
+    # node Bloom
+    bloom = bloom.nodes.new("CompositorNodeGlare")
+    bloom.label = "Bloom"
+    bloom.name = "Bloom"
 
-    # node Original Bloom High
-    original_bloom_high = bloom.nodes.new("CompositorNodeGlare")
-    original_bloom_high.label = "Original Bloom High"
-    original_bloom_high.name = "Original Bloom High"
-    original_bloom_high.use_custom_color = True
-    original_bloom_high.color = Color.DARK_PURPLE
-    original_bloom_high.glare_type = "BLOOM"
-    original_bloom_high.mix = 1.0
-    original_bloom_high.quality = "HIGH"
-    original_bloom_high.size = 9
-    original_bloom_high.threshold = 1.0
+    # Bloom settings
+    bloom.glare_type = "BLOOM"
+    bloom.quality = "LOW"
+    bloom.inputs[2].default_value = 0.1  # Highlights Smoothness
+    bloom.inputs[3].default_value = 0.0  # Maximum Highlights
+    bloom.inputs[4].default_value = 1.0  # Strength
+    bloom.inputs[5].default_value = 1.0  # Saturation
+    bloom.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
+
+    bloom.use_custom_color = True
+    bloom.color = Color.DARK_PURPLE
+    bloom.inputs[2].hide = True
+    bloom.inputs[3].hide = True
+    bloom.inputs[4].hide = True
+    bloom.inputs[5].hide = True
+    bloom.inputs[6].hide = True
+    bloom.inputs[8].hide = True
+    bloom.inputs[9].hide = True
+    bloom.inputs[10].hide = True
+    bloom.inputs[11].hide = True
+    bloom.inputs[12].hide = True
+    bloom.outputs[0].hide = True
+    bloom.outputs[2].hide = True
 
     # node Color
     color = bloom.nodes.new("CompositorNodeMixRGB")
@@ -156,12 +168,13 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     color.name = "Color"
     color.use_custom_color = True
     color.color = Color.BROWN
+
+    # Color settings
     color.blend_type = "COLOR"
     color.use_alpha = False
     color.use_clamp = False
     color.inputs[0].hide = True
-    # Fac
-    color.inputs[0].default_value = 1.0
+    color.inputs[0].default_value = 1.0  # Fac
 
     # node Blur
     blur = bloom.nodes.new("CompositorNodeBlur")
@@ -169,12 +182,15 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     blur.name = "Blur"
     blur.use_custom_color = True
     blur.color = Color.DARK_PURPLE
-    blur.aspect_correction = "NONE"
+
+    # Blur settings
     blur.filter_type = "FAST_GAUSS"
     blur.size_x = 0
     blur.size_y = 0
     blur.use_extended_bounds = False
     blur.use_relative = False
+    blur.inputs[1].hide = True
+    blur.inputs[1].default_value = 1.0  # Size
 
     # node Blur Mix
     blur_mix = bloom.nodes.new("CompositorNodeMixRGB")
@@ -182,12 +198,13 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     blur_mix.name = "Blur Mix"
     blur_mix.use_custom_color = True
     blur_mix.color = Color.BROWN
+
+    # Blur Mix settings
     blur_mix.blend_type = "SCREEN"
     blur_mix.use_alpha = False
-    blur_mix.use_clamp = True
+    blur_mix.use_clamp = False
     blur_mix.inputs[0].hide = True
-    # Fac
-    blur_mix.inputs[0].default_value = 1.0
+    blur_mix.inputs[0].default_value = 1.0  # Fac
 
     # node Intensity
     intensity = bloom.nodes.new("CompositorNodeMixRGB")
@@ -195,24 +212,44 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     intensity.name = "Intensity"
     intensity.use_custom_color = True
     intensity.color = Color.BROWN
+
+    # Intensity settings
     intensity.blend_type = "ADD"
     intensity.use_alpha = False
     intensity.use_clamp = False
 
-    # node Knee Bloom High
-    knee_bloom_high = bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_high.label = "Knee Bloom High"
-    knee_bloom_high.name = "Knee Bloom High"
-    knee_bloom_high.use_custom_color = True
-    knee_bloom_high.color = Color.DARK_PURPLE
-    knee_bloom_high.angle_offset = 0.0
-    knee_bloom_high.color_modulation = 0.25
-    knee_bloom_high.fade = 0.9
-    knee_bloom_high.glare_type = "BLOOM"
-    knee_bloom_high.mix = 1.0
-    knee_bloom_high.quality = "HIGH"
-    knee_bloom_high.size = 9
-    knee_bloom_high.threshold = 0.0
+    # node Knee Bloom
+    knee_bloom = bloom.nodes.new("CompositorNodeGlare")
+    knee_bloom.label = "Knee Bloom"
+    knee_bloom.name = "Knee Bloom"
+    knee_bloom.use_custom_color = True
+    knee_bloom.color = Color.DARK_PURPLE
+
+    # Knee Bloom settings
+    knee_bloom.glare_type = "BLOOM"
+    knee_bloom.quality = "LOW"
+    knee_bloom.inputs[1].default_value = 0.0  # Highlights Threshold
+    knee_bloom.inputs[2].default_value = 0.1  # Highlights Smoothness
+    knee_bloom.inputs[3].default_value = 0.0  # Maximum Highlights
+    knee_bloom.inputs[4].default_value = 8.0  # Strength
+    knee_bloom.inputs[5].default_value = 1.0  # Saturation
+    knee_bloom.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
+    knee_bloom.inputs[7].default_value = 1.0  # Size
+
+    knee_bloom.inputs[1].hide = True
+    knee_bloom.inputs[2].hide = True
+    knee_bloom.inputs[3].hide = True
+    knee_bloom.inputs[4].hide = True
+    knee_bloom.inputs[5].hide = True
+    knee_bloom.inputs[6].hide = True
+    knee_bloom.inputs[7].hide = True
+    knee_bloom.inputs[8].hide = True
+    knee_bloom.inputs[9].hide = True
+    knee_bloom.inputs[10].hide = True
+    knee_bloom.inputs[11].hide = True
+    knee_bloom.inputs[12].hide = True
+    knee_bloom.outputs[0].hide = True
+    knee_bloom.outputs[2].hide = True
 
     # node Knee Mix
     knee_mix = bloom.nodes.new("CompositorNodeMixRGB")
@@ -220,328 +257,233 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     knee_mix.name = "Knee Mix"
     knee_mix.use_custom_color = True
     knee_mix.color = Color.BROWN
+
+    # Knee Mix settings
     knee_mix.blend_type = "ADD"
     knee_mix.use_alpha = False
     knee_mix.use_clamp = False
 
-    # node Group Input 01
-    group_input_01 = bloom.nodes.new("NodeGroupInput")
-    group_input_01.label = "Group Input 01"
-    group_input_01.name = "Group Input 01"
-    group_input_01.use_custom_color = True
-    group_input_01.color = Color.DARK_GRAY
-    group_input_01.outputs[1].hide = True
-    group_input_01.outputs[2].hide = True
-    group_input_01.outputs[3].hide = True
-    group_input_01.outputs[4].hide = True
-    group_input_01.outputs[5].hide = True
-    group_input_01.outputs[6].hide = True
-    group_input_01.outputs[8].hide = True
-    group_input_01.outputs[9].hide = True
-
-    # node Group Input 02
-    group_input_02 = bloom.nodes.new("NodeGroupInput")
-    group_input_02.label = "Group Input 02"
-    group_input_02.name = "Group Input 02"
-    group_input_02.use_custom_color = True
-    group_input_02.color = Color.DARK_GRAY
-    group_input_02.outputs[0].hide = True
-    group_input_02.outputs[2].hide = True
-    group_input_02.outputs[3].hide = True
-    group_input_02.outputs[4].hide = True
-    group_input_02.outputs[5].hide = True
-    group_input_02.outputs[6].hide = True
-    group_input_02.outputs[7].hide = True
-    group_input_02.outputs[8].hide = True
-    group_input_02.outputs[9].hide = True
-
-    # node Group Input 03
-    group_input_03 = bloom.nodes.new("NodeGroupInput")
-    group_input_03.label = "Group Input 03"
-    group_input_03.name = "Group Input 03"
-    group_input_03.use_custom_color = True
-    group_input_03.color = Color.DARK_GRAY
-    group_input_03.outputs[0].hide = True
-    group_input_03.outputs[1].hide = True
-    group_input_03.outputs[2].hide = True
-    group_input_03.outputs[4].hide = True
-    group_input_03.outputs[5].hide = True
-    group_input_03.outputs[6].hide = True
-    group_input_03.outputs[7].hide = True
-    group_input_03.outputs[8].hide = True
-    group_input_03.outputs[9].hide = True
-
-    # node Bloom High && Low
-    bloom_high____low = bloom.nodes.new("NodeFrame")
-    bloom_high____low.label = "Bloom High && Low"
-    bloom_high____low.name = "Bloom High && Low"
-    bloom_high____low.use_custom_color = True
-    bloom_high____low.color = (
-        0.27887165546417236,
-        0.4313916563987732,
-        0.31700167059898376,
-    )
-    bloom_high____low.label_size = 32
-    bloom_high____low.shrink = True
-
-    # node Knee Bloom Low
-    knee_bloom_low = bloom.nodes.new("CompositorNodeGlare")
-    knee_bloom_low.label = "Knee Bloom Low"
-    knee_bloom_low.name = "Knee Bloom Low"
-    knee_bloom_low.use_custom_color = True
-    knee_bloom_low.color = Color.DARK_PURPLE
-    knee_bloom_low.glare_type = "BLOOM"
-    knee_bloom_low.mix = 1.0
-    knee_bloom_low.quality = "LOW"
-    knee_bloom_low.size = 9
-    knee_bloom_low.threshold = 0.0
-
-    # node KB Switch
-    kb_switch = bloom.nodes.new("CompositorNodeSwitch")
-    kb_switch.label = "KB Switch"
-    kb_switch.name = "KB Switch"
-    kb_switch.use_custom_color = True
-    kb_switch.color = Color.LIGHT_GRAY
-    kb_switch.check = False
-
-    # node OB Switch
-    ob_switch = bloom.nodes.new("CompositorNodeSwitch")
-    ob_switch.label = "OB Switch"
-    ob_switch.name = "OB Switch"
-    ob_switch.use_custom_color = True
-    ob_switch.color = Color.LIGHT_GRAY
-    ob_switch.check = False
-
-    # node Original Bloom Low
-    original_bloom_low = bloom.nodes.new("CompositorNodeGlare")
-    original_bloom_low.label = "Original Bloom Low"
-    original_bloom_low.name = "Original Bloom Low"
-    original_bloom_low.use_custom_color = True
-    original_bloom_low.color = Color.DARK_PURPLE
-    original_bloom_low.glare_type = "BLOOM"
-    original_bloom_low.mix = 1.0
-    original_bloom_low.quality = "LOW"
-    original_bloom_low.threshold = 1.0
-    original_bloom_low.size = 9
-
-    # node Group Input 04
-    group_input_04 = bloom.nodes.new("NodeGroupInput")
-    group_input_04.label = "Group Input 04"
-    group_input_04.name = "Group Input 04"
-    group_input_04.use_custom_color = True
-    group_input_04.color = Color.DARK_GRAY
-    group_input_04.outputs[0].hide = True
-    group_input_04.outputs[1].hide = True
-    group_input_04.outputs[2].hide = True
-    group_input_04.outputs[3].hide = True
-    group_input_04.outputs[4].hide = True
-    group_input_04.outputs[5].hide = True
-    group_input_04.outputs[7].hide = True
-    group_input_04.outputs[8].hide = True
-    group_input_04.outputs[9].hide = True
-
-    # node Reroute_00
-    reroute_00 = bloom.nodes.new("NodeReroute")
-    reroute_00.name = "Reroute_00"
-    reroute_00.socket_idname = "NodeSocketColor"
-
-    # node Reroute_01
-    reroute_01 = bloom.nodes.new("NodeReroute")
-    reroute_01.name = "Reroute_01"
-    reroute_01.socket_idname = "NodeSocketColor"
+    # node Group Input 001
+    group_input_001 = bloom.nodes.new("NodeGroupInput")
+    group_input_001.name = "Group Input 001"
+    group_input_001.use_custom_color = True
+    group_input_001.color = Color.DARK_GRAY
+    group_input_001.outputs[0].hide = True
+    group_input_001.outputs[1].hide = True
+    group_input_001.outputs[2].hide = True
+    group_input_001.outputs[3].hide = True
+    group_input_001.outputs[4].hide = True
+    group_input_001.outputs[5].hide = True
+    group_input_001.outputs[6].hide = True
+    group_input_001.outputs[8].hide = True
+    group_input_001.outputs[9].hide = True
 
     # node Clamp
-    clamp = bloom.nodes.new("CompositorNodeCurveRGB")
+    clamp = bloom.nodes.new("CompositorNodeExposure")
     clamp.label = "Clamp"
     clamp.name = "Clamp"
     clamp.use_custom_color = True
     clamp.color = Color.BROWN
 
-    # mapping settings
-    clamp.mapping.extend = "EXTRAPOLATED"
-    clamp.mapping.tone = "STANDARD"
-    clamp.mapping.black_level = (0.0, 0.0, 0.0)
-    clamp.mapping.white_level = (1.0, 1.0, 1.0)
-    clamp.mapping.clip_min_x = 0.0
-    clamp.mapping.clip_min_y = 0.0
-    clamp.mapping.clip_max_x = 1.0
-    clamp.mapping.clip_max_y = 1.0
-    clamp.mapping.use_clip = True
+    # node Invert Color
+    invert_color = bloom.nodes.new("CompositorNodeInvert")
+    invert_color.label = "Invert Color"
+    invert_color.name = "Invert Color"
+    invert_color.use_custom_color = True
+    invert_color.color = Color.BROWN
 
-    # curve 0
-    clamp_curve_0 = clamp.mapping.curves[0]
-    clamp_curve_0_point_0 = clamp_curve_0.points[0]
-    clamp_curve_0_point_0.location = (0.0, 0.0)
-    clamp_curve_0_point_0.handle_type = "AUTO"
-    clamp_curve_0_point_1 = clamp_curve_0.points[1]
-    clamp_curve_0_point_1.location = (1.0, 1.0)
-    clamp_curve_0_point_1.handle_type = "AUTO"
+    # Invert Color settings
+    invert_color.invert_alpha = False
+    invert_color.invert_rgb = True
+    invert_color.inputs[0].hide = True
+    invert_color.inputs[0].default_value = 1.0  # Fac
 
-    # curve 1
-    clamp_curve_1 = clamp.mapping.curves[1]
-    clamp_curve_1_point_0 = clamp_curve_1.points[0]
-    clamp_curve_1_point_0.location = (0.0, 0.0)
-    clamp_curve_1_point_0.handle_type = "AUTO"
-    clamp_curve_1_point_1 = clamp_curve_1.points[1]
-    clamp_curve_1_point_1.location = (1.0, 1.0)
-    clamp_curve_1_point_1.handle_type = "AUTO"
+    # node Group Input 002
+    group_input_002 = bloom.nodes.new("NodeGroupInput")
+    group_input_002.name = "Group Input 002"
+    group_input_002.use_custom_color = True
+    group_input_002.color = Color.DARK_GRAY
+    group_input_002.outputs[1].hide = True
+    group_input_002.outputs[3].hide = True
+    group_input_002.outputs[4].hide = True
+    group_input_002.outputs[5].hide = True
+    group_input_002.outputs[6].hide = True
+    group_input_002.outputs[7].hide = True
+    group_input_002.outputs[9].hide = True
 
-    # curve 2
-    clamp_curve_2 = clamp.mapping.curves[2]
-    clamp_curve_2_point_0 = clamp_curve_2.points[0]
-    clamp_curve_2_point_0.location = (0.0, 0.0)
-    clamp_curve_2_point_0.handle_type = "AUTO"
-    clamp_curve_2_point_1 = clamp_curve_2.points[1]
-    clamp_curve_2_point_1.location = (1.0, 1.0)
-    clamp_curve_2_point_1.handle_type = "AUTO"
+    # node Group Input 003
+    group_input_003 = bloom.nodes.new("NodeGroupInput")
+    group_input_003.name = "Group Input 003"
+    group_input_003.use_custom_color = True
+    group_input_003.color = Color.DARK_GRAY
+    group_input_003.outputs[1].hide = True
+    group_input_003.outputs[2].hide = True
+    group_input_003.outputs[3].hide = True
+    group_input_003.outputs[4].hide = True
+    group_input_003.outputs[5].hide = True
+    group_input_003.outputs[6].hide = True
+    group_input_003.outputs[7].hide = True
+    group_input_003.outputs[8].hide = True
+    group_input_003.outputs[9].hide = True
 
-    # curve 3
-    clamp_curve_3 = clamp.mapping.curves[3]
-    clamp_curve_3_point_0 = clamp_curve_3.points[0]
-    clamp_curve_3_point_0.location = (0.0, 0.0)
-    clamp_curve_3_point_0.handle_type = "AUTO"
-    clamp_curve_3_point_1 = clamp_curve_3.points[1]
-    clamp_curve_3_point_1.location = (1.0, 1.0)
-    clamp_curve_3_point_1.handle_type = "AUTO"
+    # node Group Input 004
+    group_input_004 = bloom.nodes.new("NodeGroupInput")
+    group_input_004.name = "Group Input 004"
+    group_input_004.use_custom_color = True
+    group_input_004.color = Color.DARK_GRAY
+    group_input_004.outputs[0].hide = True
+    group_input_004.outputs[1].hide = True
+    group_input_004.outputs[2].hide = True
+    group_input_004.outputs[4].hide = True
+    group_input_004.outputs[5].hide = True
+    group_input_004.outputs[6].hide = True
+    group_input_004.outputs[7].hide = True
+    group_input_004.outputs[8].hide = True
+    group_input_004.outputs[9].hide = True
 
-    # update curve after changes
-    clamp.mapping.update()
-    clamp.inputs[0].hide = True
-    clamp.inputs[2].hide = True
-    clamp.inputs[3].hide = True
+    # node Group Input 05
+    group_input_005 = bloom.nodes.new("NodeGroupInput")
+    group_input_005.name = "Group Input 005"
+    group_input_005.use_custom_color = True
+    group_input_005.color = Color.DARK_GRAY
+    group_input_005.outputs[0].hide = True
+    group_input_005.outputs[1].hide = True
+    group_input_005.outputs[2].hide = True
+    group_input_005.outputs[3].hide = True
+    group_input_005.outputs[4].hide = True
+    group_input_005.outputs[6].hide = True
+    group_input_005.outputs[7].hide = True
+    group_input_005.outputs[8].hide = True
+    group_input_005.outputs[9].hide = True
 
-    # Fac
-    clamp.inputs[0].default_value = 1.0
-    # Black Level
-    clamp.inputs[2].default_value = (0.0, 0.0, 0.0, 1.0)
-    # White Level
-    clamp.inputs[3].default_value = (1.0, 1.0, 1.0, 1.0)
+    # node Group Input 006
+    group_input_006 = bloom.nodes.new("NodeGroupInput")
+    group_input_006.name = "Group Input 006"
+    group_input_006.use_custom_color = True
+    group_input_006.color = Color.DARK_GRAY
+    group_input_006.outputs[1].hide = True
+    group_input_006.outputs[2].hide = True
+    group_input_006.outputs[3].hide = True
+    group_input_006.outputs[4].hide = True
+    group_input_006.outputs[5].hide = True
+    group_input_006.outputs[7].hide = True
+    group_input_006.outputs[8].hide = True
+    group_input_006.outputs[9].hide = True
 
-    # Set parents
-    original_bloom_high.parent = bloom_high____low
-    knee_bloom_high.parent = bloom_high____low
-    knee_bloom_low.parent = bloom_high____low
-    kb_switch.parent = bloom_high____low
-    ob_switch.parent = bloom_high____low
-    original_bloom_low.parent = bloom_high____low
+    # node Image
+    image = bloom.nodes.new("NodeReroute")
+    image.label = "Image"
+    image.name = "Image"
+    image.socket_idname = "NodeSocketColor"
+
+    # node Blurring
+    blurring = bloom.nodes.new("NodeReroute")
+    blurring.label = "Blurring"
+    blurring.name = "Blurring"
+    blurring.socket_idname = "NodeSocketColor"
 
     # Set locations
-    group_output.location = (820.0, 120.0)
-    group_input_00.location = (-1040.0, -300.0)
-    original_bloom_high.location = (53.0, -48.0)
-    color.location = (220.0, -40.0)
-    blur.location = (-320.0, -40.0)
-    blur_mix.location = (-140.0, -40.0)
-    intensity.location = (640.0, 120.0)
-    knee_bloom_high.location = (53.0, -488.0)
-    knee_mix.location = (40.0, -40.0)
-    group_input_01.location = (640.0, 220.0)
-    group_input_02.location = (220.0, -200.0)
-    group_input_03.location = (40.0, -220.0)
-    bloom_high____low.location = (-833.0, -52.0)
-    knee_bloom_low.location = (53.0, -268.0)
-    kb_switch.location = (273.0, -328.0)
-    ob_switch.location = (273.0, 112.0)
-    original_bloom_low.location = (53.0, 172.0)
-    group_input_04.location = (-320.0, -260.0)
-    reroute_00.location = (-180.0, -340.0)
-    reroute_01.location = (0.0, -220.0)
-    clamp.location = (400.0, -40.0)
+    group_output.location = (650.0, -16.0)
+    bloom.location = (-760.0, -100.0)
+    color.location = (110.0, 73.0)
+    blur.location = (-540.0, 40.0)
+    blur_mix.location = (-300.0, 20.0)
+    intensity.location = (490.0, -16.0)
+    knee_bloom.location = (-540.0, 176.0)
+    knee_mix.location = (-80.0, 73.0)
+    group_input_001.location = (290.0, -175.0)
+    clamp.location = (290.0, 73.0)
+    invert_color.location = (290.0, -39.0)
+    group_input_002.location = (-960.0, -200.0)
+    group_input_003.location = (-540.0, 243.0)
+    group_input_004.location = (-80.0, 140.0)
+    group_input_005.location = (110.0, -85.0)
+    group_input_006.location = (490.0, 73.0)
+    image.location = (-540.0, -180.0)
+    blurring.location = (-380.0, -180.0)
 
     # Set dimensions
     group_output.width, group_output.height = 140.0, 100.0
-    group_input_00.width, group_input_00.height = 140.0, 100.0
-    original_bloom_high.width, original_bloom_high.height = 154.0098876953125, 100.0
+    bloom.width, bloom.height = 160.0, 100.0
     color.width, color.height = 140.0, 100.0
-    blur.width, blur.height = 151.06350708007812, 100.0
+    blur.width, blur.height = 140.0, 100.0
     blur_mix.width, blur_mix.height = 140.0, 100.0
     intensity.width, intensity.height = 140.0, 100.0
-    knee_bloom_high.width, knee_bloom_high.height = 152.26959228515625, 100.0
+    knee_bloom.width, knee_bloom.height = 140.0, 100.0
     knee_mix.width, knee_mix.height = 140.0, 100.0
-    group_input_01.width, group_input_01.height = 140.0, 100.0
-    group_input_02.width, group_input_02.height = 140.0, 100.0
-    group_input_03.width, group_input_03.height = 140.0, 100.0
-    bloom_high____low.width, bloom_high____low.height = 420.0, 944.0
-    knee_bloom_low.width, knee_bloom_low.height = 153.29302978515625, 100.0
-    kb_switch.width, kb_switch.height = 140.0, 100.0
-    ob_switch.width, ob_switch.height = 140.0, 100.0
-    original_bloom_low.width, original_bloom_low.height = 154.0098876953125, 100.0
-    group_input_04.width, group_input_04.height = 150.76458740234375, 100.0
-    reroute_00.width, reroute_00.height = 16.0, 100.0
-    reroute_01.width, reroute_01.height = 16.0, 100.0
-    clamp.width, clamp.height = 200.0, 100.0
+    group_input_001.width, group_input_001.height = 140.0, 100.0
+    clamp.width, clamp.height = 140.0, 100.0
+    invert_color.width, invert_color.height = 140.0, 100.0
+    group_input_002.width, group_input_002.height = 140.0, 100.0
+    group_input_003.width, group_input_003.height = 140.0, 100.0
+    group_input_004.width, group_input_004.height = 140.0, 100.0
+    group_input_005.width, group_input_005.height = 140.0, 100.0
+    group_input_006.width, group_input_006.height = 140.0, 100.0
+    image.width, image.height = 10.0, 100.0
+    blurring.width, blurring.height = 10.0, 100.0
 
     # initialize bloom links
-    # ob_switch.Image -> blur_mix.Image
-    bloom.links.new(ob_switch.outputs[0], blur_mix.inputs[2])
+    # knee_mix.Image -> color.Image
+    bloom.links.new(knee_mix.outputs[0], color.inputs[1])
 
     # blur_mix.Image -> knee_mix.Image
     bloom.links.new(blur_mix.outputs[0], knee_mix.inputs[1])
 
-    # blur.Image -> blur_mix.Image
-    bloom.links.new(blur.outputs[0], blur_mix.inputs[1])
+    # clamp.Image -> intensity.Image
+    bloom.links.new(clamp.outputs[0], intensity.inputs[2])
 
-    # knee_mix.Image -> color.Image
-    bloom.links.new(knee_mix.outputs[0], color.inputs[1])
-
-    # ob_switch.Image -> blur.Image
-    bloom.links.new(ob_switch.outputs[0], blur.inputs[0])
-
-    # group_input_00.Image -> original_bloom_high.Image
-    bloom.links.new(group_input_00.outputs[0], original_bloom_high.inputs[0])
-
-    # group_input_00.Image -> knee_bloom_high.Image
-    bloom.links.new(group_input_00.outputs[0], knee_bloom_high.inputs[0])
+    # bloom.Glare -> blur.Image
+    bloom.links.new(bloom.outputs[1], blur.inputs[0])
 
     # intensity.Image -> group_output.Image
     bloom.links.new(intensity.outputs[0], group_output.inputs[0])
 
-    # group_input_01.Image -> intensity.Image
-    bloom.links.new(group_input_01.outputs[0], intensity.inputs[1])
+    # blurring.Output -> blur_mix.Image
+    bloom.links.new(blurring.outputs[0], blur_mix.inputs[2])
 
-    # group_input_01.Intensity -> intensity.Fac
-    bloom.links.new(group_input_01.outputs[7], intensity.inputs[0])
-
-    # group_input_02.Color -> color.Image
-    bloom.links.new(group_input_02.outputs[1], color.inputs[2])
-
-    # group_input_03.Knee -> knee_mix.Fac
-    bloom.links.new(group_input_03.outputs[3], knee_mix.inputs[0])
-
-    # group_input_00.Image -> knee_bloom_low.Image
-    bloom.links.new(group_input_00.outputs[0], knee_bloom_low.inputs[0])
-
-    # knee_bloom_high.Image -> kb_switch.On
-    bloom.links.new(knee_bloom_high.outputs[0], kb_switch.inputs[1])
-
-    # knee_bloom_low.Image -> kb_switch.Off
-    bloom.links.new(knee_bloom_low.outputs[0], kb_switch.inputs[0])
-
-    # original_bloom_high.Image -> ob_switch.On
-    bloom.links.new(original_bloom_high.outputs[0], ob_switch.inputs[1])
-
-    # original_bloom_low.Image -> ob_switch.Off
-    bloom.links.new(original_bloom_low.outputs[0], ob_switch.inputs[0])
-
-    # group_input_04.Blur Mix -> blur.Size
-    bloom.links.new(group_input_04.outputs[6], blur.inputs[1])
-
-    # kb_switch.Image -> reroute_00.Input
-    bloom.links.new(kb_switch.outputs[0], reroute_00.inputs[0])
-
-    # group_input_00.Image -> original_bloom_low.Image
-    bloom.links.new(group_input_00.outputs[0], original_bloom_low.inputs[0])
-
-    # reroute_00.Output -> reroute_01.Input
-    bloom.links.new(reroute_00.outputs[0], reroute_01.inputs[0])
-
-    # reroute_01.Output -> knee_mix.Image
-    bloom.links.new(reroute_01.outputs[0], knee_mix.inputs[2])
-
-    # clamp.Image -> intensity.Image
-    bloom.links.new(clamp.outputs[0], intensity.inputs[2])
+    # blur.Image -> blur_mix.Image
+    bloom.links.new(blur.outputs[0], blur_mix.inputs[1])
 
     # color.Image -> clamp.Image
-    bloom.links.new(color.outputs[0], clamp.inputs[1])
+    bloom.links.new(color.outputs[0], clamp.inputs[0])
+
+    # invert_color.Color -> clamp.Exposure
+    bloom.links.new(invert_color.outputs[0], clamp.inputs[1])
+
+    # group_input_001.Clamp -> invert_color.Color
+    bloom.links.new(group_input_001.outputs[7], invert_color.inputs[1])
+
+    # knee_bloom.Glare -> knee_mix.Image
+    bloom.links.new(knee_bloom.outputs[1], knee_mix.inputs[2])
+
+    # group_input_002.Image -> bloom.Image
+    bloom.links.new(group_input_002.outputs[0], bloom.inputs[0])
+
+    # group_input_002.Threshold -> bloom.Threshold
+    bloom.links.new(group_input_002.outputs[2], bloom.inputs[1])
+
+    # group_input_002.Size -> bloom.Size
+    bloom.links.new(group_input_002.outputs[8], bloom.inputs[7])
+
+    # group_input_003.Image -> knee_bloom.Image
+    bloom.links.new(group_input_003.outputs[0], knee_bloom.inputs[0])
+
+    # group_input_004.Knee -> knee_mix.Fac
+    bloom.links.new(group_input_004.outputs[3], knee_mix.inputs[0])
+
+    # group_input_005.Color -> color.Image
+    bloom.links.new(group_input_005.outputs[5], color.inputs[2])
+
+    # group_input_006.Image -> intensity.Image
+    bloom.links.new(group_input_006.outputs[0], intensity.inputs[1])
+
+    # group_input_006.Intensity -> intensity.Fac
+    bloom.links.new(group_input_006.outputs[6], intensity.inputs[0])
+
+    # bloom.Glare -> image.Input
+    bloom.links.new(bloom.outputs[1], image.inputs[0])
+
+    # image.Output -> blurring.Input
+    bloom.links.new(image.outputs[0], blurring.inputs[0])
 
     return bloom
