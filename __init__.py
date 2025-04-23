@@ -285,6 +285,7 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
         bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
         bloom_node.name = "Bloom"
+        bloom_node.label = "Bloom"
         bloom_node.width = 168
         bloom_node.node_tree = bpy.data.node_groups[bloom_group.name]
         bloom_node.use_custom_color = True
@@ -300,40 +301,24 @@ class NODE_OT_BLOOM(bpy.types.Operator):
 
         # Initialize NodeDriverManager to manage drivers for the node group
         drivers = NodeDriverManager(
-            node_group=bloom_group, id_type="SCENE", id=bpy.context.scene
+            node_group=bloom_node, id_type="SCENE", id=bpy.context.scene
         )
 
-        # Original Bloom Switch
-        drivers.add_driver(node_name="OB Switch", socket_name="check")
-        drivers.add_driver_var(2)
-
-        # Knee Bloom Switch
-        drivers.add_driver(node_name="KB Switch", socket_name="check")
-        drivers.add_driver_var(2)
-
-        # Original Bloom High
-        drivers.add_driver(node_name="Original Bloom High", socket_name="threshold")
-        drivers.add_driver_var(4)
-
-        # Original Bloom Low
-        drivers.add_driver(node_name="Original Bloom Low", socket_name="threshold")
-        drivers.add_driver_var(4)
-
-        # Original Bloom High Size
-        drivers.add_driver(node_name="Original Bloom High", socket_name="size")
-        drivers.add_driver_var(8)
-
-        # Original Bloom Low Size
-        drivers.add_driver(node_name="Original Bloom Low", socket_name="size")
-        drivers.add_driver_var(8)
-
-        # Added Radius X
+        # Radius X
         drivers.add_driver(node_name="Blur", socket_name="size_x")
-        drivers.add_driver_var(5)
+        drivers.add_driver_var(4)
 
-        # Added Radius Y
+        # Radius Y
         drivers.add_driver(node_name="Blur", socket_name="size_y")
-        drivers.add_driver_var(5)
+        drivers.add_driver_var(4)
+
+        # Main Bloom
+        drivers.add_driver(node_name="Main Bloom", socket_name="quality")
+        drivers.add_driver_var(1)
+
+        # Knee Bloom
+        drivers.add_driver(node_name="Knee Bloom", socket_name="quality")
+        drivers.add_driver_var(1)
 
         return {"FINISHED"}
 
