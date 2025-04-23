@@ -98,7 +98,7 @@ class NodeDriverManager:
 
         Args:
             number (int): The index of the input in the node group whose default value
-                          will be linked to the driver variable.
+            will be linked to the driver variable.
 
         Raises:
             ValueError: If the driver is not initialized or if the input number is out of range.
