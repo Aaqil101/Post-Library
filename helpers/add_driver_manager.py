@@ -7,6 +7,16 @@
 import bpy
 
 
+class DriverType:
+    """Class to store driver types"""
+
+    AVERAGE: str = "AVERAGE"
+    SUM: str = "SUM"
+    SCRIPTED: str = "SCRIPTED"
+    MIN: str = "MIN"
+    MAX: str = "MAX"
+
+
 class NodeDriverManager:
     """
     Class to manage drivers on a node group.
@@ -28,6 +38,11 @@ class NodeDriverManager:
 
     :param driver_type: The type of driver to create
     :type driver_type: str
+
+    ## Example:
+    >>> driver_manager = NodeDriverManager(*, NODE_GROUP, ID_TYPE, ID)
+    >>> driver_manager.add_driver(*, NODE_NAME, SOCKET_NAME)
+    >>> driver_manager.add_driver_var(VARIABLE_NUMBER)
     """
 
     def __init__(
@@ -37,8 +52,8 @@ class NodeDriverManager:
         id_type: str,
         id: bpy.types.ID,
         var_name="default_value",
-        driver_type="AVERAGE",
-    ):
+        driver_type=DriverType.AVERAGE,
+    ) -> None:
         """
         Constructor for NodeDriverManager
 
@@ -66,7 +81,9 @@ class NodeDriverManager:
         self.id = id
         self.driver = None
 
-    def add_driver(self, *, node_name: str, socket_name: str):
+    def add_driver(
+        self, *, node_name: str, socket_name: str, expression: str = ""
+    ) -> bpy.types.Driver:
         """
         Adds a driver to a specified node and socket within the node group.
 
@@ -87,9 +104,11 @@ class NodeDriverManager:
         else:
             self.driver = node.driver_add(socket_name).driver
             self.driver.type = self.driver_type
+            if self.driver_type == DriverType.SCRIPTED:
+                self.driver.expression = expression
             return self.driver
 
-    def add_driver_var(self, number: int):
+    def add_driver_var(self, number: int) -> bpy.types.DriverVariable:
         """
         Adds a variable to the driver associated with the node group.
 

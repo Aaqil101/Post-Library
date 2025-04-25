@@ -1,6 +1,5 @@
 # Blender Modules
 import bpy
-import mathutils
 from bpy.types import NodeTree
 
 # Helper Modules
@@ -44,18 +43,18 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     quality_socket = bloom.interface.new_socket(
         name="Quality", in_out="INPUT", socket_type="NodeSocketInt"
     )
-    quality_socket.default_value = 2
-    quality_socket.min_value = 0
-    quality_socket.max_value = 2
+    quality_socket.default_value = 3
+    quality_socket.min_value = 1
+    quality_socket.max_value = 3
     quality_socket.subtype = "NONE"
     quality_socket.attribute_domain = "POINT"
     quality_socket.description = (
         "Controls the resolution at which the bloom effect is processed. "
         "This can help save render times during preview renders.\n\n"
         "Quality levels:\n"
-        "   0 - High\n"
-        "   1 - Medium\n"
-        "   2 - Low"
+        "   1 - High\n"
+        "   2 - Medium\n"
+        "   3 - Low"
     )
 
     # Socket Threshold
@@ -143,36 +142,36 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     group_output.is_active_output = True
     group_output.inputs[1].hide = True
 
-    # node Bloom
-    bloom_1 = bloom.nodes.new("CompositorNodeGlare")
-    bloom_1.label = "Bloom"
-    bloom_1.name = "Bloom"
+    # node Main Bloom
+    main_bloom = bloom.nodes.new("CompositorNodeGlare")
+    main_bloom.label = "Main Bloom"
+    main_bloom.name = "Main Bloom"
 
     # Bloom settings
-    bloom_1.glare_type = "BLOOM"
-    bloom_1.quality = "LOW"
-    bloom_1.inputs[1].default_value = 1.0  # Highlights Threshold
-    bloom_1.inputs[2].default_value = 0.1  # Highlights Smoothness
-    bloom_1.inputs[3].default_value = 0.0  # Maximum Highlights
-    bloom_1.inputs[4].default_value = 1.0  # Strength
-    bloom_1.inputs[5].default_value = 1.0  # Saturation
-    bloom_1.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
-    bloom_1.inputs[7].default_value = 0.5  # Size
+    main_bloom.glare_type = "BLOOM"
+    main_bloom.quality = "LOW"
+    main_bloom.inputs[1].default_value = 1.0  # Highlights Threshold
+    main_bloom.inputs[2].default_value = 0.1  # Highlights Smoothness
+    main_bloom.inputs[3].default_value = 0.0  # Maximum Highlights
+    main_bloom.inputs[4].default_value = 1.0  # Strength
+    main_bloom.inputs[5].default_value = 1.0  # Saturation
+    main_bloom.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
+    main_bloom.inputs[7].default_value = 0.5  # Size
 
-    bloom_1.use_custom_color = True
-    bloom_1.color = Color.DARK_PURPLE
-    bloom_1.inputs[2].hide = True
-    bloom_1.inputs[3].hide = True
-    bloom_1.inputs[4].hide = True
-    bloom_1.inputs[5].hide = True
-    bloom_1.inputs[6].hide = True
-    bloom_1.inputs[8].hide = True
-    bloom_1.inputs[9].hide = True
-    bloom_1.inputs[10].hide = True
-    bloom_1.inputs[11].hide = True
-    bloom_1.inputs[12].hide = True
-    bloom_1.outputs[0].hide = True
-    bloom_1.outputs[2].hide = True
+    main_bloom.use_custom_color = True
+    main_bloom.color = Color.DARK_PURPLE
+    main_bloom.inputs[2].hide = True
+    main_bloom.inputs[3].hide = True
+    main_bloom.inputs[4].hide = True
+    main_bloom.inputs[5].hide = True
+    main_bloom.inputs[6].hide = True
+    main_bloom.inputs[8].hide = True
+    main_bloom.inputs[9].hide = True
+    main_bloom.inputs[10].hide = True
+    main_bloom.inputs[11].hide = True
+    main_bloom.inputs[12].hide = True
+    main_bloom.outputs[0].hide = True
+    main_bloom.outputs[2].hide = True
 
     # node Color
     color = bloom.nodes.new("CompositorNodeMixRGB")
@@ -382,6 +381,20 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     group_input_006.outputs[8].hide = True
     group_input_006.outputs[9].hide = True
 
+    # node Group Input 007
+    group_input_007 = bloom.nodes.new("NodeGroupInput")
+    group_input_007.name = "Group Input 007"
+    group_input_007.use_custom_color = True
+    group_input_007.color = Color.DARK_GRAY
+    group_input_007.outputs[0].hide = True
+    group_input_007.outputs[2].hide = True
+    group_input_007.outputs[3].hide = True
+    group_input_007.outputs[5].hide = True
+    group_input_007.outputs[6].hide = True
+    group_input_007.outputs[7].hide = True
+    group_input_007.outputs[8].hide = True
+    group_input_007.outputs[9].hide = True
+
     # node Image
     image = bloom.nodes.new("NodeReroute")
     image.label = "Image"
@@ -394,9 +407,24 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     blurring.name = "Blurring"
     blurring.socket_idname = "NodeSocketColor"
 
+    # node File Output
+    file_output = bloom.nodes.new("CompositorNodeOutputFile")
+    file_output.name = "File Output"
+    file_output.use_custom_color = True
+    file_output.color = Color.DARK_RED
+
+    # Rename the default "Image" slot aka the first slot to "Quality"
+    if len(file_output.file_slots) > 0:
+        file_output.file_slots[0].path = "Quality"
+
+    file_output.file_slots.new("Radius")
+    file_output.active_input_index = 1
+    file_output.base_path = ""
+    file_output.save_as_render = True
+
     # Set locations
     group_output.location = (650.0, -16.0)
-    bloom_1.location = (-760.0, -100.0)
+    main_bloom.location = (-760.0, -100.0)
     color.location = (110.0, 73.0)
     blur.location = (-540.0, 40.0)
     blur_mix.location = (-300.0, 20.0)
@@ -411,12 +439,14 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     group_input_004.location = (-80.0, 140.0)
     group_input_005.location = (110.0, -85.0)
     group_input_006.location = (490.0, 73.0)
+    group_input_007.location = (-300.0, -138.0)
     image.location = (-540.0, -180.0)
     blurring.location = (-380.0, -180.0)
+    file_output.location = (-80.0, -107.0)
 
     # Set dimensions
     group_output.width, group_output.height = 140.0, 100.0
-    bloom_1.width, bloom_1.height = 160.0, 100.0
+    main_bloom.width, main_bloom.height = 160.0, 100.0
     color.width, color.height = 140.0, 100.0
     blur.width, blur.height = 140.0, 100.0
     blur_mix.width, blur_mix.height = 140.0, 100.0
@@ -431,8 +461,10 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     group_input_004.width, group_input_004.height = 140.0, 100.0
     group_input_005.width, group_input_005.height = 140.0, 100.0
     group_input_006.width, group_input_006.height = 140.0, 100.0
+    group_input_007.width, group_input_007.height = 140.0, 100.0
     image.width, image.height = 10.0, 100.0
     blurring.width, blurring.height = 10.0, 100.0
+    file_output.width, file_output.height = 140.0, 100.0
 
     # initialize bloom links
     # knee_mix.Image -> color.Image
@@ -444,8 +476,8 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     # clamp.Image -> intensity.Image
     bloom.links.new(clamp.outputs[0], intensity.inputs[2])
 
-    # bloom_1.Glare -> blur.Image
-    bloom.links.new(bloom_1.outputs[1], blur.inputs[0])
+    # main_bloom.Glare -> blur.Image
+    bloom.links.new(main_bloom.outputs[1], blur.inputs[0])
 
     # intensity.Image -> group_output.Image
     bloom.links.new(intensity.outputs[0], group_output.inputs[0])
@@ -468,14 +500,14 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     # knee_bloom.Glare -> knee_mix.Image
     bloom.links.new(knee_bloom.outputs[1], knee_mix.inputs[2])
 
-    # group_input_002.Image -> bloom_1.Image
-    bloom.links.new(group_input_002.outputs[0], bloom_1.inputs[0])
+    # group_input_002.Image -> main_bloom.Image
+    bloom.links.new(group_input_002.outputs[0], main_bloom.inputs[0])
 
-    # group_input_002.Threshold -> bloom_1.Threshold
-    bloom.links.new(group_input_002.outputs[2], bloom_1.inputs[1])
+    # group_input_002.Threshold -> main_bloom.Threshold
+    bloom.links.new(group_input_002.outputs[2], main_bloom.inputs[1])
 
-    # group_input_002.Size -> bloom_1.Size
-    bloom.links.new(group_input_002.outputs[8], bloom_1.inputs[7])
+    # group_input_002.Size -> main_bloom.Size
+    bloom.links.new(group_input_002.outputs[8], main_bloom.inputs[7])
 
     # group_input_003.Image -> knee_bloom.Image
     bloom.links.new(group_input_003.outputs[0], knee_bloom.inputs[0])
@@ -492,10 +524,16 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     # group_input_006.Intensity -> intensity.Fac
     bloom.links.new(group_input_006.outputs[6], intensity.inputs[0])
 
-    # bloom_1.Glare -> image.Input
-    bloom.links.new(bloom_1.outputs[1], image.inputs[0])
+    # main_bloom.Glare -> image.Input
+    bloom.links.new(main_bloom.outputs[1], image.inputs[0])
 
     # image.Output -> blurring.Input
     bloom.links.new(image.outputs[0], blurring.inputs[0])
+
+    # group_input_007.Quality -> file_output.Image
+    bloom.links.new(group_input_007.outputs[1], file_output.inputs[0])
+
+    # group_input_007.Radius -> file_output.Image
+    bloom.links.new(group_input_007.outputs[4], file_output.inputs[1])
 
     return bloom

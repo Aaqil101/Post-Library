@@ -69,7 +69,7 @@ for path in paths:
     else:
         print(f"{path_str} already in sys.path")
 
-from helpers import Color, NodeDriverManager
+from helpers import Color, DriverType, NodeDriverManager
 from nodes import (
     beautymixer_node_group,
     bloom_node_group,
@@ -280,7 +280,6 @@ class NODE_OT_BLOOM(bpy.types.Operator):
     bl_description = "Replication of the legacy eevee bloom option, but can be used in cycles as well"
 
     def execute(shelf, context) -> set[str]:
-
         custom_bloom_node_name = "Bloom"
         bloom_group = bloom_node_group(shelf, context, custom_bloom_node_name)
         bloom_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
@@ -300,25 +299,39 @@ class NODE_OT_BLOOM(bpy.types.Operator):
         """
 
         # Initialize NodeDriverManager to manage drivers for the node group
-        drivers = NodeDriverManager(
+        normal_drivers = NodeDriverManager(
             node_group=bloom_node, id_type="SCENE", id=bpy.context.scene
+        )
+        scripted_drivers = NodeDriverManager(
+            node_group=bloom_node,
+            id_type="SCENE",
+            id=bpy.context.scene,
+            driver_type=DriverType.SCRIPTED,
         )
 
         # Radius X
-        drivers.add_driver(node_name="Blur", socket_name="size_x")
-        drivers.add_driver_var(4)
+        normal_drivers.add_driver(node_name="Blur", socket_name="size_x")
+        normal_drivers.add_driver_var(4)
 
         # Radius Y
-        drivers.add_driver(node_name="Blur", socket_name="size_y")
-        drivers.add_driver_var(4)
+        normal_drivers.add_driver(node_name="Blur", socket_name="size_y")
+        normal_drivers.add_driver_var(4)
 
         # Main Bloom
-        drivers.add_driver(node_name="Main Bloom", socket_name="quality")
-        drivers.add_driver_var(1)
+        scripted_drivers.add_driver(
+            node_name="Main Bloom",
+            socket_name="quality",
+            expression=f"{scripted_drivers.var_name} - 1",
+        )
+        scripted_drivers.add_driver_var(1)
 
         # Knee Bloom
-        drivers.add_driver(node_name="Knee Bloom", socket_name="quality")
-        drivers.add_driver_var(1)
+        scripted_drivers.add_driver(
+            node_name="Knee Bloom",
+            socket_name="quality",
+            expression=f"{scripted_drivers.var_name} - 1",
+        )
+        scripted_drivers.add_driver_var(1)
 
         return {"FINISHED"}
 
