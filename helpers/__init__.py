@@ -1,4 +1,4 @@
-from helpers.add_driver_manager import NodeDriverManager
+from helpers.add_driver_manager import DriverType, NodeDriverManager
 from helpers.color_utils import Color, hex_color_add, hexcode_to_rgb
 from helpers.compositor_node_names import CompositorNodeNames
 from helpers.oldeevee_bloom_prop_utilities import (
@@ -13,9 +13,9 @@ from helpers.oldeevee_bloom_prop_utilities import (
     update_real_time_compositing,
 )
 
-# Proper __all__ definition as strings
-__all__ = [
+__all__: list[str] = [
     "NodeDriverManager",
+    "DriverType",
     "CompositorNodeNames",
     "hexcode_to_rgb",
     "hex_color_add",
