@@ -458,7 +458,7 @@ class NODE_OT_GLOW(bpy.types.Operator):
         glow_group = glow_node_group(shelf, context, custom_glow_node_name)
         glow_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
         glow_node.name = "Glow"
-        glow_node.width = 197
+        glow_node.width = 180  # 197
         glow_node.node_tree = bpy.data.node_groups[glow_group.name]
         glow_node.use_custom_color = True
         glow_node.color = Color.DARK_PURPLE
@@ -466,80 +466,8 @@ class NODE_OT_GLOW(bpy.types.Operator):
 
         # Initialize NodeDriverManager to manage drivers for the node group
         drivers = NodeDriverManager(
-            node_group=glow_group, id_type="SCENE", id=bpy.context.scene
+            node_group=glow_node, id_type="SCENE", id=bpy.context.scene
         )
-
-        # G Switch 01
-        drivers.add_driver(node_name="G Switch 01", socket_name="check")
-        drivers.add_driver_var(1)
-
-        # G Switch 00
-        drivers.add_driver(node_name="G Switch 00", socket_name="check")
-        drivers.add_driver_var(1)
-
-        # G Bloom Low Threshold
-        drivers.add_driver(node_name="G Bloom Low", socket_name="threshold")
-        drivers.add_driver_var(4)
-
-        # G Bloom High Threshold
-        drivers.add_driver(node_name="G Bloom High", socket_name="threshold")
-        drivers.add_driver_var(4)
-
-        # G Bloom Low Size
-        drivers.add_driver(node_name="G Bloom Low", socket_name="size")
-        drivers.add_driver_var(5)
-
-        # G Bloom High Size
-        drivers.add_driver(node_name="G Bloom High", socket_name="size")
-        drivers.add_driver_var(5)
-
-        # G Streaks Low Iterations
-        drivers.add_driver(node_name="G Streaks Low", socket_name="iterations")
-        drivers.add_driver_var(7)
-
-        # G Streaks High Iterations
-        drivers.add_driver(node_name="G Streaks High", socket_name="iterations")
-        drivers.add_driver_var(7)
-
-        # G Streaks Low Color Modulation
-        drivers.add_driver(node_name="G Streaks Low", socket_name="color_modulation")
-        drivers.add_driver_var(8)
-
-        # G Streaks High Color Modulation
-        drivers.add_driver(node_name="G Streaks High", socket_name="color_modulation")
-        drivers.add_driver_var(8)
-
-        # G Streaks Low Threshold
-        drivers.add_driver(node_name="G Streaks Low", socket_name="threshold")
-        drivers.add_driver_var(9)
-
-        # G Streaks High Threshold
-        drivers.add_driver(node_name="G Streaks High", socket_name="threshold")
-        drivers.add_driver_var(9)
-
-        # G Streaks Low Streaks
-        drivers.add_driver(node_name="G Streaks Low", socket_name="streaks")
-        drivers.add_driver_var(10)
-
-        # G Streaks High Streaks
-        drivers.add_driver(node_name="G Streaks High", socket_name="streaks")
-        drivers.add_driver_var(10)
-
-        # G Streaks Low Angle Offset
-        drivers.add_driver(node_name="G Streaks Low", socket_name="angle_offset")
-        drivers.add_driver_var(11)
-
-        # G Streaks High Angle Offset
-        drivers.add_driver(node_name="G Streaks High", socket_name="angle_offset")
-        drivers.add_driver_var(11)
-
-        # G Streaks Low Fade
-        drivers.add_driver(node_name="G Streaks Low", socket_name="fade")
-        drivers.add_driver_var(12)
-
-        # G Streaks High Fade
-        drivers.add_driver(node_name="G Streaks High", socket_name="fade")
-        drivers.add_driver_var(12)
 
         return {"FINISHED"}
 
