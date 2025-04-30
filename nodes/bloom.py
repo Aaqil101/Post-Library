@@ -22,12 +22,7 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     image_socket = bloom.interface.new_socket(
         name="Image", in_out="OUTPUT", socket_type="NodeSocketColor"
     )
-    image_socket.default_value = (
-        0.8,
-        0.8,
-        0.8,
-        1.0,
-    )
+    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket.attribute_domain = "POINT"
     image_socket.description = "Standard color output"
 
@@ -146,6 +141,8 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     main_bloom = bloom.nodes.new("CompositorNodeGlare")
     main_bloom.label = "Main Bloom"
     main_bloom.name = "Main Bloom"
+    main_bloom.use_custom_color = True
+    main_bloom.color = Color.DARK_PURPLE
 
     # Bloom settings
     main_bloom.glare_type = "BLOOM"
@@ -158,8 +155,6 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     main_bloom.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
     main_bloom.inputs[7].default_value = 0.5  # Size
 
-    main_bloom.use_custom_color = True
-    main_bloom.color = Color.DARK_PURPLE
     main_bloom.inputs[2].hide = True
     main_bloom.inputs[3].hide = True
     main_bloom.inputs[4].hide = True
@@ -352,7 +347,7 @@ def bloom_node_group(context, operator, group_name) -> NodeTree:
     group_input_004.outputs[8].hide = True
     group_input_004.outputs[9].hide = True
 
-    # node Group Input 05
+    # node Group Input 005
     group_input_005 = bloom.nodes.new("NodeGroupInput")
     group_input_005.name = "Group Input 005"
     group_input_005.use_custom_color = True

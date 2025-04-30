@@ -1,6 +1,5 @@
 # Blender Modules
 import bpy
-import mathutils
 from bpy.types import NodeTree
 
 # Helper Modules
@@ -8,24 +7,22 @@ from helpers import Color
 
 
 # initialize Glow node group
-def glow_node_group() -> NodeTree:
-    glow = bpy.data.node_groups.new(type="CompositorNodeTree", name="Glow")
+def glow_node_group(context, operator, group_name) -> NodeTree:
+    # enable use nodes
+    bpy.context.scene.use_nodes = True
+
+    glow: NodeTree = bpy.data.node_groups.new(group_name, "CompositorNodeTree")
 
     glow.color_tag = "FILTER"
-    glow.description = ""
-    glow.default_group_node_width = 180
+    glow.description = "Adds a glow effect to the image. The glow effect is a post-processing effect that creates a soft, glowing halo around bright areas in the image. This effect can be used to enhance the brightness and contrast of the image, creating a more visually appealing result."
+    glow.default_group_node_width = 169
 
     # glow interface
     # Socket Image
     image_socket = glow.interface.new_socket(
         name="Image", in_out="OUTPUT", socket_type="NodeSocketColor"
     )
-    image_socket.default_value = (
-        0.800000011920929,
-        0.800000011920929,
-        0.800000011920929,
-        1.0,
-    )
+    image_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     image_socket.attribute_domain = "POINT"
     image_socket.description = "Standard color output"
 
@@ -33,12 +30,7 @@ def glow_node_group() -> NodeTree:
     bloom_preview_socket = glow.interface.new_socket(
         name="Bloom Preview", in_out="OUTPUT", socket_type="NodeSocketColor"
     )
-    bloom_preview_socket.default_value = (
-        0.800000011920929,
-        0.800000011920929,
-        0.800000011920929,
-        1.0,
-    )
+    bloom_preview_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     bloom_preview_socket.attribute_domain = "POINT"
     bloom_preview_socket.description = "Shows a preview of the bloom effect"
 
@@ -46,12 +38,7 @@ def glow_node_group() -> NodeTree:
     streaks_preview_socket = glow.interface.new_socket(
         name="Streaks Preview", in_out="OUTPUT", socket_type="NodeSocketColor"
     )
-    streaks_preview_socket.default_value = (
-        0.800000011920929,
-        0.800000011920929,
-        0.800000011920929,
-        1.0,
-    )
+    streaks_preview_socket.default_value = (1.0, 1.0, 1.0, 1.0)
     streaks_preview_socket.attribute_domain = "POINT"
     streaks_preview_socket.description = "Shows a preview of the streaks effect"
 
@@ -72,7 +59,14 @@ def glow_node_group() -> NodeTree:
     quality_socket.max_value = 3
     quality_socket.subtype = "NONE"
     quality_socket.attribute_domain = "POINT"
-    quality_socket.description = "Controls the resolution at which the glare effect is processed. This can be helpful to save render times while only doing preview renders"
+    quality_socket.description = (
+        "Controls the resolution at which the bloom effect is processed. "
+        "This can help save render times during preview renders.\n\n"
+        "Quality levels:\n"
+        "   1 - High\n"
+        "   2 - Medium\n"
+        "   3 - Low"
+    )
 
     # Socket Glow Amount
     glow_amount_socket = glow.interface.new_socket(
@@ -84,7 +78,7 @@ def glow_node_group() -> NodeTree:
     glow_amount_socket.subtype = "FACTOR"
     glow_amount_socket.attribute_domain = "POINT"
     glow_amount_socket.description = (
-        "Controls the amount of\xa0mixing between the given image and the glow effect"
+        "Controls the amount of mixing between the given image and the glow effect"
     )
 
     # Socket In-Between
@@ -97,7 +91,7 @@ def glow_node_group() -> NodeTree:
     in_between_socket.subtype = "FACTOR"
     in_between_socket.attribute_domain = "POINT"
     in_between_socket.description = (
-        "Controls the amount of\xa0mixing between the Bloom and the streak effect"
+        "Controls the amount of mixing between the Bloom and the streak effect"
     )
 
     # Socket ----Bloom----
@@ -189,6 +183,7 @@ def glow_node_group() -> NodeTree:
     bloom_extras_panel.description = (
         "Additional controls for fine-tuning the bloom effect."
     )
+
     # Socket Smoothness
     smoothness_socket = glow.interface.new_socket(
         name="Smoothness",
@@ -247,6 +242,7 @@ def glow_node_group() -> NodeTree:
     streak_extras_panel.description = (
         "Additional controls for fine-tuning the streaks effect"
     )
+
     # Socket Smoothness
     smoothness_socket_1 = glow.interface.new_socket(
         name="Smoothness",
@@ -341,7 +337,7 @@ def glow_node_group() -> NodeTree:
         socket_type="NodeSocketFloat",
         parent=streak_extras_panel,
     )
-    fade_socket.default_value = 0.8999999761581421
+    fade_socket.default_value = 0.9
     fade_socket.min_value = 0.75
     fade_socket.max_value = 1.0
     fade_socket.subtype = "FACTOR"
@@ -369,7 +365,7 @@ def glow_node_group() -> NodeTree:
     group_output = glow.nodes.new("NodeGroupOutput")
     group_output.name = "Group Output"
     group_output.use_custom_color = True
-    group_output.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
+    group_output.color = Color.DARK_GRAY
     group_output.is_active_output = True
     group_output.inputs[3].hide = True
 
@@ -377,71 +373,56 @@ def glow_node_group() -> NodeTree:
     group_input = glow.nodes.new("NodeGroupInput")
     group_input.name = "Group Input"
     group_input.use_custom_color = True
-    group_input.color = (0.23529097437858582, 0.2235269844532013, 0.21568608283996582)
-    group_input.outputs[1].hide = True
-    group_input.outputs[2].hide = True
-    group_input.outputs[3].hide = True
-    group_input.outputs[4].hide = True
-    group_input.outputs[8].hide = True
-    group_input.outputs[9].hide = True
-    group_input.outputs[10].hide = True
-    group_input.outputs[11].hide = True
-    group_input.outputs[16].hide = True
-    group_input.outputs[17].hide = True
-    group_input.outputs[18].hide = True
-    group_input.outputs[19].hide = True
-    group_input.outputs[20].hide = True
-    group_input.outputs[21].hide = True
-    group_input.outputs[22].hide = True
-    group_input.outputs[23].hide = True
-    group_input.outputs[24].hide = True
+    group_input.color = Color.DARK_GRAY
+    for i in [1, 2, 3, 4, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23, 24]:
+        group_input.outputs[i].hide = True
 
     # node Streaks
     streaks = glow.nodes.new("CompositorNodeGlare")
     streaks.label = "Streaks"
     streaks.name = "Streaks"
-    streaks.use_custom_color = True
-    streaks.color = (0.4666634798049927, 0.32548609375953674, 0.37254956364631653)
-    streaks.angle_offset = 0.0
-    streaks.color_modulation = 0.25
-    streaks.fade = 0.8999999761581421
     streaks.glare_type = "STREAKS"
-    streaks.iterations = 3
-    streaks.mix = 0.0
     streaks.quality = "LOW"
-    streaks.size = 8
-    streaks.streaks = 16
-    streaks.threshold = 0.0
-    streaks.use_rotate_45 = True
+    streaks.use_custom_color = True
+    streaks.color = Color.DARK_PURPLE
+
+    # Streaks settings
+    streaks.inputs[1].default_value = 1.0  # Highlights Threshold
+    streaks.inputs[2].default_value = 0.1  # Highlights Smoothness
+    streaks.inputs[3].default_value = 0.0  # Highlights Maximum
+    streaks.inputs[4].default_value = 1.0  # Adjust Strength
+    streaks.inputs[5].default_value = 1.0  # Adjust Saturation
+    streaks.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Adjust Tint
+    streaks.inputs[8].default_value = 16  # Glare Streaks
+    streaks.inputs[9].default_value = 0.0  # Glare Streaks Angle
+    streaks.inputs[10].default_value = 3  # Glare Iterations
+    streaks.inputs[11].default_value = 0.9  # Glare Fade
+    streaks.inputs[12].default_value = 0.25  # Glare Color Modulation
 
     # node Bloom
     bloom = glow.nodes.new("CompositorNodeGlare")
     bloom.label = "Bloom"
     bloom.name = "Bloom"
-    bloom.use_custom_color = True
-    bloom.color = (0.4666634798049927, 0.32548609375953674, 0.37254956364631653)
-    bloom.angle_offset = 0.0
-    bloom.color_modulation = 0.25
-    bloom.fade = 0.8999999761581421
     bloom.glare_type = "BLOOM"
-    bloom.iterations = 3
-    bloom.mix = 7.0
     bloom.quality = "LOW"
-    bloom.size = 9
-    bloom.streaks = 4
-    bloom.threshold = 0.0
-    bloom.use_rotate_45 = True
+    bloom.use_custom_color = True
+    bloom.color = Color.DARK_PURPLE
+
+    # Bloom settings
+    bloom.inputs[1].default_value = 1.0  # Highlights Threshold
+    bloom.inputs[2].default_value = 0.1  # Highlights Smoothness
+    bloom.inputs[3].default_value = 0.0  # Maximum Highlights
+    bloom.inputs[4].default_value = 8.0  # Strength
+    bloom.inputs[5].default_value = 1.0  # Saturation
+    bloom.inputs[6].default_value = (1.0, 1.0, 1.0, 1.0)  # Tint
+    bloom.inputs[7].default_value = 1.0  # Size
 
     # node Add Bloom and Streaks
     add_bloom_and_streaks = glow.nodes.new("CompositorNodeMixRGB")
     add_bloom_and_streaks.label = "Add Bloom and Streaks"
     add_bloom_and_streaks.name = "Add Bloom and Streaks"
     add_bloom_and_streaks.use_custom_color = True
-    add_bloom_and_streaks.color = (
-        0.5254849791526794,
-        0.41176897287368774,
-        0.21568608283996582,
-    )
+    add_bloom_and_streaks.color = Color.BROWN
     add_bloom_and_streaks.blend_type = "ADD"
     add_bloom_and_streaks.use_alpha = False
     add_bloom_and_streaks.use_clamp = False
@@ -451,24 +432,16 @@ def glow_node_group() -> NodeTree:
     add_glow_and_image.label = "Add Glow and Image"
     add_glow_and_image.name = "Add Glow and Image"
     add_glow_and_image.use_custom_color = True
-    add_glow_and_image.color = (
-        0.5254849791526794,
-        0.41176897287368774,
-        0.21568608283996582,
-    )
+    add_glow_and_image.color = Color.BROWN
     add_glow_and_image.blend_type = "ADD"
     add_glow_and_image.use_alpha = False
     add_glow_and_image.use_clamp = False
 
-    # node Group Input.001
+    # node Group Input 001
     group_input_001 = glow.nodes.new("NodeGroupInput")
-    group_input_001.name = "Group Input.001"
+    group_input_001.name = "Group Input 001"
     group_input_001.use_custom_color = True
-    group_input_001.color = (
-        0.23529097437858582,
-        0.2235269844532013,
-        0.21568608283996582,
-    )
+    group_input_001.color = Color.DARK_GRAY
     group_input_001.outputs[1].hide = True
     group_input_001.outputs[2].hide = True
     group_input_001.outputs[3].hide = True
@@ -494,15 +467,11 @@ def glow_node_group() -> NodeTree:
     group_input_001.outputs[23].hide = True
     group_input_001.outputs[24].hide = True
 
-    # node Group Input.002
+    # node Group Input 002
     group_input_002 = glow.nodes.new("NodeGroupInput")
-    group_input_002.name = "Group Input.002"
+    group_input_002.name = "Group Input 002"
     group_input_002.use_custom_color = True
-    group_input_002.color = (
-        0.23529097437858582,
-        0.2235269844532013,
-        0.21568608283996582,
-    )
+    group_input_002.color = Color.DARK_GRAY
     group_input_002.outputs[1].hide = True
     group_input_002.outputs[2].hide = True
     group_input_002.outputs[3].hide = True
@@ -517,15 +486,11 @@ def glow_node_group() -> NodeTree:
     group_input_002.outputs[15].hide = True
     group_input_002.outputs[24].hide = True
 
-    # node Group Input.003
+    # node Group Input 003
     group_input_003 = glow.nodes.new("NodeGroupInput")
-    group_input_003.name = "Group Input.003"
+    group_input_003.name = "Group Input 003"
     group_input_003.use_custom_color = True
-    group_input_003.color = (
-        0.23529097437858582,
-        0.2235269844532013,
-        0.21568608283996582,
-    )
+    group_input_003.color = Color.DARK_GRAY
     group_input_003.outputs[0].hide = True
     group_input_003.outputs[1].hide = True
     group_input_003.outputs[2].hide = True
@@ -551,15 +516,11 @@ def glow_node_group() -> NodeTree:
     group_input_003.outputs[23].hide = True
     group_input_003.outputs[24].hide = True
 
-    # node Group Input.004
+    # node Group Input 004
     group_input_004 = glow.nodes.new("NodeGroupInput")
-    group_input_004.name = "Group Input.004"
+    group_input_004.name = "Group Input 004"
     group_input_004.use_custom_color = True
-    group_input_004.color = (
-        0.23529097437858582,
-        0.2235269844532013,
-        0.21568608283996582,
-    )
+    group_input_004.color = Color.DARK_GRAY
     group_input_004.outputs[0].hide = True
     group_input_004.outputs[1].hide = True
     group_input_004.outputs[3].hide = True
@@ -585,15 +546,11 @@ def glow_node_group() -> NodeTree:
     group_input_004.outputs[23].hide = True
     group_input_004.outputs[24].hide = True
 
-    # node Group Input.005
+    # node Group Input 005
     group_input_005 = glow.nodes.new("NodeGroupInput")
-    group_input_005.name = "Group Input.005"
+    group_input_005.name = "Group Input 005"
     group_input_005.use_custom_color = True
-    group_input_005.color = (
-        0.23529097437858582,
-        0.2235269844532013,
-        0.21568608283996582,
-    )
+    group_input_005.color = Color.DARK_GRAY
     group_input_005.outputs[0].hide = True
     group_input_005.outputs[2].hide = True
     group_input_005.outputs[3].hide = True
@@ -621,8 +578,15 @@ def glow_node_group() -> NodeTree:
     file_output = glow.nodes.new("CompositorNodeOutputFile")
     file_output.name = "File Output"
     file_output.use_custom_color = True
-    file_output.color = (0.5098000168800354, 0.22744795680046082, 0.207844078540802)
-    file_output.active_input_index = 0
+    file_output.color = Color.DARK_RED
+
+    # Rename the default "Image" slot aka the first slot to "Quality"
+    if len(file_output.file_slots) > 0:
+        file_output.file_slots[0].path = "Quality"
+
+    file_output.file_slots.new("Bloom")
+    file_output.file_slots.new("Streaks")
+    file_output.active_input_index = 1
     file_output.base_path = ""
     file_output.save_as_render = True
 
@@ -657,66 +621,98 @@ def glow_node_group() -> NodeTree:
     # initialize glow links
     # streaks.Glare -> add_bloom_and_streaks.Image
     glow.links.new(streaks.outputs[1], add_bloom_and_streaks.inputs[2])
+
     # bloom.Glare -> add_bloom_and_streaks.Image
     glow.links.new(bloom.outputs[1], add_bloom_and_streaks.inputs[1])
+
     # add_bloom_and_streaks.Image -> add_glow_and_image.Image
     glow.links.new(add_bloom_and_streaks.outputs[0], add_glow_and_image.inputs[2])
+
     # add_glow_and_image.Image -> group_output.Image
     glow.links.new(add_glow_and_image.outputs[0], group_output.inputs[0])
+
     # group_input.Image -> bloom.Image
     glow.links.new(group_input.outputs[0], bloom.inputs[0])
+
     # group_input_001.Image -> add_glow_and_image.Image
     glow.links.new(group_input_001.outputs[0], add_glow_and_image.inputs[1])
+
     # group_input.Threshold -> bloom.Threshold
     glow.links.new(group_input.outputs[5], bloom.inputs[1])
+
     # group_input.Smoothness -> bloom.Smoothness
     glow.links.new(group_input.outputs[12], bloom.inputs[2])
+
     # group_input.Maximum -> bloom.Maximum
     glow.links.new(group_input.outputs[13], bloom.inputs[3])
+
     # group_input.Strength -> bloom.Strength
     glow.links.new(group_input.outputs[6], bloom.inputs[4])
+
     # group_input.Saturation -> bloom.Saturation
     glow.links.new(group_input.outputs[14], bloom.inputs[5])
+
     # group_input.Tint -> bloom.Tint
     glow.links.new(group_input.outputs[15], bloom.inputs[6])
+
     # group_input.Size -> bloom.Size
     glow.links.new(group_input.outputs[7], bloom.inputs[7])
+
     # group_input_002.Threshold -> streaks.Threshold
     glow.links.new(group_input_002.outputs[9], streaks.inputs[1])
+
     # group_input_002.Smoothness -> streaks.Smoothness
     glow.links.new(group_input_002.outputs[16], streaks.inputs[2])
+
     # group_input_002.Maximum -> streaks.Maximum
     glow.links.new(group_input_002.outputs[17], streaks.inputs[3])
+
     # group_input_002.Strength -> streaks.Strength
     glow.links.new(group_input_002.outputs[10], streaks.inputs[4])
+
     # group_input_002.Saturation -> streaks.Saturation
     glow.links.new(group_input_002.outputs[18], streaks.inputs[5])
+
     # group_input_002.Tint -> streaks.Tint
     glow.links.new(group_input_002.outputs[19], streaks.inputs[6])
+
     # group_input_002.Streaks -> streaks.Streaks
     glow.links.new(group_input_002.outputs[11], streaks.inputs[8])
+
     # group_input_002.Streaks Angle -> streaks.Streaks Angle
     glow.links.new(group_input_002.outputs[20], streaks.inputs[9])
+
     # group_input_002.Iterations -> streaks.Iterations
     glow.links.new(group_input_002.outputs[21], streaks.inputs[10])
+
     # group_input_002.Fade -> streaks.Fade
     glow.links.new(group_input_002.outputs[22], streaks.inputs[11])
+
     # group_input_002.Color Modulation -> streaks.Color Modulation
     glow.links.new(group_input_002.outputs[23], streaks.inputs[12])
+
     # group_input_002.Image -> streaks.Image
     glow.links.new(group_input_002.outputs[0], streaks.inputs[0])
+
     # group_input_003.In-Between -> add_bloom_and_streaks.Fac
     glow.links.new(group_input_003.outputs[3], add_bloom_and_streaks.inputs[0])
+
     # group_input_004.Glow Amount -> add_glow_and_image.Fac
     glow.links.new(group_input_004.outputs[2], add_glow_and_image.inputs[0])
+
     # streaks.Glare -> group_output.Streaks Preview
     glow.links.new(streaks.outputs[1], group_output.inputs[2])
+
     # bloom.Glare -> group_output.Bloom Preview
     glow.links.new(bloom.outputs[1], group_output.inputs[1])
+
     # group_input_005.----Bloom---- -> file_output.Image
     glow.links.new(group_input_005.outputs[4], file_output.inputs[1])
+
     # group_input_005.----Streaks---- -> file_output.Image
     glow.links.new(group_input_005.outputs[8], file_output.inputs[2])
+
     # group_input_005.Quality -> file_output.Image
     glow.links.new(group_input_005.outputs[1], file_output.inputs[0])
+
     return glow
