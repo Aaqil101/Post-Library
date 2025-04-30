@@ -23,18 +23,24 @@ INFO: I used the [node to python add-on](https://extensions.blender.org/add-ons/
 """
 
 # Determine script path
-try:
-    script_path = (
-        bpy.context.space_data.text.filepath
-        if bpy.context.space_data and bpy.context.space_data.type == "TEXT_EDITOR"
-        else __file__
-    )
-except NameError:
-    raise RuntimeError(
-        "Unable to determine script path. Are you running this in Blender?"
-    )
+# try:
+#     script_path = (
+#         bpy.context.space_data.text.filepath
+#         if bpy.context.space_data and bpy.context.space_data.type == "TEXT_EDITOR"
+#         else __file__
+#     )
+# except NameError:
+#     raise RuntimeError(
+#         "Unable to determine script path. Are you running this in Blender?"
+#     )
 
-if not script_path:
+# if not script_path:
+#     raise RuntimeError("The script must be saved to disk before running!")
+
+try:
+    # Determine script path
+    script_path = Path(__file__).resolve()
+except NameError:
     raise RuntimeError("The script must be saved to disk before running!")
 
 # Resolve directories
@@ -50,11 +56,6 @@ try:
     script_path = Path(__file__).resolve()
 except NameError:
     raise RuntimeError("The script must be saved to disk before running!")
-
-# Resolve directories
-script_dir = script_path.parent
-path_to_helpers_folder = script_dir / "helpers"
-path_to_core_folder = script_dir / "core"
 """
 
 # List of paths
@@ -458,16 +459,35 @@ class NODE_OT_GLOW(bpy.types.Operator):
         glow_group = glow_node_group(shelf, context, custom_glow_node_name)
         glow_node = context.scene.node_tree.nodes.new("CompositorNodeGroup")
         glow_node.name = "Glow"
-        glow_node.width = 180  # 197
+        glow_node.width = 169
         glow_node.node_tree = bpy.data.node_groups[glow_group.name]
         glow_node.use_custom_color = True
         glow_node.color = Color.DARK_PURPLE
         glow_node.select = False
 
         # Initialize NodeDriverManager to manage drivers for the node group
-        drivers = NodeDriverManager(
-            node_group=glow_node, id_type="SCENE", id=bpy.context.scene
+        scripted_drivers = NodeDriverManager(
+            node_group=glow_node,
+            id_type="SCENE",
+            id=bpy.context.scene,
+            driver_type=DriverType.SCRIPTED,
         )
+
+        # Bloom
+        scripted_drivers.add_driver(
+            node_name="Bloom",
+            socket_name="quality",
+            expression=f"{scripted_drivers.var_name} - 1",
+        )
+        scripted_drivers.add_driver_var(1)
+
+        # Streaks
+        scripted_drivers.add_driver(
+            node_name="Streaks",
+            socket_name="quality",
+            expression=f"{scripted_drivers.var_name} - 1",
+        )
+        scripted_drivers.add_driver_var(1)
 
         return {"FINISHED"}
 
