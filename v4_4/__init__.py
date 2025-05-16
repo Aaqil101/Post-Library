@@ -1,7 +1,6 @@
 bl_info = {
     "name": "Post Library",
     "author": "Aaqil",
-    "version": (2, 0, 0),
     "blender": (4, 4, 0),
     "location": "Compositor > Toolshelf",
     "description": "Boost your Blender workflow with essential tools for efficient VFX and post-processing. Simplify compositing, and finishing touches with this powerful addon.",
